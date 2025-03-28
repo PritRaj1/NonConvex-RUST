@@ -1,20 +1,20 @@
-use serde::Deserialize
+use serde::{Deserialize, Serialize};
 use serde_json;
-use std::error::Error;
+use thiserror::Error; // Import `thiserror`
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub enum AlgConf {
     CGA(CGAConf),
     PT(PTConf),
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
     pub opt_conf: OptConf,
     pub alg_conf: AlgConf,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct OptConf {
     #[serde(default = "default_max_iter")]
     pub max_iter: usize,
@@ -28,7 +28,7 @@ fn default_max_iter() -> usize { 1000 }
 fn default_rtol() -> f64 { 1e-6 }
 fn default_atol() -> f64 { 1e-6 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct CGAConf {    
     #[serde(default = "default_pop_size")]
     pub pop_size: usize,
@@ -48,7 +48,7 @@ fn default_selection_method() -> String { "tournament".to_string() }
 fn default_mating_method() -> String { "uniform".to_string() }
 fn default_crossover_prob() -> f64 { 0.8 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct PTConf {
     #[serde(default = "default_num_replicas")]
     pub num_replicas: usize,
@@ -64,6 +64,15 @@ fn default_num_replicas() -> usize { 10 }
 fn default_num_chains() -> usize { 10 }
 fn default_power_law() -> f64 { 0.5 }
 fn default_exchange_type() -> String { "swap".to_string() }
+
+#[derive(Error, Debug)]
+pub enum ConfigError {
+    #[error("Failed to deserialize configuration: {0}")]
+    DeserializationError(String),
+
+    #[error("Failed to serialize configuration: {0}")]
+    SerializationError(String),
+}
 
 impl Config {
     // Deserialize the json to config
