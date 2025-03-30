@@ -1,10 +1,10 @@
 
-use non_convex_opt::continous_ga::selection::Proportional;
+use non_convex_opt::continous_ga::selection::RouletteWheel;
 use nalgebra::{DMatrix, DVector};
 
 #[test]
-fn test_proportional_selection() {
-    let selection = Proportional::new(10, 5);
+fn test_roulette_wheel_selection() {
+    let selection = RouletteWheel::new(10, 5);
     let population = DMatrix::<f64>::from_vec(10, 5, vec![1.0; 50]);
     let fitness = DVector::<f64>::from_vec(vec![1.0; 10]);
     let constraint = DVector::from_vec(vec![true; 10]);
