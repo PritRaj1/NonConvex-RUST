@@ -19,4 +19,4 @@ Genetic algorithm for real valued (FP) vectors.
 |--------------------------|-----------------------------------------------------------------------------------------------|
 | Random | - Standard and boring |
 | Heuristic     | - More exploitative and faster to converge (with good initial population) |
-|      | - More suitable to continous problems (by intuition). Uses a Random of parent characteristics. |
+|      | - More suitable to continous problems (by intuition). Uses a blend of parent characteristics. |
