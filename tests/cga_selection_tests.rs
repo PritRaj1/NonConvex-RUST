@@ -1,4 +1,3 @@
-
 use non_convex_opt::continous_ga::selection::{RouletteWheel, Tournament, Residual};
 use nalgebra::{DMatrix, DVector};
 
