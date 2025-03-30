@@ -84,7 +84,7 @@ impl Tournament {
 
             // Randomly select `tournament_size` valid individuals
             while tournament_indices.len() < self.tournament_size {
-                let index = rng.gen_range(0..population.nrows());
+                let index = rng.random_range(0..population.nrows());
                 if constraint[index] { // Only add if it satisfies the constraint
                     tournament_indices.push(index);
                 }
@@ -163,7 +163,7 @@ impl Residual {
                 .max_by(|&&a, &&b| residual_probabilities[a].partial_cmp(&residual_probabilities[b]).unwrap())
                 .unwrap();
 
-            if rng.gen::<f64>() < residual_probabilities[chosen_index].to_f64().unwrap() {
+            if rng.random::<f64>() < residual_probabilities[chosen_index].to_f64().unwrap() {
                 selected.set_row(parent_index, &population.row(chosen_index));
                 parent_index += 1;
                 remaining_spots -= 1;
