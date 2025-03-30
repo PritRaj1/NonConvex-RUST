@@ -4,7 +4,7 @@ use crate::utils::opt_prob::FloatNumber as FloatNum;
 
 pub enum CrossoverOperator {
     Random,
-    Heuristic,
+    Heuristic, // A.K.A. Blend Crossover
 }
 
 pub struct Random {

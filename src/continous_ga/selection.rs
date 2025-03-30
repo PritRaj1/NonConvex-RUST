@@ -3,12 +3,12 @@ use rand::Rng;
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
 pub enum SelectionOperator {
-    RouletteWheel,
+    RouletteWheel, // A.K.A. Proportional Selection
     Tournament,
-    Residual,
+    Residual, // A.K.A. Stochastic Remainder Selection
 }
 
-pub struct RouletteWheel { // A.K.A. Proportional Selection
+pub struct RouletteWheel { 
     pub population_size: usize,
     pub num_parents: usize,
 }
@@ -101,7 +101,7 @@ impl Tournament {
     }
 }
 
-pub struct Residual { // A.K.A. Stochastic Remainder Selection without replacement
+pub struct Residual { 
     pub population_size: usize,
     pub num_parents: usize,
 }
