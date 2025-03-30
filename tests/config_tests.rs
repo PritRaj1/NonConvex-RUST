@@ -15,7 +15,7 @@ fn test_deserialize_config() {
                 "pop_size": 200,
                 "num_parents": 4,
                 "selection_method": "roulette",
-                "mating_method": "blend",
+                "mating_method": "Random",
                 "crossover_prob": 0.9,
             }
         }
@@ -35,8 +35,8 @@ fn test_deserialize_config() {
 fn test_serialize_config() {
     let config = Config {
         opt_conf: OptConf { max_iter: 500, rtol: 1e-5, atol: 1e-4 },
-        alg_conf: AlgConf::CGA(CGAConf { pop_size: 200, num_parents: 4, selection_method: "roulette".to_string(), mating_method: "blend".to_string(), crossover_prob: 0.9, tournament_size: 2 }),
+        alg_conf: AlgConf::CGA(CGAConf { pop_size: 200, num_parents: 4, selection_method: "roulette".to_string(), mating_method: "Random".to_string(), crossover_prob: 0.9, tournament_size: 2 }),
     };
     let serialized = serde_json::to_string(&config).unwrap();
-    assert_eq!(serialized, r#"{"opt_conf":{"max_iter":500,"rtol":1e-5,"atol":1e-4},"alg_conf":{"CGA":{"pop_size":200,"num_parents":4,"selection_method":"roulette","mating_method":"blend","crossover_prob":0.9,"tournament_size":2}}}"#);
+    assert_eq!(serialized, r#"{"opt_conf":{"max_iter":500,"rtol":1e-5,"atol":1e-4},"alg_conf":{"CGA":{"pop_size":200,"num_parents":4,"selection_method":"roulette","mating_method":"Random","crossover_prob":0.9,"tournament_size":2}}}"#);
 }

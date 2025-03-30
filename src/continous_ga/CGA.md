@@ -17,5 +17,6 @@ Genetic algorithm for real valued (FP) vectors.
 
 | Crossover Methods         | Notes                                                                                   |
 |--------------------------|-----------------------------------------------------------------------------------------------|
-| Blend | - More exploratory and diverse |
+| Random | - Standard and boring |
 | Heuristic     | - More exploitative and faster to converge (with good initial population) |
+|      | - More suitable to continous problems (by intuition). Uses a Random of parent characteristics. |
