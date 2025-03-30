@@ -5,7 +5,7 @@ use crate::utils::opt_prob::FloatNumber as FloatNum;
 pub enum SelectionOperator {
     RouletteWheel,
     Tournament,
-    SRS,
+    Residual,
 }
 
 pub struct RouletteWheel {
@@ -50,6 +50,43 @@ impl RouletteWheel {
                 }
             }
         }
+        selected
+    }
+}
+
+pub struct Tournament {
+    pub population_size: usize,
+    pub num_parents: usize,
+    pub tournament_size: usize,
+}
+
+impl Tournament {
+    pub fn new(population_size: usize, num_parents: usize, tournament_size: usize) -> Self {
+        Tournament { population_size, num_parents, tournament_size }
+    }
+
+    pub fn select<T: FloatNum>(&self, population: &DMatrix<T>, fitness: &DVector<T>, constraint: &DVector<bool>) -> DMatrix<T> {
+        let mut selected = DMatrix::<T>::zeros(self.num_parents, population.ncols());
+        let mut rng = rand::rng(); // Random number generator
+
+        for i in 0..self.num_parents {
+            let mut tournament_indices = Vec::new();
+
+            // Randomly select `tournament_size` valid individuals
+            while tournament_indices.len() < self.tournament_size {
+                let index = rng.gen_range(0..population.nrows());
+                if constraint[index] { // Only add if it satisfies the constraint
+                    tournament_indices.push(index);
+                }
+            }
+
+            let best_index = *tournament_indices.iter()
+                .max_by(|&&a, &&b| fitness[a].partial_cmp(&fitness[b]).unwrap())
+                .unwrap();
+
+            selected.set_row(i, &population.row(best_index));
+        }
+
         selected
     }
 }
