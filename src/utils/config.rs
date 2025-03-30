@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
 use thiserror::Error; 
+use serde_with::serde_as;
+use serde_with::DisplayFromStr;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum AlgConf {
@@ -14,12 +16,15 @@ pub struct Config {
     pub alg_conf: AlgConf,
 }
 
+#[serde_as]
 #[derive(Deserialize, Serialize, Debug)]
 pub struct OptConf {
     #[serde(default = "default_max_iter")]
     pub max_iter: usize,
+    #[serde_as(as = "DisplayFromStr")]
     #[serde(default = "default_rtol")]
     pub rtol: f64,
+    #[serde_as(as = "DisplayFromStr")]
     #[serde(default = "default_atol")]
     pub atol: f64,
 }
