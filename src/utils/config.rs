@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
-use thiserror::Error; // Import `thiserror`
+use thiserror::Error; 
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum AlgConf {
