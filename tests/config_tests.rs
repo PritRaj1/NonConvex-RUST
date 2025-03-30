@@ -31,6 +31,7 @@ fn test_deserialize_config() {
     }
 }
 
+#[test]
 fn test_serialize_config() {
     let config = Config {
         opt_conf: OptConf { max_iter: 500, rtol: 1e-5, atol: 1e-4 },
