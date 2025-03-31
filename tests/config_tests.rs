@@ -11,7 +11,7 @@ fn test_deserialize_config() {
         },
         "alg_conf": {
             "CGA": {
-                "pop_size": 200,
+                "population_size": 200,
                 "num_parents": 4,
                 "selection_method": "RouletteWheel",
                 "crossover_method": "Random",
@@ -36,7 +36,7 @@ fn test_serialize_config() {
             atol: 1e-4,
         },
         alg_conf: AlgConf::CGA(CGAConf {
-            pop_size: 200,
+            population_size: 200,
             num_parents: 4,
             selection_method: "RouletteWheel".to_string(),
             crossover_method: "Random".to_string(),
@@ -53,7 +53,7 @@ fn test_serialize_config() {
     assert_eq!(deserialized.opt_conf.atol, config.opt_conf.atol);
     
     if let (AlgConf::CGA(orig), AlgConf::CGA(de)) = (&config.alg_conf, &deserialized.alg_conf) {
-        assert_eq!(de.pop_size, orig.pop_size);
+        assert_eq!(de.population_size, orig.population_size);
         assert_eq!(de.num_parents, orig.num_parents);
         assert_eq!(de.selection_method, orig.selection_method);
         assert_eq!(de.crossover_method, orig.crossover_method);

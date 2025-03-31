@@ -21,15 +21,15 @@ pub struct CGA<T: FloatNum, F: OptProb<T>> {
 impl<T: FloatNum, F: OptProb<T>> CGA<T, F> {
     pub fn new(conf: CGAConf, init_pop: DMatrix<T>, opt_prob: F) -> Self {
         let selector = match conf.selection_method.as_str() {
-            "RouletteWheel" => SelectionOperator::RouletteWheel(RouletteWheel::new(conf.pop_size, conf.num_parents)),
-            "Tournament" => SelectionOperator::Tournament(Tournament::new(conf.pop_size, conf.num_parents, conf.tournament_size)),
-            "Residual" => SelectionOperator::Residual(Residual::new(conf.pop_size, conf.num_parents)),
+            "RouletteWheel" => SelectionOperator::RouletteWheel(RouletteWheel::new(conf.population_size, conf.num_parents)),
+            "Tournament" => SelectionOperator::Tournament(Tournament::new(conf.population_size, conf.num_parents, conf.tournament_size)),
+            "Residual" => SelectionOperator::Residual(Residual::new(conf.population_size, conf.num_parents)),
             _ => panic!("Invalid selection method"),
         };
 
         let crossover = match conf.crossover_method.as_str() {
-            "Random" => CrossoverOperator::Random(Random::new(conf.crossover_prob, conf.pop_size)),
-            "Heuristic" => CrossoverOperator::Heuristic(Heuristic::new(conf.crossover_prob, conf.pop_size)),
+            "Random" => CrossoverOperator::Random(Random::new(conf.crossover_prob, conf.population_size)),
+            "Heuristic" => CrossoverOperator::Heuristic(Heuristic::new(conf.crossover_prob, conf.population_size)),
             _ => panic!("Invalid crossover method"),
         };
 

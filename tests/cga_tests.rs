@@ -106,7 +106,7 @@ impl<T: FloatNum> OptProb<T> for Rosenbrock<T> {
 #[test]
 fn test_cga() {
     let conf = CGAConf {
-        pop_size: 50,
+        population_size: 50,
         num_parents: 10,
         selection_method: "RouletteWheel".to_string(),
         crossover_method: "Random".to_string(),
@@ -115,8 +115,8 @@ fn test_cga() {
     };
 
     // Initialize population
-    let mut init_pop = DMatrix::zeros(conf.pop_size, 2);
-    for i in 0..conf.pop_size {
+    let mut init_pop = DMatrix::zeros(conf.population_size, 2);
+    for i in 0..conf.population_size {
         for j in 0..2 {
             init_pop[(i, j)] = rand::random::<f64>() * 4.0 - 2.0; // Random values in [-2, 2]
         }

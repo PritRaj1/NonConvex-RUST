@@ -35,8 +35,8 @@ fn default_atol() -> f64 { 1e-6 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct CGAConf {    
-    #[serde(default = "default_pop_size")]
-    pub pop_size: usize,
+    #[serde(default = "default_population_size")]
+    pub population_size: usize,
     #[serde(default = "default_num_parents")]
     pub num_parents: usize,
     #[serde(default = "default_selection_method")]
@@ -49,12 +49,13 @@ pub struct CGAConf {
     pub tournament_size: usize,
 }
 
-fn default_pop_size() -> usize { 100 }
+fn default_population_size() -> usize { 100 }
 fn default_num_parents() -> usize { 2 }
 fn default_selection_method() -> String { "tournament".to_string() }
 fn default_crossover_method() -> String { "uniform".to_string() }
 fn default_crossover_prob() -> f64 { 0.8 }
 fn default_tournament_size() -> usize { 2 }
+
 #[derive(Deserialize, Serialize, Debug)]
 pub struct PTConf {
     #[serde(default = "default_num_replicas")]
