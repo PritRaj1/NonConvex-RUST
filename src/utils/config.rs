@@ -41,8 +41,8 @@ pub struct CGAConf {
     pub num_parents: usize,
     #[serde(default = "default_selection_method")]
     pub selection_method: String,
-    #[serde(default = "default_mating_method")]
-    pub mating_method: String,
+    #[serde(default = "default_crossover_method")]
+    pub crossover_method: String,
     #[serde(default = "default_crossover_prob")]
     pub crossover_prob: f64,
     #[serde(default = "default_tournament_size")]
@@ -52,7 +52,7 @@ pub struct CGAConf {
 fn default_pop_size() -> usize { 100 }
 fn default_num_parents() -> usize { 2 }
 fn default_selection_method() -> String { "tournament".to_string() }
-fn default_mating_method() -> String { "uniform".to_string() }
+fn default_crossover_method() -> String { "uniform".to_string() }
 fn default_crossover_prob() -> f64 { 0.8 }
 fn default_tournament_size() -> usize { 2 }
 #[derive(Deserialize, Serialize, Debug)]

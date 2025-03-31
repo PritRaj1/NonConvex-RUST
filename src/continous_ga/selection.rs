@@ -3,9 +3,19 @@ use rand::Rng;
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
 pub enum SelectionOperator {
-    RouletteWheel, // A.K.A. Proportional Selection
-    Tournament,
-    Residual, // A.K.A. Stochastic Remainder Selection
+    RouletteWheel(RouletteWheel), // A.K.A. Proportional Selection
+    Tournament(Tournament),
+    Residual(Residual), // A.K.A. Stochastic Remainder Selection
+}
+
+impl SelectionOperator {
+    pub fn select<T: FloatNum>(&self, population: &DMatrix<T>, fitness: &DVector<T>, constraint: &DVector<bool>) -> DMatrix<T> {
+        match self {
+            SelectionOperator::RouletteWheel(selection) => selection.select(population, fitness, constraint),
+            SelectionOperator::Tournament(selection) => selection.select(population, fitness, constraint),
+            SelectionOperator::Residual(selection) => selection.select(population, fitness, constraint),
+        }
+    }
 }
 
 pub struct RouletteWheel { 

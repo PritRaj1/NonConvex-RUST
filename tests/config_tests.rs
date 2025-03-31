@@ -13,8 +13,8 @@ fn test_deserialize_config() {
             "CGA": {
                 "pop_size": 200,
                 "num_parents": 4,
-                "selection_method": "roulette",
-                "mating_method": "Random",
+                "selection_method": "RouletteWheel",
+                "crossover_method": "Random",
                 "crossover_prob": 0.9,
                 "tournament_size": 2
             }
@@ -38,8 +38,8 @@ fn test_serialize_config() {
         alg_conf: AlgConf::CGA(CGAConf {
             pop_size: 200,
             num_parents: 4,
-            selection_method: "roulette".to_string(),
-            mating_method: "Random".to_string(),
+            selection_method: "RouletteWheel".to_string(),
+            crossover_method: "Random".to_string(),
             crossover_prob: 0.9,
             tournament_size: 2,
         }),
@@ -56,7 +56,7 @@ fn test_serialize_config() {
         assert_eq!(de.pop_size, orig.pop_size);
         assert_eq!(de.num_parents, orig.num_parents);
         assert_eq!(de.selection_method, orig.selection_method);
-        assert_eq!(de.mating_method, orig.mating_method);
+        assert_eq!(de.crossover_method, orig.crossover_method);
         assert_eq!(de.crossover_prob, orig.crossover_prob);
         assert_eq!(de.tournament_size, orig.tournament_size);
     } else {

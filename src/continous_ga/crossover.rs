@@ -3,10 +3,18 @@ use rand::Rng;
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
 pub enum CrossoverOperator {
-    Random,
-    Heuristic, // A.K.A. Blend Crossover
+    Random(Random),
+    Heuristic(Heuristic), // A.K.A. Blend Crossover
 }
 
+impl CrossoverOperator {
+    pub fn crossover<T: FloatNum>(&self, selected: &DMatrix<T>, fitness: &DVector<T>) -> DMatrix<T> {
+        match self {
+            CrossoverOperator::Random(crossover) => crossover.crossover(selected),
+            CrossoverOperator::Heuristic(crossover) => crossover.crossover(selected, fitness),
+        }
+    }
+}
 pub struct Random {
     pub crossover_prob: f64,
     pub population_size: usize,
