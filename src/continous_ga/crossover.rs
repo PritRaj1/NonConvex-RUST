@@ -16,7 +16,7 @@ impl CrossoverOperator {
     }
 }
 pub struct Random {
-    pub crossover_prob: f64,
+    pub crossover_prob: f64, // F64 for RNG
     pub population_size: usize,
 }
 
@@ -57,7 +57,7 @@ impl Random {
 }
 
 pub struct Heuristic {
-    pub crossover_prob: f64,
+    pub crossover_prob: f64, // F64 for RNG
     pub population_size: usize,
 }
 

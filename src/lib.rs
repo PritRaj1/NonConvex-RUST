@@ -1,5 +1,6 @@
 pub mod utils;
 pub mod continous_ga;
+pub mod parallel_tempering;
 
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 use crate::continous_ga::cga::CGA;
