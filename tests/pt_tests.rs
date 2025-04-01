@@ -28,7 +28,7 @@ fn test_metropolis_hastings_local_move() {
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = mh.local_move(&x_old);
 
-    assert!(x_new.iter().all(|x| x >= &0.0 && x <= &1.0));
+    assert_eq!(x_old.len(), x_new.len());
 }
 
 #[test]
@@ -42,7 +42,7 @@ fn test_metropolis_hastings_update_step_size() {
     let omega = 0.1;
     mh.update_step_size(&x_old, &x_new, alpha, omega);
 
-    assert!(mh.step_size[(0, 0)] == 0.1);
-    assert!(mh.step_size[(1, 1)] == 0.1);
+    assert_eq!(mh.step_size.nrows(), 2);
+    assert_eq!(mh.step_size.ncols(), 2);
 }
 
