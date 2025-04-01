@@ -39,6 +39,9 @@ impl FloatNumber for f32 {}
 // Trait for objective functions
 pub trait ObjectiveFunction<T: FloatNumber>: Send + Sync {
     fn f(&self, x: &DVector<T>) -> T;
+    fn gradient(&self, x: &DVector<T>) -> Option<DVector<T>> {
+        None
+    }
 }
 
 // Trait for constraint functions
@@ -49,7 +52,9 @@ pub trait BooleanConstraintFunction<T: FloatNumber>: Send + Sync {
 // Trait for combined optimization problem
 pub trait OptProb<T: FloatNumber>: Send + Sync {
     fn objective(&self, x: &DVector<T>) -> T;
-    fn constraints(&self, x: &DVector<T>) -> DVector<bool>;
+    fn constraints(&self, x: &DVector<T>) -> DVector<bool> {
+        DVector::from_element(x.len(), true)
+    }
 }
 
 
