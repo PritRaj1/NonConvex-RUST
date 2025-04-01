@@ -4,14 +4,14 @@ use nalgebra::{DVector};
 
 #[test]
 fn test_metropolis_hastings_accept_reject() {
-    let x_bounds = vec![0.0, 1.0]; // Example bounds for a 2D problem
+    let x_bounds = vec![0.0, 1.0];
     let mh = MetropolisHastings::new(x_bounds);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = DVector::from_vec(vec![0.6, 0.6]);
     let f_old = 1.0;
     let f_new = 1.2;
-    let constraints_new = true; // Assume new solution satisfies constraints
+    let constraints_new = true;
     let t = 1.0;
     let t_swap = 2.0;
 
@@ -22,7 +22,7 @@ fn test_metropolis_hastings_accept_reject() {
 
 #[test]
 fn test_metropolis_hastings_local_move() {
-    let x_bounds = vec![0.0, 1.0]; // Example bounds for a 2D problem
+    let x_bounds = vec![0.0, 1.0]; /
     let mh = MetropolisHastings::new(x_bounds);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
@@ -33,7 +33,7 @@ fn test_metropolis_hastings_local_move() {
 
 #[test]
 fn test_metropolis_hastings_update_step_size() {
-    let x_bounds = vec![0.0, 1.0]; // Example bounds for a 2D problem
+    let x_bounds = vec![0.0, 1.0]; 
     let mut mh = MetropolisHastings::new(x_bounds);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
