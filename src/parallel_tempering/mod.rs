@@ -1,1 +1,1 @@
-pub mod mh_criterion;
+pub mod metropolis_hastings;
