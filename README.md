@@ -1,5 +1,5 @@
 # NonConvex-RUST
-My personally preferred non-convex optimizers implemented in RUST. These are fairly standard algorithms, but slightly augmented with some features I want.
+Non-convex optimizers implemented in RUST. These are fairly standard algorithms, but slightly augmented with some features.
 
 ## [Continous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md)
 

@@ -5,6 +5,45 @@ use non_convex_opt::continous_ga::crossover::{Random, Heuristic};
 use non_convex_opt::continous_ga::cga::CGA;
 use nalgebra::{DMatrix, DVector};
 
+pub struct Rosenbrock<T: FloatNum> {
+    pub a: T,
+    pub b: T,
+}
+
+impl<T: FloatNum> Rosenbrock<T> {
+    pub fn new(a: T, b: T) -> Self {
+        Self { a, b }
+    }
+}
+
+impl<T: FloatNum> ObjectiveFunction<T> for Rosenbrock<T> {
+    fn f(&self, x: &DVector<T>) -> T {
+        let n = x.len();
+        let mut sum = T::zero();
+        for i in 0..n-1 {
+            sum += self.b * (x[i+1] - x[i].powi(2)).powi(2) + 
+                   (self.a - x[i]).powi(2);
+        }
+        sum
+    }
+}
+
+impl<T: FloatNum> BooleanConstraintFunction<T> for Rosenbrock<T> {
+    fn g(&self, x: &DVector<T>) -> DVector<bool> {
+        DVector::from_vec(vec![true; x.len()])
+    }
+}
+
+impl<T: FloatNum> OptProb<T> for Rosenbrock<T> {
+    fn objective(&self, x: &DVector<T>) -> T {
+        self.f(x)
+    }       
+
+    fn constraints(&self, x: &DVector<T>) -> DVector<bool> {
+        self.g(x)
+    }
+}
+
 #[test]
 fn test_roulette_wheel_selection() {
     let selection = RouletteWheel::new(10, 5);
@@ -62,45 +101,6 @@ fn test_heuristic_crossover() {
     let offspring = crossover.crossover(&selected, &fitness);
     assert_eq!(offspring.nrows(), 10);
     assert_eq!(offspring.ncols(), 5);
-}
-
-pub struct Rosenbrock<T: FloatNum> {
-    pub a: T,
-    pub b: T,
-}
-
-impl<T: FloatNum> Rosenbrock<T> {
-    pub fn new(a: T, b: T) -> Self {
-        Self { a, b }
-    }
-}
-
-impl<T: FloatNum> ObjectiveFunction<T> for Rosenbrock<T> {
-    fn f(&self, x: &DVector<T>) -> T {
-        let n = x.len();
-        let mut sum = T::zero();
-        for i in 0..n-1 {
-            sum += self.b * (x[i+1] - x[i].powi(2)).powi(2) + 
-                   (self.a - x[i]).powi(2);
-        }
-        sum
-    }
-}
-
-impl<T: FloatNum> BooleanConstraintFunction<T> for Rosenbrock<T> {
-    fn g(&self, x: &DVector<T>) -> DVector<bool> {
-        DVector::from_vec(vec![true; x.len()])
-    }
-}
-
-impl<T: FloatNum> OptProb<T> for Rosenbrock<T> {
-    fn objective(&self, x: &DVector<T>) -> T {
-        self.f(x)
-    }       
-
-    fn constraints(&self, x: &DVector<T>) -> DVector<bool> {
-        self.g(x)
-    }
 }
 
 #[test]
