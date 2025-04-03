@@ -11,23 +11,23 @@ pub struct MetropolisHastings<T: FloatNum, F: ObjectiveFunction<T>> {
     pub k: T,
     pub step_size: DMatrix<T>,
     pub obj: F,
-    pub x_ub: DVector<T>,
-    pub x_lb: DVector<T>,
 }
 
 impl<T: FloatNum, F: ObjectiveFunction<T>> MetropolisHastings<T, F> {
-    pub fn new(x_bounds: Vec<T>, obj: F) -> Self {
+    pub fn new(obj: F) -> Self {
         let k = T::from_f64(1.38064852e-23).unwrap(); // Boltzmann constant
-        let step_size = DMatrix::identity(x_bounds.len(), x_bounds.len());
+        let dimension = obj.x_upper_bound().as_ref().map_or(1, |b| b.len());
+        let step_size = DMatrix::identity(dimension, dimension);
 
-        let x_ub = DVector::from_fn(x_bounds.len(), |i, _| x_bounds[i]);
-        let x_lb = DVector::from_fn(x_bounds.len(), |i, _| -x_bounds[i]);
-
-        MetropolisHastings { k, step_size, obj, x_ub, x_lb }
+        MetropolisHastings { k, step_size, obj }
     }
 
     fn project(&self, x: &DVector<T>) -> DVector<T> {
-        x.component_mul(&(self.x_ub.clone() - self.x_lb.clone())) + self.x_lb.clone()
+        if let (Some(x_ub), Some(x_lb)) = (&self.obj.x_upper_bound(), &self.obj.x_lower_bound()) {
+            x.component_mul(&(x_ub.clone() - x_lb.clone())) + x_lb.clone()
+        } else {
+            x.clone()
+        }
     }
 
     pub fn accept_reject(

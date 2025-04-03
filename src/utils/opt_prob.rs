@@ -42,6 +42,12 @@ pub trait ObjectiveFunction<T: FloatNumber>: Send + Sync {
     fn gradient(&self, _x: &DVector<T>) -> Option<DVector<T>> {
         None
     }
+    fn x_lower_bound(&self) -> Option<DVector<T>> {
+        None
+    }
+    fn x_upper_bound(&self) -> Option<DVector<T>> {
+        None
+    }
 }
 
 // Trait for constraint functions

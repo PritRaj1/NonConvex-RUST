@@ -2,26 +2,27 @@ use rand::Rng;
 use nalgebra::{DVector, DMatrix};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction};
 
-pub struct AutoMALA<T: FloatNum> {
+pub struct AutoMALA<T: FloatNum, F: ObjectiveFunction<T>> {
     pub k: T,
     pub step_size: DMatrix<T>,
-    pub obj: ObjectiveFunction<T>,
-    pub project: Box<dyn Fn(&DVector<T>) -> DVector<T>>,
+    pub obj: F,
 }
 
-impl<T: FloatNum> AutoMALA<T> {
-    pub fn new(x_bounds: Vec<T>, obj: ObjectiveFunction<T>) -> Self {
+impl<T: FloatNum, F: ObjectiveFunction<T>> AutoMALA<T> {
+    pub fn new(obj: F) -> Self {
         let k = T::from_f64(1.38064852e-23).unwrap(); // Boltzmann constant
-        let step_size = DMatrix::identity(x_bounds.len(), x_bounds.len());
+        let dimension = obj.x_upper_bound().as_ref().map_or(1, |b| b.len());
+        let step_size = DMatrix::identity(dimension, dimension);
 
-        let ub = DVector::from_fn(x_bounds.len(), |i, _| x_bounds[i]);
-        let lb = DVector::from_fn(x_bounds.len(), |i, _| -x_bounds[i]);
+        AutoMALA { k, step_size, obj }
+    }
 
-        fn project(x: &DVector<T>) -> DVector<T> {
-            x.component_mul(&(ub - lb)) + lb
+    fn project(&self, x: &DVector<T>) -> DVector<T> {
+        if let (Some(x_ub), Some(x_lb)) = (&self.obj.x_upper_bound(), &self.obj.x_lower_bound()) {
+            x.component_mul(&(x_ub.clone() - x_lb.clone())) + x_lb.clone()
+        } else {
+            x.clone()
         }
-
-        AutoMALA { k, step_size, obj, project }
     }
 
     pub fn accept_reject(

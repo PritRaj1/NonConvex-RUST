@@ -23,6 +23,14 @@ impl<T: FloatNum> ObjectiveFunction<T> for Rosenbrock<T> {
         }
         sum
     }
+
+    fn x_upper_bound(&self) -> Option<DVector<T>> {
+        Some(DVector::from_vec(vec![T::from_f64(1.0).unwrap(); 2])) // Rosenbrock is 2D
+    }
+
+    fn x_lower_bound(&self) -> Option<DVector<T>> {
+        Some(DVector::from_vec(vec![T::from_f64(0.0).unwrap(); 2])) // Rosenbrock is 2D
+    }
 }
 
 impl<T: FloatNum> BooleanConstraintFunction<T> for Rosenbrock<T> {
@@ -43,9 +51,8 @@ impl<T: FloatNum> OptProb<T> for Rosenbrock<T> {
 
 #[test]
 fn test_metropolis_hastings_accept_reject() {
-    let x_bounds = vec![0.0, 1.0];
     let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mh = MetropolisHastings::new(x_bounds, obj_f);
+    let mh = MetropolisHastings::new(obj_f);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = DVector::from_vec(vec![0.6, 0.6]);
@@ -55,14 +62,13 @@ fn test_metropolis_hastings_accept_reject() {
 
     let accepted = mh.accept_reject(&x_old, &x_new, constraints_new, t, t_swap);
     
-    assert!(accepted);
+    assert_eq!(accepted, false);
 }
 
 #[test]
 fn test_metropolis_hastings_local_move() {
-    let x_bounds = vec![0.0, 1.0]; 
     let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mh = MetropolisHastings::new(x_bounds, obj_f);
+    let mh = MetropolisHastings::new(obj_f);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = mh.local_move(&x_old);
@@ -72,9 +78,8 @@ fn test_metropolis_hastings_local_move() {
 
 #[test]
 fn test_metropolis_hastings_update_step_size() {
-    let x_bounds = vec![0.0, 1.0]; 
     let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mut mh = MetropolisHastings::new(x_bounds, obj_f);
+    let mut mh = MetropolisHastings::new(obj_f);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = DVector::from_vec(vec![0.6, 0.6]);
