@@ -1,8 +1,6 @@
 # Parallel Tempering
 
-Parallel Tempering with either a Metropolis-Hastings update mechanism or [autoMALA](https://arxiv.org/abs/2310.16782). 
-
-When gradients are available, autoMALA is used, which adapts the Metropolis-adjusted Langevin algorithm to use dynamic step sizes, (nice to have considering the changing geometry of the optimization landscape with temperature).
+Parallel Tempering with either a Metropolis-Hastings update mechanism or Metropolis-Adjusted Langevin Algorithm (MALA) when gradients are available.
 
 Temperatures are scheduled with a dynamic power law relationship:
 

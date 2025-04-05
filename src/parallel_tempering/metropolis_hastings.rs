@@ -2,24 +2,21 @@ use rand::Rng;
 use nalgebra::{DVector, DMatrix};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction};
 
-// pub enum MHCriterion<T: FloatNum> {
-//     MetropolisHastings(MetropolisHastings<T>),
-//     // MA_Langevin(MA_Langevin<T>),
-// }
-
 pub struct MetropolisHastings<T: FloatNum, F: ObjectiveFunction<T>> {
     pub k: T,
     pub step_size: DMatrix<T>,
+    pub mala_step_size: T,
     pub obj: F,
 }
 
 impl<T: FloatNum, F: ObjectiveFunction<T>> MetropolisHastings<T, F> {
-    pub fn new(obj: F) -> Self {
+    pub fn new(obj: F, step_size_scalar: T) -> Self {
         let k = T::from_f64(1.38064852e-23).unwrap(); // Boltzmann constant
         let dimension = obj.x_upper_bound().as_ref().map_or(1, |b| b.len());
-        let step_size = DMatrix::identity(dimension, dimension);
+        let step_size = DMatrix::identity(dimension, dimension) * step_size_scalar;
+        let mala_step_size = step_size_scalar;
 
-        MetropolisHastings { k, step_size, obj }
+        MetropolisHastings { k, step_size, mala_step_size, obj }  
     }
 
     fn project(&self, x: &DVector<T>) -> DVector<T> {
@@ -67,7 +64,15 @@ impl<T: FloatNum, F: ObjectiveFunction<T>> MetropolisHastings<T, F> {
         let mut rng = rand::rng();
         let mut x_new = x_old.clone();
         let random_vec = DVector::from_fn(x_old.len(), |_, _| T::from_f64(rng.random::<f64>()).unwrap());
-        x_new += random_vec.component_mul(&self.step_size.diagonal());
+
+        if let Some(grad) = self.obj.gradient(&x_old) {
+            // Use Metropolis Adjusted Langevin Algorithm (MALA)
+            x_new += grad * self.mala_step_size + random_vec.component_mul(&self.step_size.diagonal());
+        } else {
+            // Use standard Metropolis Hastings
+            x_new += random_vec.component_mul(&self.step_size.diagonal());
+        }
+
         x_new
     }
 
@@ -84,4 +89,3 @@ impl<T: FloatNum, F: ObjectiveFunction<T>> MetropolisHastings<T, F> {
         }
     }
 }
-

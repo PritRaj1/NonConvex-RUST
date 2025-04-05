@@ -24,6 +24,18 @@ impl<T: FloatNum> ObjectiveFunction<T> for Rosenbrock<T> {
         sum
     }
 
+    fn gradient(&self, x: &DVector<T>) -> Option<DVector<T>> {
+        let n = x.len();
+        let mut grad = DVector::zeros(n);
+        for i in 0..n-1 {
+            let a = self.a - x[i];
+            let b = x[i+1] - x[i].powi(2);
+            grad[i] = -T::from_f64(4.0).unwrap() * self.b * a * x[i] - T::from_f64(2.0).unwrap() * (self.a - x[i]);
+            grad[i+1] = T::from_f64(2.0).unwrap() * self.b * b;
+        }
+        Some(grad)
+    }
+
     fn x_upper_bound(&self) -> Option<DVector<T>> {
         Some(DVector::from_vec(vec![T::from_f64(1.0).unwrap(); 2])) // Rosenbrock is 2D
     }
@@ -52,7 +64,7 @@ impl<T: FloatNum> OptProb<T> for Rosenbrock<T> {
 #[test]
 fn test_metropolis_hastings_accept_reject() {
     let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mh = MetropolisHastings::new(obj_f);
+    let mh = MetropolisHastings::new(obj_f, 0.5);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = DVector::from_vec(vec![0.6, 0.6]);
@@ -68,7 +80,7 @@ fn test_metropolis_hastings_accept_reject() {
 #[test]
 fn test_metropolis_hastings_local_move() {
     let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mh = MetropolisHastings::new(obj_f);
+    let mh = MetropolisHastings::new(obj_f, 0.5);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = mh.local_move(&x_old);
@@ -79,7 +91,7 @@ fn test_metropolis_hastings_local_move() {
 #[test]
 fn test_metropolis_hastings_update_step_size() {
     let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mut mh = MetropolisHastings::new(obj_f);
+    let mut mh = MetropolisHastings::new(obj_f, 0.5);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = DVector::from_vec(vec![0.6, 0.6]);
