@@ -5,21 +5,21 @@ use non_convex_opt::continous_ga::crossover::{Random, Heuristic};
 use non_convex_opt::continous_ga::cga::CGA;
 use nalgebra::{DMatrix, DVector};
 
-pub struct Rosenbrock<T: FloatNum> {
-    pub a: T,
-    pub b: T,
+pub struct Rosenbrock {
+    pub a: f64,
+    pub b: f64,
 }
 
-impl<T: FloatNum> Rosenbrock<T> {
-    pub fn new(a: T, b: T) -> Self {
+impl Rosenbrock {
+    pub fn new(a: f64, b: f64) -> Self {
         Self { a, b }
     }
 }
 
-impl<T: FloatNum> ObjectiveFunction<T> for Rosenbrock<T> {
-    fn f(&self, x: &DVector<T>) -> T {
+impl ObjectiveFunction<f64> for Rosenbrock {
+    fn f(&self, x: &DVector<f64>) -> f64 {
         let n = x.len();
-        let mut sum = T::zero();
+        let mut sum = 0.0;
         for i in 0..n-1 {
             sum += self.b * (x[i+1] - x[i].powi(2)).powi(2) + 
                    (self.a - x[i]).powi(2);
@@ -28,18 +28,18 @@ impl<T: FloatNum> ObjectiveFunction<T> for Rosenbrock<T> {
     }
 }
 
-impl<T: FloatNum> BooleanConstraintFunction<T> for Rosenbrock<T> {
-    fn g(&self, x: &DVector<T>) -> DVector<bool> {
+impl BooleanConstraintFunction<f64> for Rosenbrock {
+    fn g(&self, x: &DVector<f64>) -> DVector<bool> {
         DVector::from_vec(vec![true; x.len()])
     }
 }
 
-impl<T: FloatNum> OptProb<T> for Rosenbrock<T> {
-    fn objective(&self, x: &DVector<T>) -> T {
+impl OptProb<f64> for Rosenbrock {
+    fn objective(&self, x: &DVector<f64>) -> f64 {
         self.f(x)
     }       
 
-    fn constraints(&self, x: &DVector<T>) -> DVector<bool> {
+    fn constraints(&self, x: &DVector<f64>) -> DVector<bool> {
         self.g(x)
     }
 }

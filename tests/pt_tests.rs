@@ -2,21 +2,21 @@ use non_convex_opt::parallel_tempering::metropolis_hastings::{MetropolisHastings
 use non_convex_opt::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
 use nalgebra::{DVector};
 
-pub struct Rosenbrock<T: FloatNum> {
-    pub a: T,
-    pub b: T,
+pub struct Rosenbrock {
+    pub a: f64,
+    pub b: f64,   
 }
 
-impl<T: FloatNum> Rosenbrock<T> {
-    pub fn new(a: T, b: T) -> Self {
+impl Rosenbrock {
+    pub fn new(a: f64, b: f64) -> Self {
         Self { a, b }
     }
 }
 
-impl<T: FloatNum> ObjectiveFunction<T> for Rosenbrock<T> {
-    fn f(&self, x: &DVector<T>) -> T {
+impl ObjectiveFunction<f64> for Rosenbrock {
+    fn f(&self, x: &DVector<f64>) -> f64 {
         let n = x.len();
-        let mut sum = T::zero();
+        let mut sum = 0.0;
         for i in 0..n-1 {
             sum += self.b * (x[i+1] - x[i].powi(2)).powi(2) + 
                    (self.a - x[i]).powi(2);
@@ -24,39 +24,39 @@ impl<T: FloatNum> ObjectiveFunction<T> for Rosenbrock<T> {
         sum
     }
 
-    fn gradient(&self, x: &DVector<T>) -> Option<DVector<T>> {
+    fn gradient(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
         let n = x.len();
         let mut grad = DVector::zeros(n);
         for i in 0..n-1 {
             let a = self.a - x[i];
             let b = x[i+1] - x[i].powi(2);
-            grad[i] = -T::from_f64(4.0).unwrap() * self.b * a * x[i] - T::from_f64(2.0).unwrap() * (self.a - x[i]);
-            grad[i+1] = T::from_f64(2.0).unwrap() * self.b * b;
+            grad[i] = -4.0 * self.b * a * x[i] - 2.0 * (self.a - x[i]);
+            grad[i+1] = 2.0 * self.b * b;
         }
         Some(grad)
     }
 
-    fn x_upper_bound(&self) -> Option<DVector<T>> {
-        Some(DVector::from_vec(vec![T::from_f64(1.0).unwrap(); 2])) // Rosenbrock is 2D
+    fn x_upper_bound(&self) -> Option<DVector<f64>> {
+        Some(DVector::from_vec(vec![1.0; 2])) // Rosenbrock is 2D
     }
 
-    fn x_lower_bound(&self) -> Option<DVector<T>> {
-        Some(DVector::from_vec(vec![T::from_f64(0.0).unwrap(); 2])) // Rosenbrock is 2D
+    fn x_lower_bound(&self) -> Option<DVector<f64>> {
+        Some(DVector::from_vec(vec![0.0; 2])) // Rosenbrock is 2D
     }
 }
 
-impl<T: FloatNum> BooleanConstraintFunction<T> for Rosenbrock<T> {
-    fn g(&self, x: &DVector<T>) -> DVector<bool> {
+impl BooleanConstraintFunction<f64> for Rosenbrock {
+    fn g(&self, x: &DVector<f64>) -> DVector<bool> {
         DVector::from_vec(vec![true; x.len()])
     }
 }
 
-impl<T: FloatNum> OptProb<T> for Rosenbrock<T> {
-    fn objective(&self, x: &DVector<T>) -> T {
+impl OptProb<f64> for Rosenbrock {
+    fn objective(&self, x: &DVector<f64>) -> f64 {
         self.f(x)
     }       
 
-    fn constraints(&self, x: &DVector<T>) -> DVector<bool> {
+    fn constraints(&self, x: &DVector<f64>) -> DVector<bool> {
         self.g(x)
     }
 }
