@@ -1,6 +1,6 @@
-use non_convex_opt::parallel_tempering::metropolis_hastings::{MetropolisHastings};
+use non_convex_opt::parallel_tempering::metropolis_hastings::{MetropolisHastings, update_step_size, MoveType};
 use non_convex_opt::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
-use nalgebra::{DVector};
+use nalgebra::{DVector, DMatrix};
 
 pub struct Rosenbrock {
     pub a: f64,
@@ -64,7 +64,7 @@ impl OptProb<f64> for Rosenbrock {
 #[test]
 fn test_metropolis_hastings_accept_reject() {
     let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mh = MetropolisHastings::new(obj_f, 0.5);
+    let mh = MetropolisHastings::new(obj_f, 0.1);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = DVector::from_vec(vec![0.6, 0.6]);
@@ -80,26 +80,25 @@ fn test_metropolis_hastings_accept_reject() {
 #[test]
 fn test_metropolis_hastings_local_move() {
     let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mh = MetropolisHastings::new(obj_f, 0.5);
+    let mh = MetropolisHastings::new(obj_f, 0.1);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
-    let x_new = mh.local_move(&x_old);
+    let step_size = DMatrix::identity(2, 2);
+    let x_new = mh.local_move(&x_old, &step_size);
 
     assert_eq!(x_old.len(), x_new.len());
 }
 
 #[test]
 fn test_metropolis_hastings_update_step_size() {
-    let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mut mh = MetropolisHastings::new(obj_f, 0.5);
-
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = DVector::from_vec(vec![0.6, 0.6]);
     let alpha = 0.1;
     let omega = 0.1;
-    mh.update_step_size(&x_old, &x_new, alpha, omega);
+    let mut step_size = DMatrix::identity(2, 2);
+    step_size = update_step_size(&mut step_size, &x_old, &x_new, alpha, omega);
 
-    assert_eq!(mh.step_size.nrows(), 2);
-    assert_eq!(mh.step_size.ncols(), 2);
+    assert_eq!(step_size.nrows(), 2);
+    assert_eq!(step_size.ncols(), 2);
 }
 

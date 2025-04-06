@@ -2,21 +2,55 @@ use rand::Rng;
 use nalgebra::{DVector, DMatrix};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction};
 
+pub enum MoveType {
+    RandomDrift,
+    MALA,
+}
+
 pub struct MetropolisHastings<T: FloatNum, F: ObjectiveFunction<T>> {
     pub k: T,
-    pub step_size: DMatrix<T>,
-    pub mala_step_size: T,
+    pub move_type: MoveType,
     pub obj: F,
+    pub mala_step_size: T,
 }
 
 impl<T: FloatNum, F: ObjectiveFunction<T>> MetropolisHastings<T, F> {
-    pub fn new(obj: F, step_size_scalar: T) -> Self {
+    pub fn new(obj: F, mala_step_size: T) -> Self {
         let k = T::from_f64(1.38064852e-23).unwrap(); // Boltzmann constant
-        let dimension = obj.x_upper_bound().as_ref().map_or(1, |b| b.len());
-        let step_size = DMatrix::identity(dimension, dimension) * step_size_scalar;
-        let mala_step_size = step_size_scalar;
 
-        MetropolisHastings { k, step_size, mala_step_size, obj }  
+        let move_type = if obj.gradient(&DVector::zeros(1)).is_some() {
+            MoveType::MALA
+        } else {
+            MoveType::RandomDrift
+        };
+
+        MetropolisHastings { k, move_type, obj, mala_step_size }
+    }
+
+    pub fn local_move(&self, x_old: &DVector<T>, step_size: &DMatrix<T>) -> DVector<T> {
+        match self.move_type {
+            MoveType::MALA => {
+                let grad = self.obj.gradient(x_old).expect("Gradient should be available for MALA");
+                self.local_move_MALA(x_old, &grad)
+            }
+            MoveType::RandomDrift => self.local_move_RandomDrift(x_old, step_size),
+        }
+    }
+
+    fn local_move_RandomDrift(&self, x_old: &DVector<T>, step_size: &DMatrix<T>) -> DVector<T> {
+        let mut rng = rand::rng();
+        let mut x_new = x_old.clone();
+        let random_vec = DVector::from_fn(x_old.len(), |_, _| T::from_f64(rng.random::<f64>()).unwrap());
+        x_new += random_vec.component_mul(&step_size.diagonal());
+        x_new
+    }
+
+    fn local_move_MALA(&self, x_old: &DVector<T>, grad: &DVector<T>) -> DVector<T> {
+        let mut rng = rand::rng();
+        let mut x_new = x_old.clone();
+        let random_vec = DVector::from_fn(x_old.len(), |_, _| T::from_f64(rng.random::<f64>()).unwrap());
+        x_new += grad * self.mala_step_size + random_vec.map(|val| (T::from_f64(2.0).unwrap() * self.mala_step_size).sqrt() * val);
+        x_new
     }
 
     fn project(&self, x: &DVector<T>) -> DVector<T> {
@@ -56,36 +90,19 @@ impl<T: FloatNum, F: ObjectiveFunction<T>> MetropolisHastings<T, F> {
         let u = T::from_f64(rng.random::<f64>()).unwrap();
         u < r
     }
+}
 
-    pub fn local_move(
-        &self,
-        x_old: &DVector<T>,
-    ) -> DVector<T> {
-        let mut rng = rand::rng();
-        let mut x_new = x_old.clone();
-        let random_vec = DVector::from_fn(x_old.len(), |_, _| T::from_f64(rng.random::<f64>()).unwrap());
-
-        if let Some(grad) = self.obj.gradient(&x_old) {
-            // Use Metropolis Adjusted Langevin Algorithm (MALA)
-            x_new += grad * self.mala_step_size + random_vec.component_mul(&self.step_size.diagonal());
-        } else {
-            // Use standard Metropolis Hastings
-            x_new += random_vec.component_mul(&self.step_size.diagonal());
-        }
-
-        x_new
+pub fn update_step_size<T: FloatNum>(
+    step_size: &DMatrix<T>,
+    x_old: &DVector<T>,
+    x_new: &DVector<T>,
+    alpha: T,
+    omega: T,
+) -> DMatrix<T> {
+    let r = DVector::from_fn(x_old.len(), |i, _| (x_new[i] - x_old[i]).abs());
+    let mut step_size_new = step_size.clone();
+    for i in 0..x_old.len() {
+        step_size_new[(i, i)] = (T::from_f64(1.0).unwrap() - alpha) * step_size[(i, i)] + alpha * omega * r[i];
     }
-
-    pub fn update_step_size(
-        &mut self,
-        x_old: &DVector<T>,
-        x_new: &DVector<T>,
-        alpha: T,
-        omega: T,
-    ) {
-        let r = DVector::from_fn(x_old.len(), |i, _| (x_new[i] - x_old[i]).abs());
-        for i in 0..x_old.len() {
-            self.step_size[(i, i)] = (T::from_f64(1.0).unwrap() - alpha) * self.step_size[(i, i)] + alpha * omega * r[i];
-        }
-    }
+    step_size_new
 }
