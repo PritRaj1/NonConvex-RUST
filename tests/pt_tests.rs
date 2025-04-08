@@ -1,19 +1,16 @@
-use non_convex_opt::parallel_tempering::metropolis_hastings::{MetropolisHastings, update_step_size, MoveType};
+use non_convex_opt::parallel_tempering::pt::PT;
+use non_convex_opt::parallel_tempering::metropolis_hastings::{MetropolisHastings, update_step_size};
 use non_convex_opt::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
+use non_convex_opt::utils::config::PTConf;
 use nalgebra::{DVector, DMatrix};
 
-pub struct Rosenbrock {
+#[derive(Debug, Clone)]
+pub struct RosenbrockObjective {
     pub a: f64,
-    pub b: f64,   
+    pub b: f64,
 }
 
-impl Rosenbrock {
-    pub fn new(a: f64, b: f64) -> Self {
-        Self { a, b }
-    }
-}
-
-impl ObjectiveFunction<f64> for Rosenbrock {
+impl ObjectiveFunction<f64> for RosenbrockObjective {
     fn f(&self, x: &DVector<f64>) -> f64 {
         let n = x.len();
         let mut sum = 0.0;
@@ -23,48 +20,32 @@ impl ObjectiveFunction<f64> for Rosenbrock {
         }
         sum
     }
-
-    fn gradient(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
-        let n = x.len();
-        let mut grad = DVector::zeros(n);
-        for i in 0..n-1 {
-            let a = self.a - x[i];
-            let b = x[i+1] - x[i].powi(2);
-            grad[i] = -4.0 * self.b * a * x[i] - 2.0 * (self.a - x[i]);
-            grad[i+1] = 2.0 * self.b * b;
-        }
-        Some(grad)
-    }
-
-    fn x_upper_bound(&self) -> Option<DVector<f64>> {
-        Some(DVector::from_vec(vec![1.0; 2])) // Rosenbrock is 2D
-    }
-
-    fn x_lower_bound(&self) -> Option<DVector<f64>> {
-        Some(DVector::from_vec(vec![0.0; 2])) // Rosenbrock is 2D
-    }
 }
 
-impl BooleanConstraintFunction<f64> for Rosenbrock {
+#[derive(Debug, Clone)]
+pub struct RosenbrockConstraints {
+    pub a: f64,
+    pub b: f64,
+}
+
+impl BooleanConstraintFunction<f64> for RosenbrockConstraints {
     fn g(&self, x: &DVector<f64>) -> DVector<bool> {
-        DVector::from_vec(vec![true; x.len()])
-    }
-}
-
-impl OptProb<f64> for Rosenbrock {
-    fn objective(&self, x: &DVector<f64>) -> f64 {
-        self.f(x)
-    }       
-
-    fn constraints(&self, x: &DVector<f64>) -> DVector<bool> {
-        self.g(x)
+        let n = x.len();
+        let mut constraints = DVector::from_element(n, false);
+        for i in 0..n {
+            constraints[i] = x[i] >= 0.0 && x[i] <= 1.0;
+        }
+        constraints
     }
 }
 
 #[test]
 fn test_metropolis_hastings_accept_reject() {
-    let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mh = MetropolisHastings::new(obj_f, 0.1);
+    let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
+    let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
+    let opt_prob = OptProb::new(obj_f, constraints);
+
+    let mh = MetropolisHastings::new(opt_prob, 0.1);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = DVector::from_vec(vec![0.6, 0.6]);
@@ -79,8 +60,10 @@ fn test_metropolis_hastings_accept_reject() {
 
 #[test]
 fn test_metropolis_hastings_local_move() {
-    let obj_f = Rosenbrock::new(1.0, 100.0);
-    let mh = MetropolisHastings::new(obj_f, 0.1);
+    let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
+    let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
+    let opt_prob = OptProb::new(obj_f, constraints);
+    let mh = MetropolisHastings::new(opt_prob, 0.1);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let step_size = DMatrix::identity(2, 2);
@@ -102,3 +85,60 @@ fn test_metropolis_hastings_update_step_size() {
     assert_eq!(step_size.ncols(), 2);
 }
 
+#[test]
+fn test_pt_swap() {
+    let conf = PTConf {
+        num_replicas: 2,
+        num_chains: 1,
+        power_law_init: 2.0,
+        power_law_final: 0.5,
+        power_law_cycles: 1,
+        swap_check_type: "Always".to_string(),
+        alpha: 0.1,
+        omega: 2.1,
+        swap_frequency: 0.9,
+        swap_probability: 0.1,
+        mala_step_size: 0.1,
+    };
+
+    let init_pop = DMatrix::from_vec(2, 2, vec![0.5, 0.5, 0.5, 0.5]);
+    let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
+    let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
+    let opt_prob = OptProb::new(obj_f, constraints);
+    let mut pt = PT::new(conf, init_pop, opt_prob, 5);
+
+    pt.swap();
+
+    assert_eq!(pt.population.len(), 2);
+    assert_eq!(pt.population[0].nrows(), 2);
+    assert_eq!(pt.population[0].ncols(), 2);
+}
+
+#[test]
+fn test_pt_step() {
+    let conf = PTConf {
+        num_replicas: 2,
+        num_chains: 1,
+        power_law_init: 2.0,
+        power_law_final: 0.5,
+        power_law_cycles: 1,
+        swap_check_type: "Always".to_string(),
+        alpha: 0.1,
+        omega: 2.1,
+        swap_frequency: 0.9,
+        swap_probability: 0.1,
+        mala_step_size: 0.1,
+    };
+
+    let init_pop = DMatrix::from_vec(2, 2, vec![0.5, 0.5, 0.5, 0.5]);
+    let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
+    let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
+    let opt_prob = OptProb::new(obj_f, constraints);
+    let mut pt = PT::new(conf, init_pop, opt_prob, 5);
+
+    for _ in 0..5 {
+        pt.step();
+    }
+
+    assert!(pt.best_fitness.is_finite());
+}

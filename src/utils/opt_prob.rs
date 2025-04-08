@@ -6,6 +6,7 @@ use simba::scalar::{
     ClosedDivAssign, ClosedMul, ClosedMulAssign, 
     ClosedNeg, ClosedSub, ClosedSubAssign, SubsetOf,
 };
+use std::marker::PhantomData;
 
 // More general trait for float numbers 
 pub trait FloatNumber:
@@ -37,7 +38,7 @@ impl FloatNumber for f64 {}
 impl FloatNumber for f32 {}
 
 // Trait for objective functions
-pub trait ObjectiveFunction<T: FloatNumber>: Send + Sync {
+pub trait ObjectiveFunction<T: FloatNumber>: Send + Sync + Clone {
     fn f(&self, x: &DVector<T>) -> T;
     fn gradient(&self, _x: &DVector<T>) -> Option<DVector<T>> {
         None
@@ -51,17 +52,25 @@ pub trait ObjectiveFunction<T: FloatNumber>: Send + Sync {
 }
 
 // Trait for constraint functions
-pub trait BooleanConstraintFunction<T: FloatNumber>: Send + Sync {
+pub trait BooleanConstraintFunction<T: FloatNumber>: Send + Sync + Clone {
     fn g(&self, x: &DVector<T>) -> DVector<bool>;
 }
 
 // Trait for combined optimization problem
-pub trait OptProb<T: FloatNumber>: Send + Sync {
-    fn objective(&self, x: &DVector<T>) -> T;
-    fn constraints(&self, x: &DVector<T>) -> DVector<bool> {
-        DVector::from_element(x.len(), true)
-    }
+#[derive(Clone)]
+pub struct OptProb<T: FloatNumber, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
+    pub objective: F,
+    pub constraints: G,
+    _phantom: PhantomData<T>,
 }
 
-
+impl<T: FloatNumber, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> OptProb<T, F, G> {
+    pub fn new(objective: F, constraints: G) -> Self {
+        Self { 
+            objective, 
+            constraints,
+            _phantom: PhantomData,
+        }
+    }
+}
 

@@ -68,8 +68,18 @@ pub struct PTConf {
     pub power_law_final: f64,
     #[serde(default = "default_power_law_cycles")]
     pub power_law_cycles: usize,
-    #[serde(default = "default_exchange_type")]
-    pub exchange_type: String,
+    #[serde(default = "default_alpha")]
+    pub alpha: f64,
+    #[serde(default = "default_omega")]
+    pub omega: f64,
+    #[serde(default = "default_swap_check_type")]
+    pub swap_check_type: String,
+    #[serde(default = "default_swap_frequency")]
+    pub swap_frequency: f64,
+    #[serde(default = "default_swap_probability")]
+    pub swap_probability: f64,
+    #[serde(default = "default_mala_step_size")]
+    pub mala_step_size: f64,
 }
 
 fn default_num_replicas() -> usize { 10 }
@@ -77,7 +87,12 @@ fn default_num_chains() -> usize { 10 }
 fn default_power_law_init() -> f64 { 2.0 }
 fn default_power_law_final() -> f64 { 0.5 }
 fn default_power_law_cycles() -> usize { 1 }
-fn default_exchange_type() -> String { "swap".to_string() }
+fn default_alpha() -> f64 { 0.1 }
+fn default_omega() -> f64 { 2.1 }
+fn default_swap_check_type() -> String { "Always".to_string() }
+fn default_swap_frequency() -> f64 { 1.0 }
+fn default_swap_probability() -> f64 { 0.1 }
+fn default_mala_step_size() -> f64 { 0.01 }
 
 #[derive(Error, Debug)]
 pub enum ConfigError {

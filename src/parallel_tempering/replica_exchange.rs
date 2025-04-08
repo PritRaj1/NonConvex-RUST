@@ -1,12 +1,9 @@
-
-use nalgebra::{DMatrix, DVector};
-use rayon::prelude::*;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction};
+use rand::Rng;
 
 pub enum SwapCheck {
-    Periodic,
-    Stochastic,
-    Always,
+    Periodic(Periodic),
+    Stochastic(Stochastic),
+    Always(Always),
 }
 
 pub struct Periodic {
@@ -19,7 +16,7 @@ impl Periodic {
         Self { swap_frequency, total_steps }
     }
 
-    pub fn swap_bool(&self, current_step: usize) -> bool {
+    pub fn should_swap(&self, current_step: usize) -> bool {
         current_step % (self.swap_frequency * self.total_steps as f64) as usize  == 0
     }
 }
@@ -33,7 +30,7 @@ impl Stochastic {
         Self { swap_probability }
     }
 
-    pub fn swap_bool(&self, _current_step: usize) -> bool {
+    pub fn should_swap(&self, _current_step: usize) -> bool {
         rand::random::<f64>() < self.swap_probability
     }
 }
@@ -45,7 +42,7 @@ impl Always {
         Self {}
     }
 
-    pub fn swap_bool(&self, _current_step: usize) -> bool {
+    pub fn should_swap(&self, _current_step: usize) -> bool {
         true
     }
 }

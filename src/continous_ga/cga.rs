@@ -1,25 +1,25 @@
 use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
 use crate::utils::config::CGAConf;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
 use crate::continous_ga::selection::*;
 use crate::continous_ga::crossover::*;
 
 
-pub struct CGA<T: FloatNum, F: OptProb<T>> {
+pub struct CGA<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub conf: CGAConf,
     pub population: DMatrix<T>,
     pub fitness: DVector<T>,
     pub constraints: DVector<bool>,
     pub selector: SelectionOperator,
     pub crossover: CrossoverOperator,
-    pub opt_prob: F,
+    pub opt_prob: OptProb<T, F, G>,
     pub best_individual: DVector<T>,
     pub best_fitness: T,
 }
 
-impl<T: FloatNum, F: OptProb<T>> CGA<T, F> {
-    pub fn new(conf: CGAConf, init_pop: DMatrix<T>, opt_prob: F) -> Self {
+impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<T, F, G> {
+    pub fn new(conf: CGAConf, init_pop: DMatrix<T>, opt_prob: OptProb<T, F, G>,) -> Self {
         let selector = match conf.selection_method.as_str() {
             "RouletteWheel" => SelectionOperator::RouletteWheel(RouletteWheel::new(conf.population_size, conf.num_parents)),
             "Tournament" => SelectionOperator::Tournament(Tournament::new(conf.population_size, conf.num_parents, conf.tournament_size)),
@@ -38,8 +38,8 @@ impl<T: FloatNum, F: OptProb<T>> CGA<T, F> {
             .into_par_iter()
             .map(|i| {
                 let individual = init_pop.row(i).transpose();
-                let fit = opt_prob.objective(&individual);
-                let constr = opt_prob.constraints(&individual)[0];
+                let fit = opt_prob.objective.f(&individual);
+                let constr = opt_prob.constraints.g(&individual)[0];
                 (fit, constr)
             })
             .unzip();
@@ -80,8 +80,8 @@ impl<T: FloatNum, F: OptProb<T>> CGA<T, F> {
             .into_par_iter()
             .map(|i| {
                 let individual = offspring.row(i).transpose();
-                let fit = self.opt_prob.objective(&individual);
-                let constr = self.opt_prob.constraints(&individual)[0];
+                let fit = self.opt_prob.objective.f(&individual);
+                let constr = self.opt_prob.constraints.g(&individual)[0];
                 (fit, constr)
             })
             .unzip();
