@@ -2,7 +2,7 @@ pub mod utils;
 pub mod continous_ga;
 pub mod parallel_tempering;
 
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
+use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction};
 use crate::continous_ga::cga::CGA;
 use crate::parallel_tempering::pt::PT;
 use crate::utils::config::{Config};

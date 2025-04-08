@@ -1,6 +1,6 @@
 use non_convex_opt::parallel_tempering::pt::PT;
 use non_convex_opt::parallel_tempering::metropolis_hastings::{MetropolisHastings, update_step_size};
-use non_convex_opt::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
+use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction, OptProb};
 use non_convex_opt::utils::config::PTConf;
 use nalgebra::{DVector, DMatrix};
 

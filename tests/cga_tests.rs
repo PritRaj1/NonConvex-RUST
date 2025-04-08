@@ -1,5 +1,5 @@
 use non_convex_opt::utils::config::{CGAConf};
-use non_convex_opt::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
+use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction, OptProb};
 use non_convex_opt::continous_ga::selection::{RouletteWheel, Tournament, Residual};
 use non_convex_opt::continous_ga::crossover::{Random, Heuristic};
 use non_convex_opt::continous_ga::cga::CGA;

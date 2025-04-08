@@ -1,4 +1,4 @@
-use nalgebra::{DVector, DMatrix, Matrix};
+use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
 use crate::parallel_tempering::replica_exchange::{SwapCheck, Periodic, Stochastic, Always};
 use crate::parallel_tempering::metropolis_hastings::{MetropolisHastings, update_step_size};

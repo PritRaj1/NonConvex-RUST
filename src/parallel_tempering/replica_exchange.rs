@@ -1,5 +1,3 @@
-use rand::Rng;
-
 pub enum SwapCheck {
     Periodic(Periodic),
     Stochastic(Stochastic),
