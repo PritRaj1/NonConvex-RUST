@@ -4,7 +4,6 @@ use crate::parallel_tempering::replica_exchange::{SwapCheck, Periodic, Stochasti
 use crate::parallel_tempering::metropolis_hastings::{MetropolisHastings, update_step_size};
 use crate::utils::config::PTConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
-use rand::Rng;
 
 pub struct PT<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub conf: PTConf,
@@ -131,7 +130,6 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
 
     // Replica exchange
     pub fn swap(&mut self) {
-        let mut rng = rand::rng();
         let n = self.population.len() - 1;
         let m = self.population[0].nrows();
 
@@ -139,15 +137,21 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
         let mut swap_bool = DMatrix::from_element(n, m, false);
 
         // Determine which pairs to swap
-        for i in 0..n {
-            for j in 0..m {
-                let delta_f = self.fitness[i+1][(j, 0)] - self.fitness[i][(j, 0)];
-                let delta_t = (T::one() / self.p_schedule[self.iter+1]) - (T::one() / self.p_schedule[self.iter]);
-                let delta = delta_f * delta_t;
-                
-                if delta <= T::zero() || T::from_f64(rng.random::<f64>()).unwrap() < (-delta).exp() {
-                    swap_bool[(i, j)] = true;
-                }
+        let swap_results: Vec<Vec<(usize, usize, bool)>> = (0..n).into_par_iter().map(|i| {
+            (0..m).into_par_iter().map(|j| {
+                let x_old = self.population[i].row(j).transpose();
+                let x_new = self.population[i+1].row(j).transpose();
+                let constraints_new = self.constraints[i+1][(j, 0)];
+                let t = self.p_schedule[self.iter];
+                let t_swap = self.p_schedule[self.iter+1];
+                let accept = self.metropolis_hastings.accept_reject(&x_old, &x_new, constraints_new, t, t_swap);
+                (i, j, accept)
+            }).collect()
+        }).collect();
+
+        for swap_result in swap_results {
+            for (i, j, accept) in swap_result {
+                swap_bool[(i, j)] = accept;
             }
         }
 
@@ -206,7 +210,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
                             &x_new,
                             constr_new,
                             temperatures[i],
-                            -T::from_f64(1.0).unwrap()
+                            -T::from_f64(1.0).unwrap() // Send in negative to signal local move 
                         ) {
                             let new_step_size = if self.opt_prob.objective.gradient(&x_old).is_none() {
                                 update_step_size(
