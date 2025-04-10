@@ -1,4 +1,4 @@
-use non_convex_opt::{NonConvexOpt};
+use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, CGAConf, PTConf};
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
 use nalgebra::{DVector, DMatrix};

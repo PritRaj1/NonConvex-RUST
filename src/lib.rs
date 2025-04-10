@@ -44,6 +44,19 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::PT(pt) => pt.step(),
         }
     }
+    pub fn get_population(&self) -> DMatrix<T> {
+        match &self.alg {
+            OptAlg::CGA(cga) => cga.population.clone(),
+            OptAlg::PT(pt) => pt.population[pt.population.len()-1].clone(),
+        }
+    }
+
+    pub fn get_best_individual(&self) -> DVector<T> {
+        match &self.alg {
+            OptAlg::CGA(cga) => cga.best_individual.clone(),
+            OptAlg::PT(pt) => pt.best_individual.clone(),
+        }
+    }
 
     pub fn run(&mut self) -> Result<T> {
 
