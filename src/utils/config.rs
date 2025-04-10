@@ -103,6 +103,7 @@ pub enum ConfigError {
     SerializationError(String),
 }
 
+// Have the option to load config from a json
 impl Config {
     // Deserialize the json to config
     pub fn new(config: &str) -> Result<Self, ConfigError> {

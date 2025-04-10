@@ -13,6 +13,11 @@ pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFuncti
     PT(PT<T, F, G>),
 }
 
+pub struct Result<T: FloatNum> {
+    pub best_x: DVector<T>,
+    pub best_f: T,
+}
+
 pub struct NonConvexOpt<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub alg: OptAlg<T, F, G>,
     pub conf: OptConf,
@@ -27,5 +32,39 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
         };
 
         Self { alg, conf: conf.opt_conf }
+    }
+
+    pub fn run(&mut self) -> Result<T> {
+
+        let mut previous_best_fitness = T::infinity();
+        
+        for _ in 0..self.conf.max_iter {
+            match &mut self.alg {
+                OptAlg::CGA(cga) => {
+                    cga.step();
+                    previous_best_fitness = cga.best_fitness;
+                    if cga.best_fitness <= T::from_f64(self.conf.atol).unwrap() || (cga.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
+                        break;
+                    }
+                },
+                OptAlg::PT(pt) => {
+                    pt.step();
+                    previous_best_fitness = pt.best_fitness;
+                    if pt.best_fitness <= T::from_f64(self.conf.atol).unwrap() || (pt.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
+                        break;
+                    }
+                },
+            }
+        }
+
+        let (best_x, best_f) = match &self.alg {
+            OptAlg::CGA(cga) => (cga.best_individual.clone(), cga.best_fitness),
+            OptAlg::PT(pt) => (pt.best_individual.clone(), pt.best_fitness),
+        };
+
+        Result {
+            best_x,
+            best_f,
+        }
     }
 }

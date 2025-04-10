@@ -83,6 +83,8 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
             let delta_t = (T::one() / t) - (T::one() / t_swap);
             r = (delta_f / (self.k * delta_t * delta_x)).exp();
         } else { // Pass in negative anything to signal local move
+            
+            // Correct asymmetry in proposal distribution if MALA
             let langevin_correction = if let Some(grad) = self.prob.objective.gradient(&self.project(x_old)) {
                 let proposal_grad = self.prob.objective.gradient(&self.project(x_new)).unwrap();
                 let grad_term = -(
@@ -98,6 +100,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
             } else {
                 T::zero()
             };
+
             r = ((delta_f + langevin_correction) / (self.k * delta_x * t)).exp();
         }
 
