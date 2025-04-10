@@ -34,9 +34,9 @@ impl BooleanConstraintFunction<f64> for BoxConstraints {
 fn test_cga() {
     let conf = Config {
         opt_conf: OptConf {
-            max_iter: 100,
-            rtol: 1e-6,
-            atol: 1e-4,
+            max_iter: 1000,
+            rtol: 1e-2,
+            atol: 1e-2,
         },
         alg_conf: AlgConf::CGA(CGAConf {
             population_size: 50,
@@ -75,12 +75,12 @@ fn test_cga() {
 fn test_pt() {
     let conf = Config {
         opt_conf: OptConf {
-            max_iter: 100,
-            rtol: 1e-4,
-            atol: 1e-4,
+            max_iter: 2,
+            rtol: 1e-2,
+            atol: 1e-2,
         },
         alg_conf: AlgConf::PT(PTConf {
-            num_replicas: 10,
+            num_replicas: 1000,
             num_chains: 10,
             power_law_init: 2.0,
             power_law_final: 0.5,

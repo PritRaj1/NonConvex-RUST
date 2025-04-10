@@ -43,19 +43,19 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             match &mut self.alg {
                 OptAlg::CGA(cga) => {
                     cga.step();
-                    // if (-cga.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (cga.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
-                    //     println!("Converged in {} iterations", iter);
-                    //     break;
-                    // }
+                    if (-cga.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (cga.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
+                        println!("Converged in {} iterations", iter);
+                        break;
+                    }
                     previous_best_fitness = cga.best_fitness;
                     iter += 1;
                 },
                 OptAlg::PT(pt) => {
                     pt.step();
-                    // if (-pt.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (pt.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
-                    //     println!("Converged in {} iterations", iter);
-                    //     break;
-                    // }
+                    if (-pt.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (pt.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
+                        println!("Converged in {} iterations", iter);
+                        break;
+                    }
                     previous_best_fitness = pt.best_fitness;
                     iter += 1;
                 },

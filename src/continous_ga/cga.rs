@@ -51,7 +51,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
         let mut best_idx = 0;
         let mut best_fitness = fitness[0];
         for i in 1..fitness.len() {
-            if fitness[i] < best_fitness && constraints[i] {
+            if fitness[i] > best_fitness && constraints[i] {
                 best_idx = i;
                 best_fitness = fitness[i];
             }
@@ -93,14 +93,14 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
         let mut best_idx = 0;
         let mut best_fitness = new_fitness[0];
         for i in 1..new_fitness.len() {
-            if new_fitness[i] < best_fitness && new_constraints[i] {
+            if new_fitness[i] > best_fitness && new_constraints[i] {
                 best_idx = i;
                 best_fitness = new_fitness[i];
             }
         }
         
         // Update best solution if better
-        if best_fitness < self.best_fitness {
+        if best_fitness > self.best_fitness {
             self.best_individual = offspring.row(best_idx).transpose();
             self.best_fitness = best_fitness;
         }

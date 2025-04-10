@@ -95,7 +95,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
         let mut best_fitness = fitness[0][0];
         for i in 0..conf.num_replicas {
             for j in 0..fitness[i].len() {
-                if fitness[i][j] < best_fitness && constraints[i][j] {
+                if fitness[i][j] > best_fitness && constraints[i][j] {
                     best_fitness = fitness[i][j];
                     best_idx = i;
                 }
@@ -266,7 +266,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
         let mut best_fitness = self.fitness[0][0];
         for i in 0..self.conf.num_replicas {
             for j in 0..self.fitness[i].len() {
-                if self.fitness[i][j] < best_fitness && self.constraints[i][j] {
+                if self.fitness[i][j] > best_fitness && self.constraints[i][j] {
                     best_fitness = self.fitness[i][j];
                     best_idx = i;
                 }
