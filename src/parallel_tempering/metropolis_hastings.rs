@@ -83,7 +83,22 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
             let delta_t = (T::one() / t) - (T::one() / t_swap);
             r = (delta_f / (self.k * delta_t * delta_x)).exp();
         } else { // Pass in negative anything to signal local move
-                r = (delta_f / (self.k * delta_x * t)).exp();
+            let langevin_correction = if let Some(grad) = self.prob.objective.gradient(&self.project(x_old)) {
+                let proposal_grad = self.prob.objective.gradient(&self.project(x_new)).unwrap();
+                let grad_term = -(
+                    (x_new - x_old - grad.clone() * self.mala_step_size)
+                        .dot(&(x_new - x_old - grad.clone() * self.mala_step_size))
+                    / (T::from_f64(4.0).unwrap() * self.mala_step_size)
+                ) + (
+                    (x_old - x_new - proposal_grad.clone() * self.mala_step_size)
+                        .dot(&(x_old - x_new - proposal_grad.clone() * self.mala_step_size))
+                    / (T::from_f64(4.0).unwrap() * self.mala_step_size)
+                );
+                grad_term
+            } else {
+                T::zero()
+            };
+            r = ((delta_f + langevin_correction) / (self.k * delta_x * t)).exp();
         }
 
         let mut rng = rand::rng(); 
