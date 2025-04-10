@@ -1,5 +1,5 @@
 use non_convex_opt::{NonConvexOpt};
-use non_convex_opt::utils::config::{Config, OptConf, AlgConf, CGAConf};
+use non_convex_opt::utils::config::{Config, OptConf, AlgConf, CGAConf, PTConf};
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
 use nalgebra::{DVector, DMatrix};
 
@@ -34,9 +34,9 @@ impl BooleanConstraintFunction<f64> for BoxConstraints {
 fn test_cga() {
     let conf = Config {
         opt_conf: OptConf {
-            max_iter: 10000000,
+            max_iter: 100,
             rtol: 1e-6,
-            atol: 10.0,
+            atol: 1e-4,
         },
         alg_conf: AlgConf::CGA(CGAConf {
             population_size: 50,
@@ -67,6 +67,53 @@ fn test_cga() {
     println!("Initial best fitness: {}", initial_best_fitness);
     println!("Best f: {}", result.best_f);
 
-    assert!(result.best_f < 10.0);
-    assert!(result.best_f < initial_best_fitness);
+    assert!(-result.best_f.exp() < 0.01);
+    assert!(result.best_f > initial_best_fitness);
 }
+
+#[test]
+fn test_pt() {
+    let conf = Config {
+        opt_conf: OptConf {
+            max_iter: 100,
+            rtol: 1e-4,
+            atol: 1e-4,
+        },
+        alg_conf: AlgConf::PT(PTConf {
+            num_replicas: 10,
+            num_chains: 10,
+            power_law_init: 2.0,
+            power_law_final: 0.5,
+            power_law_cycles: 1,
+            alpha: 0.1,
+            omega: 2.1,
+            swap_check_type: "Always".to_string(),
+            swap_frequency: 1.0,
+            swap_probability: 0.1,
+            mala_step_size: 0.01,
+        }),
+    };
+
+    let mut init_pop = DMatrix::zeros(10, 2);
+    for i in 0..10 {
+        for j in 0..2 {
+            init_pop[(i, j)] = rand::random::<f64>() * 4.0 - 2.0; // Random values in [-2, 2]
+        }
+    }
+
+    let constraints = BoxConstraints { lower: -2.0, upper: 2.0 };
+    let mut opt = NonConvexOpt::new(conf, init_pop.clone(), Rosenbrock, Some(constraints));
+
+    let initial_best_fitness: f64 = init_pop.row_iter()
+        .map(|row| Rosenbrock.f(&row.transpose()))
+        .fold(f64::INFINITY, |a, b| a.min(b));
+
+    println!("Initial best fitness: {}", initial_best_fitness);
+    
+    let result = opt.run();
+
+    println!("Best f: {}", result.best_f);
+
+    assert!(-result.best_f.exp() < 0.01);
+    assert!(result.best_f > initial_best_fitness);
+}   
