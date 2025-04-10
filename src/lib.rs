@@ -16,6 +16,7 @@ pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFuncti
 pub struct Result<T: FloatNum> {
     pub best_x: DVector<T>,
     pub best_f: T,
+    pub final_pop: DMatrix<T>,
 }
 
 pub struct NonConvexOpt<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
@@ -62,14 +63,15 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             }
         }
 
-        let (best_x, best_f) = match &self.alg {
-            OptAlg::CGA(cga) => (cga.best_individual.clone(), cga.best_fitness),
-            OptAlg::PT(pt) => (pt.best_individual.clone(), pt.best_fitness),
+        let (best_x, best_f, final_pop) = match &self.alg {
+            OptAlg::CGA(cga) => (cga.best_individual.clone(), cga.best_fitness, cga.population.clone()),
+            OptAlg::PT(pt) => (pt.best_individual.clone(), pt.best_fitness, pt.population[pt.population.len()-1].clone()),
         };
 
         Result {
             best_x,
             best_f,
+            final_pop,
         }
     }
 }
