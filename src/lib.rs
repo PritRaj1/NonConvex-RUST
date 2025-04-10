@@ -42,17 +42,17 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             match &mut self.alg {
                 OptAlg::CGA(cga) => {
                     cga.step();
-                    previous_best_fitness = cga.best_fitness;
                     if cga.best_fitness <= T::from_f64(self.conf.atol).unwrap() || (cga.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
                         break;
                     }
+                    previous_best_fitness = cga.best_fitness;
                 },
                 OptAlg::PT(pt) => {
                     pt.step();
-                    previous_best_fitness = pt.best_fitness;
                     if pt.best_fitness <= T::from_f64(self.conf.atol).unwrap() || (pt.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
                         break;
                     }
+                    previous_best_fitness = pt.best_fitness;
                 },
             }
         }
