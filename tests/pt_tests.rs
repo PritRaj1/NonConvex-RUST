@@ -29,13 +29,9 @@ pub struct RosenbrockConstraints {
 }
 
 impl BooleanConstraintFunction<f64> for RosenbrockConstraints {
-    fn g(&self, x: &DVector<f64>) -> DVector<bool> {
-        let n = x.len();
-        let mut constraints = DVector::from_element(n, false);
-        for i in 0..n {
-            constraints[i] = x[i] >= 0.0 && x[i] <= 1.0;
-        }
-        constraints
+    fn g(&self, x: &DVector<f64>) -> bool {
+        // Check if all components are within bounds
+        x.iter().all(|&xi| xi >= 0.0 && xi <= 1.0)
     }
 }
 
@@ -43,7 +39,7 @@ impl BooleanConstraintFunction<f64> for RosenbrockConstraints {
 fn test_metropolis_hastings_accept_reject() {
     let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
     let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
-    let opt_prob = OptProb::new(obj_f, constraints);
+    let opt_prob = OptProb::new(obj_f, Some(constraints));
 
     let mh = MetropolisHastings::new(opt_prob, 0.1);
 
@@ -62,7 +58,7 @@ fn test_metropolis_hastings_accept_reject() {
 fn test_metropolis_hastings_local_move() {
     let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
     let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
-    let opt_prob = OptProb::new(obj_f, constraints);
+    let opt_prob = OptProb::new(obj_f, Some(constraints));
     let mh = MetropolisHastings::new(opt_prob, 0.1);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
@@ -104,7 +100,7 @@ fn test_pt_swap() {
     let init_pop = DMatrix::from_vec(2, 2, vec![0.5, 0.5, 0.5, 0.5]);
     let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
     let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
-    let opt_prob = OptProb::new(obj_f, constraints);
+    let opt_prob = OptProb::new(obj_f, Some(constraints));
     let mut pt = PT::new(conf, init_pop, opt_prob, 5);
 
     pt.swap();
@@ -133,7 +129,7 @@ fn test_pt_step() {
     let init_pop = DMatrix::from_vec(2, 2, vec![0.5, 0.5, 0.5, 0.5]);
     let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
     let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
-    let opt_prob = OptProb::new(obj_f, constraints);
+    let opt_prob = OptProb::new(obj_f, Some(constraints));
     let mut pt = PT::new(conf, init_pop, opt_prob, 5);
 
     for _ in 0..5 {

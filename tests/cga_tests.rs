@@ -30,13 +30,9 @@ pub struct RosenbrockConstraints {
 }
 
 impl BooleanConstraintFunction<f64> for RosenbrockConstraints {
-    fn g(&self, x: &DVector<f64>) -> DVector<bool> {
-        let n = x.len();
-        let mut constraints = DVector::from_element(n, false);
-        for i in 0..n {
-            constraints[i] = x[i] >= 0.0 && x[i] <= 1.0;
-        }
-        constraints
+    fn g(&self, x: &DVector<f64>) -> bool {
+        // Check if all components are within bounds
+        x.iter().all(|&xi| xi >= 0.0 && xi <= 1.0)
     }
 }
 
@@ -120,7 +116,7 @@ fn test_cga() {
 
     let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
     let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
-    let opt_prob = OptProb::new(obj_f, constraints);
+    let opt_prob = OptProb::new(obj_f, Some(constraints));
     let mut cga = CGA::new(conf, init_pop, opt_prob);
 
     // Run a few iterations

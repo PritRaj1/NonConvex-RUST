@@ -53,24 +53,30 @@ pub trait ObjectiveFunction<T: FloatNumber>: Send + Sync + Clone {
 
 // Trait for constraint functions
 pub trait BooleanConstraintFunction<T: FloatNumber>: Send + Sync + Clone {
-    fn g(&self, x: &DVector<T>) -> DVector<bool>;
+    fn g(&self, x: &DVector<T>) -> bool;
 }
 
 // Trait for combined optimization problem
 #[derive(Clone)]
 pub struct OptProb<T: FloatNumber, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub objective: F,
-    pub constraints: G,
+    pub constraints: Option<G>,
     _phantom: PhantomData<T>,
 }
 
 impl<T: FloatNumber, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> OptProb<T, F, G> {
-    pub fn new(objective: F, constraints: G) -> Self {
+    pub fn new(objective: F, constraints: Option<G>) -> Self {
         Self { 
             objective, 
             constraints,
             _phantom: PhantomData,
         }
     }
-}
 
+    pub fn is_feasible(&self, x: &DVector<T>) -> bool {
+        match &self.constraints {
+            Some(constraints) => constraints.g(x),
+            None => true,
+        }
+    }
+}

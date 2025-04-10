@@ -67,7 +67,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
                     .into_par_iter()
                     .map(|i| {
                         let individual = init_pop.row(i).transpose();
-                        opt_prob.constraints.g(&individual)[0]
+                        opt_prob.is_feasible(&individual)
                     })
                     .collect();
 
@@ -203,7 +203,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
                     .map(|j| {
                         let x_old = self.population[i].row(j).transpose();
                         let x_new = self.metropolis_hastings.local_move(&x_old, &self.step_sizes[i][j]);
-                        let constr_new = self.opt_prob.constraints.g(&x_new)[0];
+                        let constr_new = self.opt_prob.is_feasible(&x_new);
                         
                         if self.metropolis_hastings.accept_reject(
                             &x_old,

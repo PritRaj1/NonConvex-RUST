@@ -39,7 +39,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
             .map(|i| {
                 let individual = init_pop.row(i).transpose();
                 let fit = opt_prob.objective.f(&individual);
-                let constr = opt_prob.constraints.g(&individual)[0];
+                let constr = opt_prob.is_feasible(&individual);
                 (fit, constr)
             })
             .unzip();
@@ -81,7 +81,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
             .map(|i| {
                 let individual = offspring.row(i).transpose();
                 let fit = self.opt_prob.objective.f(&individual);
-                let constr = self.opt_prob.constraints.g(&individual)[0];
+                let constr = self.opt_prob.is_feasible(&individual);
                 (fit, constr)
             })
             .unzip();
