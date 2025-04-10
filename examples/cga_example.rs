@@ -100,42 +100,49 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let resolution = 100;
     let (z_values, min_val, max_val) = create_contour_data(&obj_f, resolution);
 
-    let mut gif = File::create("examples/optimization.gif")?;
+    let mut gif = File::create("examples/cga_kbf.gif")?;
     let mut color_palette = Vec::with_capacity(768); 
-    for r in 0..8 {
-        for g in 0..8 {
-            for b in 0..4 {
-                color_palette.push((r * 32) as u8);    
-                color_palette.push((g * 32) as u8);   
-                color_palette.push((b * 64) as u8);    
-            }
-        }
+    
+    color_palette.extend_from_slice(&[
+        255, 0, 0,      // Bright red for population
+        255, 255, 0,    // Bright yellow for best individual
+    ]);
+    
+    // Then add grayscale colors
+    for i in 0..254 {  
+        color_palette.push(i as u8);    
+        color_palette.push(i as u8);    
+        color_palette.push(i as u8);   
     }
+
     let mut encoder = Encoder::new(&mut gif, 800, 800, &color_palette)?;
     encoder.set_repeat(Repeat::Infinite)?;
 
-    for frame in 0..20 {
+    for frame in 0..10 {
         let root = BitMapBackend::new("examples/frame.png", (800, 800)).into_drawing_area();
         root.fill(&WHITE)?;
 
         let mut chart = ChartBuilder::on(&root)
-            .caption(format!("Optimization Progress - Frame {}", frame), ("sans-serif", 30))
+            .caption(format!("CGA, Keane's Bump Function - Iteration {}", frame), ("sans-serif", 30))
             .margin(5)
             .x_label_area_size(30)
             .y_label_area_size(30)
             .build_cartesian_2d(0f64..10f64, 0f64..10f64)?;
 
-        chart.configure_mesh().draw()?;
+        chart.configure_mesh()
+            .disable_mesh()    
+            .draw()?;
 
         for i in 0..resolution-1 {
             for j in 0..resolution-1 {
                 let x = 10.0 * i as f64 / (resolution - 1) as f64;
                 let y = 10.0 * j as f64 / (resolution - 1) as f64;
+                let dx = 10.0 / (resolution - 1) as f64; 
                 let val = (z_values[i][j] - min_val) / (max_val - min_val);
                 let color = RGBColor(
-                    (255.0 * (1.0 - val)) as u8,
-                    (255.0 * (1.0 - val)) as u8,
-                    (255.0 * (1.0 - val)) as u8,
+                    (255.0 * val) as u8,
+                    (255.0 * val) as u8,
+                    (255.0 * val) as u8,
                 );
                 
                 // Draw stripes for infeasible regions
@@ -144,13 +151,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let stripe_pos = ((x + y) / stripe_width).floor() as i32;
                     if stripe_pos % 2 == 0 {
                         chart.draw_series(std::iter::once(Rectangle::new(
-                            [(x, y), (x + 0.1, y + 0.1)],
+                            [(x, y), (x + dx, y + dx)],  
                             RGBColor(128, 128, 128).mix(0.3).filled(),
                         )))?;
                     }
                 } else {
                     chart.draw_series(std::iter::once(Rectangle::new(
-                        [(x, y), (x + 0.1, y + 0.1)],
+                        [(x, y), (x + dx, y + dx)], 
                         color.filled(),
                     )))?;
                 }
@@ -161,7 +168,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let population = opt.get_population();
         chart.draw_series(
             population.row_iter().map(|row| {
-                Circle::new((row[0], row[1]), 3, RED.mix(0.8).filled())
+                Circle::new(
+                    (row[0], row[1]), 
+                    3, 
+                    RGBColor(255, 0, 0).filled()  
+                )
             })
         )?;
 
@@ -170,8 +181,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         chart.draw_series(std::iter::once(
             Circle::new(
                 (best_x[0], best_x[1]),
-                5,  
-                YELLOW.filled(),
+                6, 
+                RGBColor(255, 255, 0).filled()
             )
         ))?;
 
@@ -192,7 +203,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 100; // Controls FPS
+        frame.delay = 100; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 
