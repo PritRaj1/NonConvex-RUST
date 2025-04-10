@@ -17,6 +17,9 @@ pub struct Result<T: FloatNum> {
     pub best_x: DVector<T>,
     pub best_f: T,
     pub final_pop: DMatrix<T>,
+    pub final_fitness: DVector<T>,
+    pub final_constraints: DVector<bool>,
+    pub convergence_iter: usize,
 }
 
 pub struct NonConvexOpt<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
@@ -63,15 +66,18 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             }
         }
 
-        let (best_x, best_f, final_pop) = match &self.alg {
-            OptAlg::CGA(cga) => (cga.best_individual.clone(), cga.best_fitness, cga.population.clone()),
-            OptAlg::PT(pt) => (pt.best_individual.clone(), pt.best_fitness, pt.population[pt.population.len()-1].clone()),
+        let (best_x, best_f, final_pop, final_fitness, final_constraints) = match &self.alg {
+            OptAlg::CGA(cga) => (cga.best_individual.clone(), cga.best_fitness, cga.population.clone(), cga.fitness.clone(), cga.constraints.clone()),
+            OptAlg::PT(pt) => (pt.best_individual.clone(), pt.best_fitness, pt.population[pt.population.len()-1].clone(), pt.fitness[pt.fitness.len()-1].clone(), pt.constraints[pt.constraints.len()-1].clone()),
         };
 
         Result {
             best_x,
             best_f,
             final_pop,
+            final_fitness,
+            final_constraints,
+            convergence_iter: iter,
         }
     }
 }
