@@ -1,11 +1,13 @@
-# Example
+# Example GIFs
 
-The examples in this subdirectory are concerned with creating a GIF of the algorithm's progress against the following constrained optimization problem. We refer to this problem as "Keane's Bump Function", and the GIF plots the evolution of the population overlayed on its 2D realization.
+The examples in this subdirectory are concerned with creating GIFs of the algorithm's progress against the following constrained optimization problem. 
+
+We refer to this problem as "Keane's Bump Function", and the GIF plots the evolution of the population overlayed on its 2D realization.
 
 ## Keane's Bump Function
 
 ```math
-f(\mathbf{x}) = \left| 
+\max f(\mathbf{x}) = \left| 
 \frac{
 \sum_{i=1}^{n} (\cos(x_i))^4 - 2 \prod_{i=1}^{n} (\cos(x_i))^2
 }{

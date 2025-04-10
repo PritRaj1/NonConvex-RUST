@@ -60,8 +60,6 @@ fn default_tournament_size() -> usize { 2 }
 pub struct PTConf {
     #[serde(default = "default_num_replicas")]
     pub num_replicas: usize,
-    #[serde(default = "default_num_chains")]
-    pub num_chains: usize,
     #[serde(default = "default_power_law_init")]
     pub power_law_init: f64,
     #[serde(default = "default_power_law_final")]
@@ -83,7 +81,6 @@ pub struct PTConf {
 }
 
 fn default_num_replicas() -> usize { 10 }
-fn default_num_chains() -> usize { 10 }
 fn default_power_law_init() -> f64 { 2.0 }
 fn default_power_law_final() -> f64 { 0.5 }
 fn default_power_law_cycles() -> usize { 1 }

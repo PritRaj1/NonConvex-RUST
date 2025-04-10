@@ -85,7 +85,6 @@ fn test_metropolis_hastings_update_step_size() {
 fn test_pt_swap() {
     let conf = PTConf {
         num_replicas: 2,
-        num_chains: 1,
         power_law_init: 2.0,
         power_law_final: 0.5,
         power_law_cycles: 1,
@@ -114,7 +113,6 @@ fn test_pt_swap() {
 fn test_pt_step() {
     let conf = PTConf {
         num_replicas: 2,
-        num_chains: 1,
         power_law_init: 2.0,
         power_law_final: 0.5,
         power_law_cycles: 1,

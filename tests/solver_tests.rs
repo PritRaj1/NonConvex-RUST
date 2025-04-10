@@ -81,7 +81,6 @@ fn test_pt() {
         },
         alg_conf: AlgConf::PT(PTConf {
             num_replicas: 1000,
-            num_chains: 10,
             power_law_init: 2.0,
             power_law_final: 0.5,
             power_law_cycles: 1,

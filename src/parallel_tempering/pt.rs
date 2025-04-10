@@ -263,16 +263,18 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
 
         // Update best individual
         let mut best_idx = 0;
+        let mut best_row = 0;
         let mut best_fitness = self.fitness[0][0];
         for i in 0..self.conf.num_replicas {
             for j in 0..self.fitness[i].len() {
                 if self.fitness[i][j] > best_fitness && self.constraints[i][j] {
                     best_fitness = self.fitness[i][j];
                     best_idx = i;
+                    best_row = j;
                 }
             }
         }
-        self.best_individual = self.population[best_idx].row(0).transpose();
+        self.best_individual = self.population[best_idx].row(best_row).transpose();
         self.best_fitness = best_fitness;
 
         self.iter += 1;

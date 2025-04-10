@@ -1,5 +1,5 @@
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::{Config, OptConf, AlgConf, CGAConf};
+use non_convex_opt::utils::config::{Config, OptConf, AlgConf, PTConf};
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
 use nalgebra::{DVector, DMatrix};
 use plotters::prelude::*;
@@ -69,27 +69,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             rtol: 1e-6,
             atol: 1e-6,
         },
-        alg_conf: AlgConf::CGA(CGAConf {
-            population_size: 100,
-            num_parents: 20,
-            selection_method: "Residual".to_string(),
-            crossover_method: "Heuristic".to_string(),
-            crossover_prob: 0.8,
-            tournament_size: 50,
+        alg_conf: AlgConf::PT(PTConf {
+            num_replicas: 10,
+            power_law_init: 3.0,
+            power_law_final: 0.35,
+            power_law_cycles: 1,
+            alpha: 0.1,
+            omega: 2.1,
+            swap_check_type: "Always".to_string(),
+            swap_frequency: 1.0,
+            swap_probability: 0.5,
+            mala_step_size: 0.01,
         }),
     };
 
     let obj_f = KBF;
     let constraints = KBFConstraints;
 
-    let cga_conf = match &config.alg_conf {
-        AlgConf::CGA(conf) => conf,
-        _ => panic!("Expected CGA configuration"),
-    };
-
     // Randomly spread initial population across domain
-    let mut init_pop = DMatrix::zeros(cga_conf.population_size, 2);
-    for i in 0..cga_conf.population_size {
+    let mut init_pop = DMatrix::zeros(100, 2);
+    for i in 0..100 {
         for j in 0..2 {
             init_pop[(i, j)] = rand::random::<f64>() * 10.0;
         }
@@ -100,7 +99,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let resolution = 100;
     let (z_values, min_val, max_val) = create_contour_data(&obj_f, resolution);
 
-    let mut gif = File::create("examples/cga_kbf.gif")?;
+    let mut gif = File::create("examples/pt_kbf.gif")?;
     let mut color_palette = Vec::with_capacity(768); 
     
     color_palette.extend_from_slice(&[
@@ -119,11 +118,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     encoder.set_repeat(Repeat::Infinite)?;
 
     for frame in 0..10 {
-        let root = BitMapBackend::new("examples/cga_frame.png", (800, 800)).into_drawing_area();
+        let root = BitMapBackend::new("examples/pt_frame.png", (800, 800)).into_drawing_area();
         root.fill(&WHITE)?;
 
         let mut chart = ChartBuilder::on(&root)
-            .caption(format!("CGA, Keane's Bump Function - Iteration {}", frame), ("sans-serif", 30))
+            .caption(format!("PT, Keane's Bump Function - Iteration {}", frame), ("sans-serif", 30))
             .margin(5)
             .x_label_area_size(30)
             .y_label_area_size(30)
@@ -190,7 +189,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         root.present()?;
         
         // Convert PNG to GIF frame
-        let img = ImageReader::open("examples/cga_frame.png")?
+        let img = ImageReader::open("examples/pt_frame.png")?
             .decode()?
             .into_rgb8();
         
@@ -210,7 +209,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         opt.step();
     }
 
-    std::fs::remove_file("examples/cga_frame.png")?;
+    std::fs::remove_file("examples/pt_frame.png")?;
 
     Ok(())
 }
