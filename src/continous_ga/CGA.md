@@ -20,3 +20,10 @@ Genetic algorithm for real valued (FP) vectors.
 | Random | - Standard and boring |
 | Heuristic     | - More exploitative and faster to converge (with good initial population) |
 |      | - More suitable to continous problems (by intuition). Uses a blend of parent characteristics. |
+
+## Sources and more information
+
+- [Continuous Genetic Algorithm](https://doi.org/10.1002/0471671746.ch3)
+- [CGA is more akin to Evolutionary Strategies](https://arxiv.org/abs/1703.03864)
+- [However, it is still a GA](https://doi.org/10.1007/BFb0029787)
+- [Heuristic or blend crossover](https://doi.org/10.1007/978-3-662-03315-9)

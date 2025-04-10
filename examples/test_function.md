@@ -27,3 +27,6 @@ We refer to this problem as "Keane's Bump Function", and the GIF plots the evolu
 ```math
 \sum_{i=1}^{n} x_i < \frac{15n}{2}
 ```
+## Sources and more information
+
+- [Keane's Bump Function](https://doi.org/10.1016/S0952-1976(99)00033-0)
