@@ -87,7 +87,6 @@ impl Heuristic {
                 let (better, worse) = if fit1 > fit2 { (parent1, parent2) } else { (parent2, parent1) };
                 let mut child = DVector::<T>::zeros(selected.ncols());
 
-                // Perform heuristic crossover by random
                 for k in 0..selected.ncols() {
                     let b = T::from_f64(rng.random::<f64>()).unwrap(); // Random factor between 0 and 1
                     child[k] = b * (better[k] - worse[k]) + worse[k]; // p_new = b * (p1 - p2) + p2

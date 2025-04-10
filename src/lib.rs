@@ -38,15 +38,22 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
         Self { alg, conf: conf.opt_conf }
     }
 
+    pub fn step(&mut self) {
+        match &mut self.alg {
+            OptAlg::CGA(cga) => cga.step(),
+            OptAlg::PT(pt) => pt.step(),
+        }
+    }
+
     pub fn run(&mut self) -> Result<T> {
 
         let mut previous_best_fitness = T::infinity();
         let mut iter = 0;
         
         for _ in 0..self.conf.max_iter {
+            self.step();
             match &mut self.alg {
                 OptAlg::CGA(cga) => {
-                    cga.step();
                     if (-cga.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (cga.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
                         println!("Converged in {} iterations", iter);
                         break;
@@ -55,7 +62,6 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
                     iter += 1;
                 },
                 OptAlg::PT(pt) => {
-                    pt.step();
                     if (-pt.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (pt.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
                         println!("Converged in {} iterations", iter);
                         break;
