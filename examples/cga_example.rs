@@ -65,7 +65,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 10,
+            max_iter: 5,
             rtol: 0.0,
             atol: 0.0,
         },
@@ -74,7 +74,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             num_parents: 20,
             selection_method: "Tournament".to_string(),
             crossover_method: "Heuristic".to_string(),
-            crossover_prob: 0.8,
+            crossover_prob: 0.5,
             tournament_size: 50,
         }),
     };
@@ -118,7 +118,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut encoder = Encoder::new(&mut gif, 800, 800, &color_palette)?;
     encoder.set_repeat(Repeat::Infinite)?;
 
-    for frame in 0..10 {
+    for frame in 0..5 {
         let root = BitMapBackend::new("examples/cga_frame.png", (800, 800)).into_drawing_area();
         root.fill(&WHITE)?;
 
@@ -203,7 +203,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 30; 
+        frame.delay = 80; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 

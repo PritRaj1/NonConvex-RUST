@@ -47,8 +47,8 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
 
     fn local_move_mala(&self, x_old: &DVector<T>, grad: &DVector<T>, t: T) -> DVector<T> {
         let mut rng = rand::rng();
-        let step = self.mala_step_size;
-        let drift = grad * step * t;
+        let step = self.mala_step_size / t;
+        let drift = grad * step;
     
         let noise = DVector::from_fn(x_old.len(), |_, _| {
             T::from_f64(rng.sample::<f64, _>(StandardNormal)).unwrap()
@@ -83,8 +83,9 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
 
         let r: T;
         if t_swap > T::from_f64(0.0).unwrap() { // Pass in next temperature to signal global move
-            let delta_f = t_swap * self.prob.objective.f(&self.project(x_new)) - t * self.prob.objective.f(&self.project(x_old));
-            r = (delta_f / (self.k * delta_x)).exp();
+            let delta_t = (T::one() / t - T::one() / t_swap).powf(-T::one());
+            let delta_f = self.prob.objective.f(&self.project(x_new)) - self.prob.objective.f(&self.project(x_old));
+            r = (delta_f / (self.k * delta_x * delta_t)).exp();
         } else { // Pass in negative anything to signal local move
             
             let delta_f = self.prob.objective.f(&self.project(x_new)) - self.prob.objective.f(&self.project(x_old));
@@ -93,20 +94,20 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
             let langevin_correction = if let Some(grad) = self.prob.objective.gradient(&self.project(x_old)) {
                 let proposal_grad = self.prob.objective.gradient(&self.project(x_new)).unwrap();
                 let grad_term = -(
-                    (x_new - x_old - grad.clone() * self.mala_step_size * t)
-                        .dot(&(x_new - x_old - grad.clone() * self.mala_step_size * t))
-                    / (T::from_f64(4.0).unwrap() * self.mala_step_size * t)
+                    (x_new - x_old - grad.clone() * self.mala_step_size / t)
+                        .dot(&(x_new - x_old - grad.clone() * self.mala_step_size / t))
+                    / (T::from_f64(4.0).unwrap() * self.mala_step_size / t)
                 ) + (
-                    (x_old - x_new - proposal_grad.clone() * self.mala_step_size * t)
-                        .dot(&(x_old - x_new - proposal_grad.clone() * self.mala_step_size * t))
-                    / (T::from_f64(4.0).unwrap() * self.mala_step_size * t)
+                    (x_old - x_new - proposal_grad.clone() * self.mala_step_size / t)
+                        .dot(&(x_old - x_new - proposal_grad.clone() * self.mala_step_size / t))
+                    / (T::from_f64(4.0).unwrap() * self.mala_step_size / t)
                 );
                 grad_term
             } else {
                 T::zero()
             };
 
-            r = ((delta_f * t) / (self.k * delta_x) + langevin_correction).exp();
+            r = ((delta_f) / (self.k * delta_x * t) + langevin_correction).exp();
         }
 
         let mut rng = rand::rng(); 

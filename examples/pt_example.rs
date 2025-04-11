@@ -22,7 +22,6 @@ impl ObjectiveFunction<f64> for KBF {
         let n = x.len();
     
         let cos_vals: Vec<f64> = x.iter().map(|&xi| xi.cos()).collect();
-        let sin_vals: Vec<f64> = x.iter().map(|&xi| xi.sin()).collect();
         
         let sum_cos4: f64 = cos_vals.iter().map(|&c| c.powi(4)).sum();
         let prod_cos2: f64 = cos_vals.iter().map(|&c| c.powi(2)).product();
@@ -38,20 +37,13 @@ impl ObjectiveFunction<f64> for KBF {
         let mut grad = DVector::zeros(n);
     
         for j in 0..n {
-            let cos_xj = cos_vals[j];
-            let sin_xj = sin_vals[j];
-    
-            // ∂A/∂x_j = -4 cos³(x_j) sin(x_j)
-            let da_dxj = -4.0 * cos_xj.powi(3) * sin_xj;
-    
-            // ∂B/∂x_j = -2 cos(x_j) sin(x_j) * ∏_{i≠j} cos²(x_i)
+
             let mut prod_cos2_excl_j = 1.0;
             for (i, &c) in cos_vals.iter().enumerate() {
                 if i != j {
                     prod_cos2_excl_j *= c.powi(2);
                 }
             }
-            let db_dxj = -2.0 * cos_xj * sin_xj * prod_cos2_excl_j;
         
             // ∂C/∂x_j = 2 * j * x_j
             let dd_dxj = 2.0 * (j as f64 + 1.0) * x[j];
@@ -61,7 +53,6 @@ impl ObjectiveFunction<f64> for KBF {
     
         Some(grad)
     }
-    
 }
 
 #[derive(Clone)]
@@ -109,7 +100,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 100,
+            max_iter: 40,
             rtol: 0.0,
             atol: 0.0,
         },
@@ -161,7 +152,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut encoder = Encoder::new(&mut gif, 800, 800, &color_palette)?;
     encoder.set_repeat(Repeat::Infinite)?;
 
-    for frame in 0..100 {
+    for frame in 0..40 {
         let root = BitMapBackend::new("examples/pt_frame.png", (800, 800)).into_drawing_area();
         root.fill(&WHITE)?;
 
@@ -246,7 +237,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 3; 
+        frame.delay = 10; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 
