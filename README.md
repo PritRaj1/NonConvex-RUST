@@ -1,9 +1,11 @@
 # NonConvex-RUST
 Non-convex optimizers implemented in RUST for constrained and unconstrained maximization problems. 
 
-The following GIFs are based on the [2D unconstrained maximization problem](./examples/test_function.md) in the 'examples' subdirectory.
-
 Sources/links to more information in the respective algorithm .md files.
+
+## Examples
+
+The following GIFs are based on the [2D unconstrained maximization problem](./examples/test_function.md) in the 'examples' subdirectory.
 
 | Algorithm | Description | Visualization |
 |-----------|-------------|---------------|
