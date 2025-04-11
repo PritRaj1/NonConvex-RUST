@@ -17,8 +17,9 @@ This ensures that early iterations are more explorative and later iterations are
 ## Sources and more information
 
 - [Parallel Tempering](https://arxiv.org/abs/physics/0508111)
-- [Power-law scheduling and minimizing KL divergences between temperature distributions](https://doi.org/10.1016/j.csda.2009.07.025)
 - [Chains might be initialized between 0 and 1 similar to simulated annealing](https://doi.org/10.13182/NT90-A34350)
 - [Metropolis-Hastings](http://www.jstor.org/stable/2280232)
 - [MALA](https://doi.org/10.1063/1.436415)
 - [Metropolis-Hastings step size adaptation](https://doi.org/10.1007/BF00143556)
+- [Power-law scheduling and minimizing KL divergences between temperature distributions](https://doi.org/10.1016/j.csda.2009.07.025)
+- [Cyclic annealing-ish](https://arxiv.org/abs/1903.10145)
