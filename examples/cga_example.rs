@@ -203,7 +203,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 60; 
+        frame.delay = 50; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 

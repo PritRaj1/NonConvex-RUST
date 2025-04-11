@@ -18,52 +18,6 @@ impl ObjectiveFunction<f64> for KBF {
         
         (sum_cos4 - 2.0 * prod_cos2).abs() / sum_ix2.sqrt()
     }
-    fn gradient(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
-        let n = x.len();
-    
-        let cos_vals: Vec<f64> = x.iter().map(|&xi| xi.cos()).collect();
-        let sin_vals: Vec<f64> = x.iter().map(|&xi| xi.sin()).collect();
-        
-        let sum_cos4: f64 = cos_vals.iter().map(|&c| c.powi(4)).sum();
-        let prod_cos2: f64 = cos_vals.iter().map(|&c| c.powi(2)).product();
-        let sum_ix2: f64 = x.iter().enumerate().map(|(i, &xi)| (i as f64 + 1.0) * xi * xi).sum();
-    
-        let d = sum_cos4 - 2.0 * prod_cos2;
-        let sign_d = d.signum();
-        let abs_d = d.abs();
-    
-        let sqrt_c = sum_ix2.sqrt();
-        let c_pow_3_2 = sum_ix2.powf(1.5);
-    
-        let mut grad = DVector::zeros(n);
-    
-        for j in 0..n {
-            let cos_xj = cos_vals[j];
-            let sin_xj = sin_vals[j];
-    
-            // ∂A/∂x_j = -4 cos³(x_j) sin(x_j)
-            let da_dxj = -4.0 * cos_xj.powi(3) * sin_xj;
-    
-            // ∂B/∂x_j = -2 cos(x_j) sin(x_j) * ∏_{i≠j} cos²(x_i)
-            let mut prod_cos2_excl_j = 1.0;
-            for (i, &c) in cos_vals.iter().enumerate() {
-                if i != j {
-                    prod_cos2_excl_j *= c.powi(2);
-                }
-            }
-            let db_dxj = -2.0 * cos_xj * sin_xj * prod_cos2_excl_j;
-    
-            let dd_dxj = da_dxj - 2.0 * db_dxj;
-    
-            // ∂C/∂x_j = 2 * j * x_j
-            let dd_dxj = 2.0 * (j as f64 + 1.0) * x[j];
-    
-            grad[j] = (sign_d / sqrt_c) * dd_dxj - (abs_d / c_pow_3_2) * dd_dxj;
-        }
-    
-        Some(grad)
-    }
-    
 }
 
 #[derive(Clone)]
@@ -116,9 +70,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             atol: 0.0,
         },
         alg_conf: AlgConf::PT(PTConf {
-            num_replicas: 10,
-            power_law_init: 3.0,
-            power_law_final: 0.35,
+            num_replicas: 100,
+            power_law_init: 4.0,
+            power_law_final: 0.25,
             power_law_cycles: 1,
             alpha: 0.1,
             omega: 2.1,
@@ -248,7 +202,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 10; 
+        frame.delay = 1; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 
