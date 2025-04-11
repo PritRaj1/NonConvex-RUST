@@ -20,45 +20,50 @@ impl ObjectiveFunction<f64> for KBF {
     }
     fn gradient(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
         let n = x.len();
-        
+    
         let cos_vals: Vec<f64> = x.iter().map(|&xi| xi.cos()).collect();
         let sin_vals: Vec<f64> = x.iter().map(|&xi| xi.sin()).collect();
         
-        let cos4_sum: f64 = cos_vals.iter().map(|&ci| ci.powi(4)).sum();
-        let cos2_prod: f64 = cos_vals.iter().map(|&ci| ci.powi(2)).product();
+        let sum_cos4: f64 = cos_vals.iter().map(|&c| c.powi(4)).sum();
+        let prod_cos2: f64 = cos_vals.iter().map(|&c| c.powi(2)).product();
         let sum_ix2: f64 = x.iter().enumerate().map(|(i, &xi)| (i as f64 + 1.0) * xi * xi).sum();
-        
-        let d = cos4_sum - 2.0 * cos2_prod;
+    
+        let d = sum_cos4 - 2.0 * prod_cos2;
+        let sign_d = d.signum();
+        let abs_d = d.abs();
+    
         let sqrt_c = sum_ix2.sqrt();
-        let sign = d.signum();
-        
-        let grad_a: Vec<f64> = cos_vals.iter()
-            .zip(sin_vals.iter())
-            .map(|(&c, &s)| -4.0 * c.powi(3) * s)
-            .collect();
+        let c_pow_3_2 = sum_ix2.powf(1.5);
     
-        let grad_b: Vec<f64> = x.iter().enumerate().map(|(i, _xi)| {
-            if cos_vals[i].abs() < 1e-8 {
-                0.0  // Avoid division by zero
-            } else {
-                -2.0 * cos2_prod * sin_vals[i] / cos_vals[i]
+        let mut grad = DVector::zeros(n);
+    
+        for j in 0..n {
+            let cos_xj = cos_vals[j];
+            let sin_xj = sin_vals[j];
+    
+            // ∂A/∂x_j = -4 cos³(x_j) sin(x_j)
+            let da_dxj = -4.0 * cos_xj.powi(3) * sin_xj;
+    
+            // ∂B/∂x_j = -2 cos(x_j) sin(x_j) * ∏_{i≠j} cos²(x_i)
+            let mut prod_cos2_excl_j = 1.0;
+            for (i, &c) in cos_vals.iter().enumerate() {
+                if i != j {
+                    prod_cos2_excl_j *= c.powi(2);
+                }
             }
-        }).collect();
+            let db_dxj = -2.0 * cos_xj * sin_xj * prod_cos2_excl_j;
     
-        let grad_d: Vec<f64> = grad_a.iter().zip(grad_b.iter())
-            .map(|(&ga, &gb)| ga - gb)
-            .collect();
+            let dd_dxj = da_dxj - 2.0 * db_dxj;
     
-        let grad_sqrt_c: Vec<f64> = x.iter().enumerate()
-            .map(|(i, &xi)| (i as f64 + 1.0) * xi / sqrt_c)
-            .collect();
+            // ∂C/∂x_j = 2 * j * x_j
+            let dd_dxj = 2.0 * (j as f64 + 1.0) * x[j];
     
-        let grad: Vec<f64> = (0..n)
-            .map(|i| sign * (grad_d[i] * sqrt_c - d * grad_sqrt_c[i]) / sum_ix2)
-            .collect();
+            grad[j] = (sign_d / sqrt_c) * dd_dxj - (abs_d / c_pow_3_2) * dd_dxj;
+        }
     
-        Some(DVector::from_vec(grad))
+        Some(grad)
     }
+    
 }
 
 #[derive(Clone)]
