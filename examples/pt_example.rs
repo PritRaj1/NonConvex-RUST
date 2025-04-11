@@ -66,19 +66,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config {
         opt_conf: OptConf {
             max_iter: 10,
-            rtol: 1e-6,
-            atol: 1e-6,
+            rtol: 0.0,
+            atol: 0.0,
         },
         alg_conf: AlgConf::PT(PTConf {
-            num_replicas: 10,
-            power_law_init: 3.0,
-            power_law_final: 0.35,
+            num_replicas: 20,
+            power_law_init: 4.0,
+            power_law_final: 0.2,
             power_law_cycles: 1,
             alpha: 0.1,
             omega: 2.1,
             swap_check_type: "Always".to_string(),
             swap_frequency: 1.0,
-            swap_probability: 0.5,
+            swap_probability: 0.8,
             mala_step_size: 0.01,
         }),
     };
@@ -87,8 +87,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let constraints = KBFConstraints;
 
     // Randomly spread initial population across domain
-    let mut init_pop = DMatrix::zeros(100, 2);
-    for i in 0..100 {
+    let mut init_pop = DMatrix::zeros(200, 2);
+    for i in 0..200 {
         for j in 0..2 {
             init_pop[(i, j)] = rand::random::<f64>() * 10.0;
         }
@@ -202,7 +202,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 50; 
+        frame.delay = 30; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 

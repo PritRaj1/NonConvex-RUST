@@ -66,16 +66,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config {
         opt_conf: OptConf {
             max_iter: 10,
-            rtol: 1e-6,
-            atol: 1e-6,
+            rtol: 0.0,
+            atol: 0.0,
         },
         alg_conf: AlgConf::CGA(CGAConf {
-            population_size: 100,
-            num_parents: 20,
-            selection_method: "Residual".to_string(),
+            population_size: 200,
+            num_parents: 50,
+            selection_method: "Tournament".to_string(),
             crossover_method: "Heuristic".to_string(),
             crossover_prob: 0.8,
-            tournament_size: 50,
+            tournament_size: 100,
         }),
     };
 
@@ -203,7 +203,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 50; 
+        frame.delay = 30; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 
