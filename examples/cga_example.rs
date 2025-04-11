@@ -70,12 +70,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             atol: 0.0,
         },
         alg_conf: AlgConf::CGA(CGAConf {
-            population_size: 200,
-            num_parents: 50,
+            population_size: 100,
+            num_parents: 20,
             selection_method: "Tournament".to_string(),
             crossover_method: "Heuristic".to_string(),
             crossover_prob: 0.8,
-            tournament_size: 100,
+            tournament_size: 50,
         }),
     };
 
