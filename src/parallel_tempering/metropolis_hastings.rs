@@ -79,12 +79,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
         }
 
         let diff = x_new - x_old;
-        let delta_x = if let Some(grad) = self.prob.objective.gradient(&self.project(x_old)) {
-            T::one()
-        } else {
-            diff.dot(&diff).sqrt()
-        };
-        
+        let delta_x = diff.dot(&diff).sqrt();  
 
         let r: T;
         if t_swap > T::from_f64(0.0).unwrap() { // Pass in next temperature to signal global move

@@ -52,9 +52,7 @@ impl ObjectiveFunction<f64> for KBF {
                 }
             }
             let db_dxj = -2.0 * cos_xj * sin_xj * prod_cos2_excl_j;
-    
-            let dd_dxj = da_dxj - 2.0 * db_dxj;
-    
+        
             // ∂C/∂x_j = 2 * j * x_j
             let dd_dxj = 2.0 * (j as f64 + 1.0) * x[j];
     
@@ -111,7 +109,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 30,
+            max_iter: 100,
             rtol: 0.0,
             atol: 0.0,
         },
@@ -163,7 +161,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut encoder = Encoder::new(&mut gif, 800, 800, &color_palette)?;
     encoder.set_repeat(Repeat::Infinite)?;
 
-    for frame in 0..30 {
+    for frame in 0..100 {
         let root = BitMapBackend::new("examples/pt_frame.png", (800, 800)).into_drawing_area();
         root.fill(&WHITE)?;
 
@@ -248,7 +246,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 10; 
+        frame.delay = 3; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 
