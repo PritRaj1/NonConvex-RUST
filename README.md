@@ -7,6 +7,6 @@ Sources/links to more information in the respective algorithm .md files.
 
 | Algorithm | Description | Visualization |
 |-----------|-------------|---------------|
-| [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) | Population-based natural selection | <img src="./examples/cga_kbf.gif" width="200" alt="CGA Example"> |
-| [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) | Multi-temperature Monte Carlo sampling | <img src="./examples/pt_kbf.gif" width="200" alt="PT Example"> |
+| [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) | Population-based natural selection | <img src="./examples/cga_kbf.gif" width="300" alt="CGA Example"> |
+| [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) | Multi-temperature Monte Carlo sampling | <img src="./examples/pt_kbf.gif" width="300" alt="PT Example"> |
 
