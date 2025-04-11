@@ -18,6 +18,47 @@ impl ObjectiveFunction<f64> for KBF {
         
         (sum_cos4 - 2.0 * prod_cos2).abs() / sum_ix2.sqrt()
     }
+    fn gradient(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
+        let n = x.len();
+        
+        let cos_vals: Vec<f64> = x.iter().map(|&xi| xi.cos()).collect();
+        let sin_vals: Vec<f64> = x.iter().map(|&xi| xi.sin()).collect();
+        
+        let cos4_sum: f64 = cos_vals.iter().map(|&ci| ci.powi(4)).sum();
+        let cos2_prod: f64 = cos_vals.iter().map(|&ci| ci.powi(2)).product();
+        let sum_ix2: f64 = x.iter().enumerate().map(|(i, &xi)| (i as f64 + 1.0) * xi * xi).sum();
+        
+        let d = cos4_sum - 2.0 * cos2_prod;
+        let sqrt_c = sum_ix2.sqrt();
+        let sign = d.signum();
+        
+        let grad_a: Vec<f64> = cos_vals.iter()
+            .zip(sin_vals.iter())
+            .map(|(&c, &s)| -4.0 * c.powi(3) * s)
+            .collect();
+    
+        let grad_b: Vec<f64> = x.iter().enumerate().map(|(i, _xi)| {
+            if cos_vals[i].abs() < 1e-8 {
+                0.0  // Avoid division by zero
+            } else {
+                -2.0 * cos2_prod * sin_vals[i] / cos_vals[i]
+            }
+        }).collect();
+    
+        let grad_d: Vec<f64> = grad_a.iter().zip(grad_b.iter())
+            .map(|(&ga, &gb)| ga - gb)
+            .collect();
+    
+        let grad_sqrt_c: Vec<f64> = x.iter().enumerate()
+            .map(|(i, &xi)| (i as f64 + 1.0) * xi / sqrt_c)
+            .collect();
+    
+        let grad: Vec<f64> = (0..n)
+            .map(|i| sign * (grad_d[i] * sqrt_c - d * grad_sqrt_c[i]) / sum_ix2)
+            .collect();
+    
+        Some(DVector::from_vec(grad))
+    }
 }
 
 #[derive(Clone)]
@@ -65,14 +106,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 10,
+            max_iter: 30,
             rtol: 0.0,
             atol: 0.0,
         },
         alg_conf: AlgConf::PT(PTConf {
-            num_replicas: 20,
-            power_law_init: 4.0,
-            power_law_final: 0.2,
+            num_replicas: 10,
+            power_law_init: 3.0,
+            power_law_final: 0.35,
             power_law_cycles: 1,
             alpha: 0.1,
             omega: 2.1,
@@ -117,7 +158,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut encoder = Encoder::new(&mut gif, 800, 800, &color_palette)?;
     encoder.set_repeat(Repeat::Infinite)?;
 
-    for frame in 0..10 {
+    for frame in 0..30 {
         let root = BitMapBackend::new("examples/pt_frame.png", (800, 800)).into_drawing_area();
         root.fill(&WHITE)?;
 
@@ -202,7 +243,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 30; 
+        frame.delay = 10; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 
