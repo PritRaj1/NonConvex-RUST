@@ -28,9 +28,9 @@ We refer to this problem as "Keane's Bump Function", and the GIF plots the evolu
 \sum_{i=1}^{n} x_i < \frac{15n}{2}
 ```
 
-<div style="text-align:center">
+<p align="center">
 <img src="KBF_contour.png" height="300" alt="KBF Contour" style="display:inline-block"> <img src="KBF_surf.png" height="300" alt="KBF Surface" style="display:inline-block">
-</div>
+</p>
 
 ## Sources and more information
 
