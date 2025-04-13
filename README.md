@@ -31,6 +31,38 @@ The following GIFs are based on the [2D unconstrained maximization problem](./ex
 | <img src="./examples/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Monte Carlo sampling |
 | [Tabu Search (TS)](./src/tabu_search/tabu.md) - Local search with memory | <img src="./examples/tabu_kbf.gif" width="300" alt="Tabu Example"> |
 
+## Usage
+
+```rust
+// Load config from file
+let config = Config::new(include_str!("config.json")).unwrap();
+
+// Or create config directly
+let config = Config {
+    opt_conf: OptConf {
+        max_iter: 1000,
+        rtol: 1e-6,
+        atol: 1e-6,
+    },
+    alg_conf: AlgConf::CGA(CGAConf {
+        population_size: 100,
+        num_parents: 2,
+        selection_method: "Tournament".to_string(),
+        crossover_method: "Random".to_string(),
+        crossover_prob: 0.8,
+        tournament_size: 2,
+    }),
+};
+
+let mut opt = NonConvexOpt::new(
+    config,
+    init_x, // Initial population - must be a DMatrix from nalgebra
+    obj_f,  // Objective function
+    Some(constraints) // Optional constraints
+);
+
+let result = opt.run();
+```
 ## Config
 
 The config is structured as follows:
@@ -80,37 +112,4 @@ The default values are:
         }
     }
 }
-```
-
-## Usage
-
-```rust
-// Load config from file
-let config = Config::new(include_str!("config.json")).unwrap();
-
-// Or create config directly
-let config = Config {
-    opt_conf: OptConf {
-        max_iter: 1000,
-        rtol: 1e-6,
-        atol: 1e-6,
-    },
-    alg_conf: AlgConf::CGA(CGAConf {
-        population_size: 100,
-        num_parents: 2,
-        selection_method: "Tournament".to_string(),
-        crossover_method: "Random".to_string(),
-        crossover_prob: 0.8,
-        tournament_size: 2,
-    }),
-};
-
-let mut opt = NonConvexOpt::new(
-    config,
-    init_x, // Initial population - must be a DMatrix from nalgebra
-    obj_f,  // Objective function
-    Some(constraints) // Optional constraints
-);
-
-let result = opt.run();
 ```
