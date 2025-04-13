@@ -8,6 +8,7 @@ use serde_with::DisplayFromStr;
 pub enum AlgConf {
     CGA(CGAConf),
     PT(PTConf),
+    TS(TabuConf),
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -90,6 +91,26 @@ fn default_swap_check_type() -> String { "Always".to_string() }
 fn default_swap_frequency() -> f64 { 1.0 }
 fn default_swap_probability() -> f64 { 0.1 }
 fn default_mala_step_size() -> f64 { 0.01 }
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct TabuConf {
+    #[serde(default = "default_tabu_list_size")]
+    pub tabu_list_size: usize,
+    #[serde(default = "default_num_neighbors")]
+    pub num_neighbors: usize,
+    #[serde(default = "default_step_size")]
+    pub step_size: f64,
+    #[serde(default = "default_perturbation_prob")]
+    pub perturbation_prob: f64,
+    #[serde(default = "default_tabu_threshold")]
+    pub tabu_threshold: f64,
+}
+
+fn default_tabu_list_size() -> usize { 20 }
+fn default_num_neighbors() -> usize { 50 }
+fn default_step_size() -> f64 { 0.1 }
+fn default_perturbation_prob() -> f64 { 0.3 }
+fn default_tabu_threshold() -> f64 { 1e-6 }
 
 #[derive(Error, Debug)]
 pub enum ConfigError {

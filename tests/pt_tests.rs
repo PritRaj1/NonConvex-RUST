@@ -63,7 +63,7 @@ fn test_metropolis_hastings_local_move() {
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let step_size = DMatrix::identity(2, 2);
-    let x_new = mh.local_move(&x_old, &step_size);
+    let x_new = mh.local_move(&x_old, &step_size, 1.0);
 
     assert_eq!(x_old.len(), x_new.len());
 }
