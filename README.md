@@ -25,13 +25,14 @@ use nalgebra::{DVector, DMatrix};
 
 ## Examples
 
-The following GIFs are based on the [2D unconstrained maximization problem](./examples/test_function.md) in the 'examples' subdirectory.
+The following GIFs are based on the [2D unconstrained maximization problems](./examples/test_functions.md) in the 'examples' subdirectory.
 
 |  |  |
 |-----------|---------------|
 | [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) - Population-based natural selection | <img src="./examples/cga_kbf.gif" width="300" alt="CGA Example"> |
 | <img src="./examples/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Monte Carlo sampling |
 | [Tabu Search (TS)](./src/tabu_search/tabu.md) - Local search with memory | <img src="./examples/tabu_kbf.gif" width="300" alt="Tabu Example"> |
+| <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> | [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation |
 
 ## Usage
 
@@ -74,6 +75,7 @@ The config is structured as follows:
 - `CGAConf` - Continuous Genetic Algorithm configuration
 - `PTConf` - Parallel Tempering configuration
 - `TabuConf` - Tabu Search configuration
+- `AdamConf` - Adam configuration
 
 The default values are:
 
@@ -111,6 +113,12 @@ The default values are:
             "step_size": 0.1,
             "perturbation_prob": 0.3,
             "tabu_threshold": 1e-6
+        },
+        "adam": {
+            "learning_rate": 0.01,
+            "beta1": 0.9,
+            "beta2": 0.999,
+            "epsilon": 1e-8
         }
     }
 }

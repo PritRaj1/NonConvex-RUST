@@ -8,70 +8,46 @@ use std::fs::File;
 use image::ImageReader;
 
 #[derive(Clone)]
-struct KBF;
+struct MultiModalFunction;
 
-impl ObjectiveFunction<f64> for KBF {
+impl ObjectiveFunction<f64> for MultiModalFunction {
     fn f(&self, x: &DVector<f64>) -> f64 {
-        let sum_cos4: f64 = x.iter().map(|&xi| xi.cos().powi(4)).sum();
-        let prod_cos2: f64 = x.iter().map(|&xi| xi.cos().powi(2)).product();
-        let sum_ix2: f64 = x.iter().enumerate().map(|(i, &xi)| (i as f64 + 1.0) * xi * xi).sum();
+        let gaussian1 = -0.5 * ((x[0] - 3.0).powi(2) + (x[1] - 3.0).powi(2));
+        let gaussian2 = -0.3 * ((x[0] - 7.0).powi(2) + (x[1] - 7.0).powi(2));
+        let gaussian3 = -0.2 * ((x[0] - 7.0).powi(2) + (x[1] - 3.0).powi(2));
         
-        (sum_cos4 - 2.0 * prod_cos2).abs() / sum_ix2.sqrt()
+        10.0 * (gaussian1.exp() + gaussian2.exp() + gaussian3.exp())
     }
-    fn gradient(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
-        let n = x.len();
-    
-        let cos_vals: Vec<f64> = x.iter().map(|&xi| xi.cos()).collect();
-        
-        let sum_cos4: f64 = cos_vals.iter().map(|&c| c.powi(4)).sum();
-        let prod_cos2: f64 = cos_vals.iter().map(|&c| c.powi(2)).product();
-        let sum_ix2: f64 = x.iter().enumerate().map(|(i, &xi)| (i as f64 + 1.0) * xi * xi).sum();
-    
-        let d = sum_cos4 - 2.0 * prod_cos2;
-        let sign_d = d.signum();
-        let abs_d = d.abs();
-    
-        let sqrt_c = sum_ix2.sqrt();
-        let c_pow_3_2 = sum_ix2.powf(1.5);
-    
-        let mut grad = DVector::zeros(n);
-    
-        for j in 0..n {
 
-            let mut prod_cos2_excl_j = 1.0;
-            for (i, &c) in cos_vals.iter().enumerate() {
-                if i != j {
-                    prod_cos2_excl_j *= c.powi(2);
-                }
-            }
+    fn gradient(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
+        let mut grad = DVector::zeros(2);
         
-            // ∂C/∂x_j = 2 * j * x_j
-            let dd_dxj = 2.0 * (j as f64 + 1.0) * x[j];
-    
-            grad[j] = (sign_d / sqrt_c) * dd_dxj - (abs_d / c_pow_3_2) * dd_dxj;
-        }
-    
+        let exp1 = (-0.5 * ((x[0] - 3.0).powi(2) + (x[1] - 3.0).powi(2))).exp();
+        grad[0] += 10.0 * exp1 * (-(x[0] - 3.0));
+        grad[1] += 10.0 * exp1 * (-(x[1] - 3.0));
+        
+        let exp2 = (-0.3 * ((x[0] - 7.0).powi(2) + (x[1] - 7.0).powi(2))).exp();
+        grad[0] += 6.0 * exp2 * (-(x[0] - 7.0));
+        grad[1] += 6.0 * exp2 * (-(x[1] - 7.0));
+        
+        let exp3 = (-0.2 * ((x[0] - 7.0).powi(2) + (x[1] - 3.0).powi(2))).exp();
+        grad[0] += 4.0 * exp3 * (-(x[0] - 7.0));
+        grad[1] += 4.0 * exp3 * (-(x[1] - 3.0));
+        
         Some(grad)
     }
 }
 
 #[derive(Clone)]
-struct KBFConstraints;
+struct BoxConstraints;
 
-impl BooleanConstraintFunction<f64> for KBFConstraints {
+impl BooleanConstraintFunction<f64> for BoxConstraints {
     fn g(&self, x: &DVector<f64>) -> bool {
-        let n = x.len();
-        let product: f64 = x.iter().product();
-        let sum: f64 = x.iter().sum();
-        
-        x.iter().all(|&xi| xi >= 0.0 && xi <= 10.0) &&
-        product > 0.75 &&
-        sum < (15.0 * n as f64) / 2.0
+        x.iter().all(|&xi| xi >= 0.0 && xi <= 10.0)
     }
 }
 
-// Create background contour
-fn create_contour_data(obj_f: &KBF, resolution: usize) -> (Vec<Vec<f64>>, f64, f64) {
+fn create_contour_data(obj_f: &MultiModalFunction, resolution: usize) -> (Vec<Vec<f64>>, f64, f64) {
     let mut z = vec![vec![0.0; resolution]; resolution];
     let mut min_val = f64::INFINITY;
     let mut max_val = f64::NEG_INFINITY;
@@ -92,33 +68,38 @@ fn create_contour_data(obj_f: &KBF, resolution: usize) -> (Vec<Vec<f64>>, f64, f
 
 fn is_feasible(x: f64, y: f64) -> bool {
     let point = DVector::from_vec(vec![x, y]);
-    let constraints = KBFConstraints;
+    let constraints = BoxConstraints;
     constraints.g(&point)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 80,
+            max_iter: 100,
             rtol: 1e-6,
             atol: 1e-6,
         },
         alg_conf: AlgConf::Adam(AdamConf {
-            learning_rate: 0.01,
+            learning_rate: 0.05,  // Reduced for this more complex landscape
             beta1: 0.9,
             beta2: 0.999,
             epsilon: 1e-8,
         }),
     };
 
-    let obj_f = KBF;
-    let constraints = KBFConstraints;
+    let obj_f = MultiModalFunction;
+    let constraints = BoxConstraints;
 
     let init_x = DVector::from_vec(vec![
-        rand::random::<f64>() * 10.0,
-        rand::random::<f64>() * 10.0
+        1.0,
+        6.0
     ]);
-    let mut opt = NonConvexOpt::new(config, DMatrix::from_columns(&[init_x.clone()]), obj_f.clone(), Some(constraints));
+    let mut opt = NonConvexOpt::new(
+        config, 
+        DMatrix::from_columns(&[init_x.clone()]), 
+        obj_f.clone(), 
+        Some(constraints)
+    );
 
     let resolution = 100;
     let (z_values, min_val, max_val) = create_contour_data(&obj_f, resolution);
@@ -141,7 +122,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut encoder = Encoder::new(&mut gif, 800, 800, &color_palette)?;
     encoder.set_repeat(Repeat::Infinite)?;
 
-    for frame in 0..80 {
+    for frame in 0..100 {
         let root = BitMapBackend::new("examples/adam_frame.png", (800, 800)).into_drawing_area();
         root.fill(&WHITE)?;
 
@@ -221,7 +202,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 5; 
+        frame.delay = 4; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 
