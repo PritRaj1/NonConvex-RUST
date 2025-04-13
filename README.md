@@ -77,7 +77,7 @@ The default values are:
 
 ```json
     {
-        "opt_conf": {
+    "opt_conf": {
             "max_iter": 1000,
             "rtol": 1e-6,
             "atol": 1e-6
