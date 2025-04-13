@@ -100,7 +100,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 40,
+            max_iter: 80,
             rtol: 0.0,
             atol: 0.0,
         },
@@ -152,7 +152,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut encoder = Encoder::new(&mut gif, 800, 800, &color_palette)?;
     encoder.set_repeat(Repeat::Infinite)?;
 
-    for frame in 0..40 {
+    for frame in 0..80 {
         let root = BitMapBackend::new("examples/pt_frame.png", (800, 800)).into_drawing_area();
         root.fill(&WHITE)?;
 
@@ -237,7 +237,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 10; 
+        frame.delay = 5; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 
