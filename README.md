@@ -86,7 +86,7 @@ The default values are:
 
 ```rust
 // Load config from file
-let config = Config::new(std::fs::read_to_string("config.json")?)?;
+let config = Config::new(include_str!("config.json")).unwrap();
 
 // Or create config directly
 let config = Config {
