@@ -71,7 +71,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Tabu
                 };
                 
                 let fitness = self.opt_prob.objective.f(&neighbor);
-                if is_feasible && (!self.is_tabu(&neighbor) || fitness > self.best_fitness){
+                if is_feasible && (!self.is_tabu(&neighbor) || fitness > self.best_fitness) {
                     Some((neighbor, fitness, is_feasible))
                 } else {
                     None
@@ -79,7 +79,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Tabu
             })
             .collect();
 
-        // Find best non-tabu neighbor
+        // Find best (maximum) non-tabu neighbor
         if let Some((best_neighbor, best_neighbor_fitness, _)) = evaluations
             .into_iter()
             .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
