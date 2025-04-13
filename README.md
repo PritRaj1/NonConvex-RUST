@@ -113,3 +113,5 @@ The default values are:
     }
 }
 ```
+
+See the 'examples' subdirectory for more information on how to the lib.
