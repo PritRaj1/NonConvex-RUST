@@ -2,11 +2,12 @@ pub mod utils;
 pub mod continous_ga;
 pub mod parallel_tempering;
 pub mod tabu_search;
-
+pub mod adam;
 use nalgebra::{DVector, DMatrix};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
 use crate::continous_ga::cga::CGA;
 use crate::parallel_tempering::pt::PT;
+use crate::adam::adam::Adam;
 use crate::tabu_search::tabu::TabuSearch;
 use crate::utils::config::{Config, AlgConf, OptConf};
 
@@ -14,6 +15,7 @@ pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFuncti
     CGA(CGA<T, F, G>),
     PT(PT<T, F, G>),
     TS(TabuSearch<T, F, G>),
+    Adam(Adam<T, F, G>),
 }
 
 pub struct Result<T: FloatNum> {
@@ -37,6 +39,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             AlgConf::CGA(cga_conf) => OptAlg::CGA(CGA::new(cga_conf, init_pop, opt_prob)),
             AlgConf::PT(pt_conf) => OptAlg::PT(PT::new(pt_conf, init_pop, opt_prob, conf.opt_conf.max_iter)),
             AlgConf::TS(ts_conf) => OptAlg::TS(TabuSearch::new(ts_conf, init_pop.column(0).into(), opt_prob)),
+            AlgConf::Adam(adam_conf) => OptAlg::Adam(Adam::new(adam_conf, init_pop.column(0).into(), opt_prob)),
         };
 
         Self { alg, conf: conf.opt_conf }
@@ -47,6 +50,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::CGA(cga) => cga.step(),
             OptAlg::PT(pt) => pt.step(),
             OptAlg::TS(ts) => ts.step(),
+            OptAlg::Adam(adam) => adam.step(),
         }
     }
     
@@ -55,6 +59,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::CGA(cga) => cga.population.clone(),
             OptAlg::PT(pt) => pt.population[pt.population.len()-1].clone(),
             OptAlg::TS(ts) => DMatrix::from_columns(&[ts.x.clone()]),
+            OptAlg::Adam(adam) => DMatrix::from_columns(&[adam.x.clone()]),
         }
     }
 
@@ -63,6 +68,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::CGA(cga) => cga.best_individual.clone(),
             OptAlg::PT(pt) => pt.best_individual.clone(),
             OptAlg::TS(ts) => ts.best_x.clone(),
+            OptAlg::Adam(adam) => adam.x.clone(),
         }
     }
 
@@ -96,6 +102,14 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
                     }
                     previous_best_fitness = ts.best_fitness;
                     iter += 1;
+                },
+                OptAlg::Adam(adam) => {
+                    if (-adam.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (adam.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
+                        println!("Converged in {} iterations", iter);
+                        break;
+                    }
+                    previous_best_fitness = adam.best_fitness;
+                    iter += 1;
                 }
             }
         }
@@ -108,6 +122,12 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
                 let fitness_vec = DVector::from_element(x_matrix.ncols(), ts.best_fitness);
                 let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
                 (ts.best_x.clone(), ts.best_fitness, x_matrix, fitness_vec, constraints_vec)
+            },
+            OptAlg::Adam(adam) => {
+                let x_matrix = DMatrix::from_columns(&[adam.x.clone()]);
+                let fitness_vec = DVector::from_element(x_matrix.ncols(), adam.best_fitness);
+                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
+                (adam.x.clone(), adam.best_fitness, x_matrix, fitness_vec, constraints_vec)
             },
         };
 

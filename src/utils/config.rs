@@ -9,6 +9,7 @@ pub enum AlgConf {
     CGA(CGAConf),
     PT(PTConf),
     TS(TabuConf),
+    Adam(AdamConf),
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -111,6 +112,23 @@ fn default_num_neighbors() -> usize { 50 }
 fn default_step_size() -> f64 { 0.1 }
 fn default_perturbation_prob() -> f64 { 0.3 }
 fn default_tabu_threshold() -> f64 { 1e-6 }
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct AdamConf {
+    #[serde(default = "default_learning_rate")]
+    pub learning_rate: f64,      
+    #[serde(default = "default_beta1")]
+    pub beta1: f64,    
+    #[serde(default = "default_beta2")]
+    pub beta2: f64,     
+    #[serde(default = "default_epsilon")]
+    pub epsilon: f64,    
+}
+
+fn default_learning_rate() -> f64 { 0.001 }
+fn default_beta1() -> f64 { 0.9 }
+fn default_beta2() -> f64 { 0.999 }
+fn default_epsilon() -> f64 { 1e-8 }
 
 #[derive(Error, Debug)]
 pub enum ConfigError {
