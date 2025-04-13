@@ -64,7 +64,7 @@ fn is_feasible(x: f64, y: f64) -> bool {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 400,
+            max_iter: 80,
             rtol: 1e-6,
             atol: 1e-6,
         },
@@ -112,7 +112,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut encoder = Encoder::new(&mut gif, 800, 800, &color_palette)?;
     encoder.set_repeat(Repeat::Infinite)?;
 
-    for frame in 0..400 {
+    for frame in 0..80 {
         let root = BitMapBackend::new("examples/tabu_frame.png", (800, 800)).into_drawing_area();
         root.fill(&WHITE)?;
 
@@ -192,7 +192,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 1; 
+        frame.delay = 5; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 

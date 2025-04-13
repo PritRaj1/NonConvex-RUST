@@ -52,6 +52,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Tabu
             .collect()
     }
 
+    // Check if a neighbor is tabu
     fn is_tabu(&self, x: &DVector<T>) -> bool {
         self.tabu_list.iter().any(|tabu_x| {
             let diff = x - tabu_x;
