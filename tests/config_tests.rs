@@ -1,5 +1,40 @@
+use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{OptConf, CGAConf, AlgConf, Config};
+use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
+use nalgebra::{DVector, DMatrix};
 use serde_json;
+
+#[derive(Debug, Clone)]
+pub struct RosenbrockObjective {
+    pub a: f64,
+    pub b: f64,
+}
+
+impl ObjectiveFunction<f64> for RosenbrockObjective {
+    fn f(&self, x: &DVector<f64>) -> f64 {
+        let n = x.len();
+        let mut sum = 0.0;
+        for i in 0..n-1 {
+            sum += self.b * (x[i+1] - x[i].powi(2)).powi(2) + 
+                   (self.a - x[i]).powi(2);
+        }
+        sum
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RosenbrockConstraints {
+    pub a: f64,
+    pub b: f64,
+}
+
+impl BooleanConstraintFunction<f64> for RosenbrockConstraints {
+    fn g(&self, x: &DVector<f64>) -> bool {
+        // Check if all components are within bounds
+        x.iter().all(|&xi| xi >= 0.0 && xi <= 1.0)
+    }
+}
+
 
 #[test]
 fn test_deserialize_config() {
@@ -62,4 +97,22 @@ fn test_serialize_config() {
     } else {
         panic!("Expected CGAConf");
     }
+}
+
+#[test]
+fn load_solver_from_config() {
+    let config = Config::new(include_str!("config.json")).unwrap();
+    
+    let init_pop = DMatrix::from_vec(2, 2, vec![0.0, 0.0, 0.0, 0.0]);
+    
+    let opt = NonConvexOpt::new(
+        config, 
+        init_pop,
+        RosenbrockObjective { a: 1.0, b: 100.0 },
+        Some(RosenbrockConstraints { a: 0.0, b: 1.0 })
+    );
+
+    assert_eq!(opt.get_population().column(0), DVector::from_vec(vec![0.0, 0.0]));
+    assert_eq!(opt.get_population().column(1), DVector::from_vec(vec![0.0, 0.0]));
+    assert_eq!(opt.get_best_individual(), DVector::from_vec(vec![0.0, 0.0]));
 }

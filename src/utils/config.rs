@@ -134,4 +134,9 @@ impl Config {
         serde_json::to_string(self)
             .map_err(|e| ConfigError::SerializationError(e.to_string()))
     }
+
+    #[cfg(test)]
+    pub fn from_str(json: &str) -> Self {
+        serde_json::from_str(json).expect("Failed to parse config JSON")
+    }
 }
