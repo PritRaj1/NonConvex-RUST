@@ -91,7 +91,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut init_pop = DMatrix::zeros(cga_conf.population_size, 2);
     for i in 0..cga_conf.population_size {
         for j in 0..2 {
-            init_pop[(i, j)] = rand::random::<f64>() * 10.0;
+            init_pop[(i, j)] = 3.0 + (rand::random::<f64>() * 5.0);
         }
     }
 

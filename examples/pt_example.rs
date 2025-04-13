@@ -108,7 +108,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             num_replicas: 10,
             power_law_init: 3.0,
             power_law_final: 0.35,
-            power_law_cycles: 1,
+            power_law_cycles: 0,
             alpha: 0.1,
             omega: 2.1,
             swap_check_type: "Always".to_string(),
@@ -125,7 +125,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut init_pop = DMatrix::zeros(100, 2);
     for i in 0..100 {
         for j in 0..2 {
-            init_pop[(i, j)] = rand::random::<f64>() * 10.0;
+            init_pop[(i, j)] = 3.0 + (rand::random::<f64>() * 5.0);
         }
     }
 
