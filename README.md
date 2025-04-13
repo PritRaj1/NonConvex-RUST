@@ -107,7 +107,7 @@ let config = Config {
 
 let mut opt = NonConvexOpt::new(
     config,
-    init_x, // Initial population - must be a DMatrix 
+    init_x, // Initial population - must be a DMatrix from nalgebra
     obj_f,  // Objective function
     Some(constraints) // Optional constraints
 );
