@@ -70,8 +70,8 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Tabu
                     None => true,
                 };
                 
-                if is_feasible && !self.is_tabu(&neighbor) {
-                    let fitness = self.opt_prob.objective.f(&neighbor);
+                let fitness = self.opt_prob.objective.f(&neighbor);
+                if is_feasible && (!self.is_tabu(&neighbor) || fitness > self.best_fitness){
                     Some((neighbor, fitness, is_feasible))
                 } else {
                     None
