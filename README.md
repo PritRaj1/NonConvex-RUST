@@ -1,4 +1,6 @@
 # NonConvex-RUST
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
 Non-convex optimizers implemented in RUST for constrained and unconstrained maximization problems. 
 
 Sources/links to more information in the respective algorithm .md files.
@@ -115,3 +117,7 @@ The default values are:
 ```
 
 See the 'examples' subdirectory for more information on how to the lib.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
