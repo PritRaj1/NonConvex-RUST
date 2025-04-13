@@ -80,11 +80,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let obj_f = KBF;
     let constraints = KBFConstraints;
 
-    let tabu_conf = match &config.alg_conf {
-        AlgConf::TS(conf) => conf,
-        _ => panic!("Expected Tabu configuration"),
-    };
-
     let init_x = DVector::from_vec(vec![
         rand::random::<f64>() * 10.0,
         rand::random::<f64>() * 10.0
