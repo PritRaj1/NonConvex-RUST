@@ -168,21 +168,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        // Draw current individual in red
-        let population = opt.get_population();
-        let current_x = population.column(0);
-        chart.draw_series(std::iter::once(Circle::new(
-            (current_x[0], current_x[1]),
-            6,
-            RGBColor(255, 0, 0).filled(),
-        )))?;
-
         // Draw best individual in yellow
         let best_x = opt.get_best_individual();
         chart.draw_series(std::iter::once(Circle::new(
             (best_x[0], best_x[1]),
             6,
-            RGBColor(255, 255, 0).filled(),
+            RGBColor(255, 0, 0).filled(),
         )))?;
 
         // Save frame
