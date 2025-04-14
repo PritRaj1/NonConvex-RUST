@@ -22,6 +22,7 @@ rayon = "1.10.0"
 plotters = "0.3.7"
 gif = "0.13.1"
 image = "0.25.6"
+criterion = "0.5.1"
 
 [lib]
 name = "non_convex_opt"

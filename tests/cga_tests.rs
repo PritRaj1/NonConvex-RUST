@@ -1,40 +1,11 @@
-use non_convex_opt::utils::config::{CGAConf};
-use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction, OptProb};
+mod common;
+use non_convex_opt::utils::config::CGAConf;
+use non_convex_opt::utils::opt_prob::OptProb;
+use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
 use non_convex_opt::continous_ga::selection::{RouletteWheel, Tournament, Residual};
 use non_convex_opt::continous_ga::crossover::{Random, Heuristic};
 use non_convex_opt::continous_ga::cga::CGA;
 use nalgebra::{DMatrix, DVector};
-
-#[derive(Debug, Clone)]
-pub struct RosenbrockObjective {
-    pub a: f64,
-    pub b: f64,
-}
-
-impl ObjectiveFunction<f64> for RosenbrockObjective {
-    fn f(&self, x: &DVector<f64>) -> f64 {
-        let n = x.len();
-        let mut sum = 0.0;
-        for i in 0..n-1 {
-            sum += self.b * (x[i+1] - x[i].powi(2)).powi(2) + 
-                   (self.a - x[i]).powi(2);
-        }
-        sum
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct RosenbrockConstraints {
-    pub a: f64,
-    pub b: f64,
-}
-
-impl BooleanConstraintFunction<f64> for RosenbrockConstraints {
-    fn g(&self, x: &DVector<f64>) -> bool {
-        // Check if all components are within bounds
-        x.iter().all(|&xi| xi >= 0.0 && xi <= 1.0)
-    }
-}
 
 #[test]
 fn test_roulette_wheel_selection() {
@@ -114,8 +85,8 @@ fn test_cga() {
         }
     }
 
-    let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
-    let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
+    let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
+    let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(obj_f, Some(constraints));
     let mut cga = CGA::new(conf, init_pop, opt_prob);
 

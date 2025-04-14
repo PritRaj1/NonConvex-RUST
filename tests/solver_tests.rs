@@ -1,34 +1,9 @@
+mod common;
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, CGAConf, PTConf};
-use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
-use nalgebra::{DVector, DMatrix};
-
-#[derive(Clone)]
-struct Rosenbrock;
-
-impl ObjectiveFunction<f64> for Rosenbrock {
-    fn f(&self, x: &DVector<f64>) -> f64 {
-        let mut sum = 0.0;
-        for i in 0..(x.len() - 1) {
-            let xi = x[i];
-            let xi1 = x[i + 1];
-            sum += 100.0 * (xi1 - xi * xi).powi(2) + (1.0 - xi).powi(2);
-        }
-        sum
-    }
-}
-
-#[derive(Clone)]
-struct BoxConstraints {
-    lower: f64,
-    upper: f64,
-}
-
-impl BooleanConstraintFunction<f64> for BoxConstraints {
-    fn g(&self, x: &DVector<f64>) -> bool {
-        x.iter().all(|&xi| xi >= self.lower && xi <= self.upper)
-    }
-}
+use non_convex_opt::utils::opt_prob::ObjectiveFunction;
+use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+use nalgebra::DMatrix;
 
 #[test]
 fn test_cga() {
@@ -55,11 +30,10 @@ fn test_cga() {
         }
     }
 
-    let constraints = BoxConstraints { lower: -2.0, upper: 2.0 };
-    let mut opt = NonConvexOpt::new(conf, init_pop.clone(), Rosenbrock, Some(constraints));
+    let mut opt = NonConvexOpt::new(conf, init_pop.clone(), RosenbrockObjective{ a: 1.0, b: 1.0}, Some(RosenbrockConstraints{}));
 
     let initial_best_fitness: f64 = init_pop.row_iter()
-        .map(|row| Rosenbrock.f(&row.transpose()))
+        .map(|row| RosenbrockObjective{ a: 1.0, b: 1.0}.f(&row.transpose()))
         .fold(f64::INFINITY, |a, b| a.min(b));
 
     let result = opt.run();
@@ -100,11 +74,10 @@ fn test_pt() {
         }
     }
 
-    let constraints = BoxConstraints { lower: -2.0, upper: 2.0 };
-    let mut opt = NonConvexOpt::new(conf, init_pop.clone(), Rosenbrock, Some(constraints));
+    let mut opt = NonConvexOpt::new(conf, init_pop.clone(), RosenbrockObjective{ a: 1.0, b: 1.0}, Some(RosenbrockConstraints{}));
 
     let initial_best_fitness: f64 = init_pop.row_iter()
-        .map(|row| Rosenbrock.f(&row.transpose()))
+        .map(|row| RosenbrockObjective{ a: 1.0, b: 1.0}.f(&row.transpose()))
         .fold(f64::INFINITY, |a, b| a.min(b));
 
     println!("Initial best fitness: {}", initial_best_fitness);

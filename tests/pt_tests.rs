@@ -1,44 +1,15 @@
+mod common;
 use non_convex_opt::parallel_tempering::pt::PT;
 use non_convex_opt::parallel_tempering::metropolis_hastings::{MetropolisHastings, update_step_size};
-use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction, OptProb};
+use non_convex_opt::utils::opt_prob::OptProb;
 use non_convex_opt::utils::config::PTConf;
+use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
 use nalgebra::{DVector, DMatrix};
-
-#[derive(Debug, Clone)]
-pub struct RosenbrockObjective {
-    pub a: f64,
-    pub b: f64,
-}
-
-impl ObjectiveFunction<f64> for RosenbrockObjective {
-    fn f(&self, x: &DVector<f64>) -> f64 {
-        let n = x.len();
-        let mut sum = 0.0;
-        for i in 0..n-1 {
-            sum += self.b * (x[i+1] - x[i].powi(2)).powi(2) + 
-                   (self.a - x[i]).powi(2);
-        }
-        sum
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct RosenbrockConstraints {
-    pub a: f64,
-    pub b: f64,
-}
-
-impl BooleanConstraintFunction<f64> for RosenbrockConstraints {
-    fn g(&self, x: &DVector<f64>) -> bool {
-        // Check if all components are within bounds
-        x.iter().all(|&xi| xi >= 0.0 && xi <= 1.0)
-    }
-}
 
 #[test]
 fn test_metropolis_hastings_accept_reject() {
-    let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
-    let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
+    let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
+    let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(obj_f, Some(constraints));
 
     let mh = MetropolisHastings::new(opt_prob, 0.1);
@@ -56,8 +27,8 @@ fn test_metropolis_hastings_accept_reject() {
 
 #[test]
 fn test_metropolis_hastings_local_move() {
-    let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
-    let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
+    let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
+    let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(obj_f, Some(constraints));
     let mh = MetropolisHastings::new(opt_prob, 0.1);
 
@@ -97,8 +68,8 @@ fn test_pt_swap() {
     };
 
     let init_pop = DMatrix::from_vec(2, 2, vec![0.5, 0.5, 0.5, 0.5]);
-    let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
-    let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
+    let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
+    let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(obj_f, Some(constraints));
     let mut pt = PT::new(conf, init_pop, opt_prob, 5);
 
@@ -125,8 +96,8 @@ fn test_pt_step() {
     };
 
     let init_pop = DMatrix::from_vec(2, 2, vec![0.5, 0.5, 0.5, 0.5]);
-    let obj_f = RosenbrockObjective{a: 1.0, b: 100.0};
-    let constraints = RosenbrockConstraints{a: 1.0, b: 100.0};
+    let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
+    let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(obj_f, Some(constraints));
     let mut pt = PT::new(conf, init_pop, opt_prob, 5);
 
