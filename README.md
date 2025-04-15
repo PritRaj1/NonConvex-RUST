@@ -23,17 +23,6 @@ use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFuncti
 use nalgebra::{DVector, DMatrix};
 ```
 
-## Examples
-
-The following GIFs are based on poor initializations of the [2D unconstrained maximization problems](./examples/test_functions.md) in the 'examples' subdirectory.
-
-|  |  |
-|-----------|---------------|
-| [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) - Population-based natural selection | <img src="./examples/cga_kbf.gif" width="300" alt="CGA Example"> |
-| <img src="./examples/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Monte Carlo sampling |
-| [Tabu Search (TS)](./src/tabu_search/tabu.md) - Local search with memory | <img src="./examples/tabu_kbf.gif" width="300" alt="Tabu Example"> |
-| <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> | [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation |
-
 ## Usage
 
 ```rust
@@ -76,7 +65,18 @@ let result = opt.run();
 ```
 To see the differences between setting up unconstrained and constrained problems, please refer to the [benches](./benches) subdirectory.
 
-See the 'examples' subdirectory for more information on how to use the lib in general.
+See the [examples](./examples) subdirectory for more examples on how to use the lib in general.
+
+## Examples
+
+The following GIFs are based on poor initializations of the [2D unconstrained maximization problems](./examples/test_functions.md) in the 'examples' subdirectory.
+
+|  |  |
+|-----------|---------------|
+| [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) - Population-based natural selection | <img src="./examples/cga_kbf.gif" width="300" alt="CGA Example"> |
+| <img src="./examples/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Monte Carlo sampling |
+| [Tabu Search (TS)](./src/tabu_search/tabu.md) - Local search with memory | <img src="./examples/tabu_kbf.gif" width="300" alt="Tabu Example"> |
+| <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> | [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation |
 
 ## Config
 
