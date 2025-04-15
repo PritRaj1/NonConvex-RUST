@@ -74,6 +74,10 @@ let mut opt = NonConvexOpt::new(
 
 let result = opt.run();
 ```
+To see the differences between setting up unconstrained and constrained problems, please refer to the [benches](./benches) subdirectory.
+
+See the 'examples' subdirectory for more information on how to use the lib in general.
+
 ## Config
 
 The config is structured as follows:
@@ -131,8 +135,6 @@ The default values are:
     }
 }
 ```
-
-See the 'examples' subdirectory for more information on how to use the lib.
 
 ## License
 
