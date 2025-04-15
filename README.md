@@ -63,9 +63,9 @@ let mut opt = NonConvexOpt::new(
 
 let result = opt.run();
 ```
-To see the differences between setting up unconstrained and constrained problems, please refer to the [benches](./benches) subdirectory.
+To see the differences between setting up unconstrained and constrained problems, please refer to the [benches/](./benches) subdirectory.
 
-See the [examples](./examples) subdirectory for more examples on how to use the lib in general.
+See the [examples/](./examples) subdirectory for more examples on how to use the lib in general.
 
 ## Examples
 
@@ -83,11 +83,13 @@ The following GIFs are based on poor initializations of the [2D unconstrained ma
 The config is structured as follows:
 
 - `OptConf` - Optimization configuration
-- `AlgConf` - Algorithm configuration
-- `CGAConf` - Continuous Genetic Algorithm configuration
-- `PTConf` - Parallel Tempering configuration
-- `TabuConf` - Tabu Search configuration
-- `AdamConf` - Adam configuration
+- `AlgConf` - Algorithm configuration, containing one of:
+    - `CGAConf` - Continuous Genetic Algorithm configuration
+    - `PTConf` - Parallel Tempering configuration
+    - `TabuConf` - Tabu Search configuration
+    - `AdamConf` - Adam configuration
+
+An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/blob/main/tests/config.json)
 
 The default values are:
 
