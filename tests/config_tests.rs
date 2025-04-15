@@ -38,6 +38,7 @@ fn test_serialize_config() {
             max_iter: 500,
             rtol: 1e-5,
             atol: 1e-4,
+            rtol_max_iter_fraction: 1.0,
         },
         alg_conf: AlgConf::CGA(CGAConf {
             population_size: 200,

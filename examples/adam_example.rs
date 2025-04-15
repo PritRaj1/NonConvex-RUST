@@ -14,6 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             max_iter: 100,
             rtol: 1e-6,
             atol: 1e-6,
+            rtol_max_iter_fraction: 1.0,
         },
         alg_conf: AlgConf::Adam(AdamConf {
             learning_rate: 0.05, 

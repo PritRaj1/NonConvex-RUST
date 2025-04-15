@@ -18,7 +18,7 @@ non_convex_opt = "0.1.0"
 
 ```rust
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::{Config, OptConf, AlgConf, CGAConf, PTConf, TabuConf};
+use non_convex_opt::utils::config::{Config, OptConf, AlgConf, CGAConf, PTConf, TabuConf, GRASPConf, AdamConf};
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
 use nalgebra::{DVector, DMatrix};
 ```
@@ -35,6 +35,7 @@ let config = Config {
         max_iter: 1000,
         rtol: 1e-6,
         atol: 1e-6,
+        rtol_max_iter_fraction: 1.0,
     },
     alg_conf: AlgConf::CGA(CGAConf {
         population_size: 100,
@@ -76,7 +77,8 @@ The following GIFs are based on poor initializations of the [2D unconstrained ma
 | [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) - Population-based natural selection | <img src="./examples/cga_kbf.gif" width="300" alt="CGA Example"> |
 | <img src="./examples/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Monte Carlo sampling |
 | [Tabu Search (TS)](./src/tabu_search/tabu.md) - Local search with memory | <img src="./examples/tabu_kbf.gif" width="300" alt="Tabu Example"> |
-| <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> | [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation |
+| <img src="./examples/grasp_kbf.gif" width="300" alt="GRASP Example"> | [Greedy Randomized Adaptive Search Procedure (GRASP)](./src/grasp/GRASP.md) - Construction and local search |
+| [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation | <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> | 
 
 ## Config
 
@@ -87,6 +89,7 @@ The config is structured as follows:
     - `CGAConf` - Continuous Genetic Algorithm configuration
     - `PTConf` - Parallel Tempering configuration
     - `TabuConf` - Tabu Search configuration
+    - `GRASPConf` - Greedy Randomized Adaptive Search Procedure configuration
     - `AdamConf` - Adam configuration
 
 An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/blob/main/tests/config.json). The default values are:
@@ -96,7 +99,8 @@ An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/bl
     "opt_conf": {
             "max_iter": 1000,
             "rtol": 1e-6,
-            "atol": 1e-6
+            "atol": 1e-6,
+            "rtol_max_iter_fraction": 1.0
         },
     "alg_conf": {
         "cga": {
@@ -125,6 +129,13 @@ An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/bl
             "step_size": 0.1,
             "perturbation_prob": 0.3,
             "tabu_threshold": 1e-6
+        },
+        "grasp": {
+            "num_candidates": 30,
+            "alpha": 0.3,
+            "num_neighbors": 10,
+            "step_size": 0.1,
+            "perturbation_prob": 0.3
         },
         "adam": {
             "learning_rate": 0.01,

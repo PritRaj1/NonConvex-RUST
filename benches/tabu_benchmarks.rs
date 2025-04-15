@@ -13,6 +13,7 @@ fn bench_tabu_unconstrained(c: &mut Criterion) {
             max_iter: 10,
             rtol: -1e8,
             atol: -1e8,
+            rtol_max_iter_fraction: 1.0,
         },
         alg_conf: AlgConf::TS(TabuConf {
             num_neighbors: 100,
@@ -43,6 +44,7 @@ fn bench_tabu_constrained(c: &mut Criterion) {
             max_iter: 10,
             rtol: -1e8,
             atol: -1e8,
+            rtol_max_iter_fraction: 1.0,
         },
         alg_conf: AlgConf::TS(TabuConf {
             num_neighbors: 100,

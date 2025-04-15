@@ -13,6 +13,7 @@ fn bench_pt_unconstrained(c: &mut Criterion) {
             max_iter: 10,
             rtol: -1e8,
             atol: -1e8,
+            rtol_max_iter_fraction: 1.0,
         },
         alg_conf: AlgConf::PT(PTConf {
             num_replicas: 10,
@@ -48,6 +49,7 @@ fn bench_pt_constrained(c: &mut Criterion) {
             max_iter: 10,
             rtol: -1e8,
             atol: -1e8,
+            rtol_max_iter_fraction: 1.0,
         },
         alg_conf: AlgConf::PT(PTConf {
             num_replicas: 10,

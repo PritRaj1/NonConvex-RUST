@@ -12,9 +12,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 5,
-            rtol: 0.0,
-            atol: 0.0,
+            max_iter: 100,
+            rtol: 1e-6,
+            atol: 1e-6,
+            rtol_max_iter_fraction: 1.0,
         },
         alg_conf: AlgConf::CGA(CGAConf {
             population_size: 100,

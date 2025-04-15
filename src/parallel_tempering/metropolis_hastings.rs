@@ -58,7 +58,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
     }
 
     fn project(&self, x: &DVector<T>) -> DVector<T> {
-        if let (Some(x_ub), Some(x_lb)) = (&self.prob.objective.x_upper_bound(), &self.prob.objective.x_lower_bound()) {
+        if let (Some(x_ub), Some(x_lb)) = (&self.prob.objective.x_upper_bound(x), &self.prob.objective.x_lower_bound(x)) {
             x.component_mul(&(x_ub.clone() - x_lb.clone())) + x_lb.clone()
         } else {
             x.clone()

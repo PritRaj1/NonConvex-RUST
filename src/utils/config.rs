@@ -10,6 +10,7 @@ pub enum AlgConf {
     PT(PTConf),
     TS(TabuConf),
     Adam(AdamConf),
+    GRASP(GRASPConf),
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -29,11 +30,14 @@ pub struct OptConf {
     #[serde_as(as = "DisplayFromStr")]
     #[serde(default = "default_atol")]
     pub atol: f64,
+    #[serde(default = "default_rtol_max_iter_fraction")] 
+    pub rtol_max_iter_fraction: f64,
 }
 
 fn default_max_iter() -> usize { 1000 }
 fn default_rtol() -> f64 { 1e-6 }
 fn default_atol() -> f64 { 1e-6 }
+fn default_rtol_max_iter_fraction() -> f64 { 1.0 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CGAConf {    
@@ -129,6 +133,26 @@ fn default_learning_rate() -> f64 { 0.001 }
 fn default_beta1() -> f64 { 0.9 }
 fn default_beta2() -> f64 { 0.999 }
 fn default_epsilon() -> f64 { 1e-8 }
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct GRASPConf {
+    #[serde(default = "default_grasp_num_candidates")]
+    pub num_candidates: usize,
+    #[serde(default = "default_grasp_alpha")]
+    pub alpha: f64,
+    #[serde(default = "default_grasp_num_neighbors")]
+    pub num_neighbors: usize,
+    #[serde(default = "default_grasp_step_size")]
+    pub step_size: f64,
+    #[serde(default = "default_grasp_perturbation_prob")]
+    pub perturbation_prob: f64,
+}
+
+fn default_grasp_num_candidates() -> usize { 100 }
+fn default_grasp_alpha() -> f64 { 0.3 }
+fn default_grasp_num_neighbors() -> usize { 50 }
+fn default_grasp_step_size() -> f64 { 0.1 }
+fn default_grasp_perturbation_prob() -> f64 { 0.3 }
 
 #[derive(Error, Debug)]
 pub enum ConfigError {

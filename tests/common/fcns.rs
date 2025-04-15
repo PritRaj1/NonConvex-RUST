@@ -53,12 +53,12 @@ impl ObjectiveFunction<f64> for QuadraticObjective {
         Some(grad)
     }
 
-    fn x_lower_bound(&self) -> Option<DVector<f64>> {
-        Some(DVector::from_element(2, 0.0))
+    fn x_lower_bound(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
+        Some(DVector::from_element(x.len(), 0.0))
     }
 
-    fn x_upper_bound(&self) -> Option<DVector<f64>> {
-        Some(DVector::from_element(2, 1.0))
+    fn x_upper_bound(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
+        Some(DVector::from_element(x.len(), 1.0))
     }
 }
 

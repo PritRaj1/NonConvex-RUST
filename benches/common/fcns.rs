@@ -11,6 +11,14 @@ impl ObjectiveFunction<f64> for KBF {
         let sum_ix2: f64 = x.iter().enumerate().map(|(i, &xi)| (i as f64 + 1.0) * xi * xi).sum();
         (sum_cos4 - 2.0 * prod_cos2).abs() / sum_ix2.sqrt()
     }
+
+    fn x_lower_bound(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
+        Some(DVector::from_element(x.len(), 0.0))
+    }
+
+    fn x_upper_bound(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
+        Some(DVector::from_element(x.len(), 10.0))
+    }
 }
 
 #[derive(Clone)]

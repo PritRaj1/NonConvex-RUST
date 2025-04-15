@@ -3,12 +3,14 @@ pub mod continous_ga;
 pub mod parallel_tempering;
 pub mod tabu_search;
 pub mod adam;
+pub mod grasp;
 use nalgebra::{DVector, DMatrix};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
 use crate::continous_ga::cga::CGA;
 use crate::parallel_tempering::pt::PT;
 use crate::adam::adam::Adam;
 use crate::tabu_search::tabu::TabuSearch;
+use crate::grasp::grasp::GRASP;
 use crate::utils::config::{Config, AlgConf, OptConf};
 
 pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
@@ -16,6 +18,7 @@ pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFuncti
     PT(PT<T, F, G>),
     TS(TabuSearch<T, F, G>),
     Adam(Adam<T, F, G>),
+    GRASP(GRASP<T, F, G>),
 }
 
 pub struct Result<T: FloatNum> {
@@ -42,15 +45,15 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             AlgConf::PT(pt_conf) => OptAlg::PT(PT::new(pt_conf, init_pop, opt_prob, conf.opt_conf.max_iter)),
             AlgConf::TS(ts_conf) => OptAlg::TS(TabuSearch::new(ts_conf, init_pop.column(0).into(), opt_prob)),
             AlgConf::Adam(adam_conf) => OptAlg::Adam(Adam::new(adam_conf, init_pop.column(0).into(), opt_prob)),
+            AlgConf::GRASP(grasp_conf) => OptAlg::GRASP(GRASP::new(grasp_conf, init_pop.column(0).into(), opt_prob)),
         };
 
         Self { alg, conf: conf.opt_conf, iter: 0, converged: false }
     }
 
     fn check_convergence(&self, current_best: T, previous_best: T, iter: usize) -> bool {
-        let converged = (-current_best).exp() <= T::from_f64(self.conf.atol).unwrap() 
-            || (current_best - previous_best).abs() <= T::from_f64(self.conf.rtol).unwrap();
-        
+        let converged = (-current_best).exp() <= T::from_f64(self.conf.atol).unwrap()
+            || ((current_best - previous_best).abs() <= T::from_f64(self.conf.rtol).unwrap() && iter > (self.conf.max_iter as f64 * self.conf.rtol_max_iter_fraction).floor() as usize);
         if converged {
             println!("Converged in {} iterations", iter);
         }
@@ -68,6 +71,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::PT(pt) => pt.best_fitness,
             OptAlg::TS(ts) => ts.best_fitness,
             OptAlg::Adam(adam) => adam.best_fitness,
+            OptAlg::GRASP(grasp) => grasp.best_fitness,
         };
 
         match &mut self.alg {
@@ -75,6 +79,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::PT(pt) => pt.step(),
             OptAlg::TS(ts) => ts.step(),
             OptAlg::Adam(adam) => adam.step(),
+            OptAlg::GRASP(grasp) => grasp.step(),
         }
 
         let current_best_fitness = match &self.alg {
@@ -82,6 +87,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::PT(pt) => pt.best_fitness,
             OptAlg::TS(ts) => ts.best_fitness,
             OptAlg::Adam(adam) => adam.best_fitness,
+            OptAlg::GRASP(grasp) => grasp.best_fitness,
         };
 
         self.converged = self.check_convergence(
@@ -99,6 +105,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::PT(pt) => pt.population[pt.population.len()-1].clone(),
             OptAlg::TS(ts) => DMatrix::from_columns(&[ts.x.clone()]),
             OptAlg::Adam(adam) => DMatrix::from_columns(&[adam.x.clone()]),
+            OptAlg::GRASP(grasp) => DMatrix::from_columns(&[grasp.x.clone()]),
         }
     }
 
@@ -108,6 +115,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::PT(pt) => pt.best_individual.clone(),
             OptAlg::TS(ts) => ts.best_x.clone(),
             OptAlg::Adam(adam) => adam.x.clone(),
+            OptAlg::GRASP(grasp) => grasp.best_x.clone(),
         }
     }
 
@@ -130,6 +138,12 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
                 let fitness_vec = DVector::from_element(x_matrix.ncols(), adam.best_fitness);
                 let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
                 (adam.x.clone(), adam.best_fitness, x_matrix, fitness_vec, constraints_vec)
+            },
+            OptAlg::GRASP(grasp) => {
+                let x_matrix = DMatrix::from_columns(&[grasp.x.clone()]);
+                let fitness_vec = DVector::from_element(x_matrix.ncols(), grasp.best_fitness);
+                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
+                (grasp.x.clone(), grasp.best_fitness, x_matrix, fitness_vec, constraints_vec)
             },
         };
 

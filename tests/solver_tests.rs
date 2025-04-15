@@ -9,9 +9,10 @@ use nalgebra::DMatrix;
 fn test_cga() {
     let conf = Config {
         opt_conf: OptConf {
-            max_iter: 1000,
-            rtol: 1e-2,
-            atol: 1e-2,
+            max_iter: 100,
+            rtol: 1e-6,
+            atol: 1e-6,
+            rtol_max_iter_fraction: 1.0,
         },
         alg_conf: AlgConf::CGA(CGAConf {
             population_size: 50,
@@ -52,6 +53,7 @@ fn test_pt() {
             max_iter: 2,
             rtol: 1e-2,
             atol: 1e-2,
+            rtol_max_iter_fraction: 1.0,
         },
         alg_conf: AlgConf::PT(PTConf {
             num_replicas: 1000,

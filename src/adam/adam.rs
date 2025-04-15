@@ -58,8 +58,8 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Adam
         // Project onto feasible set if needed
         if let Some(ref constraints) = self.opt_prob.constraints {
             if !constraints.g(&self.x) {
-                if let (Some(lb), Some(ub)) = (self.opt_prob.objective.x_lower_bound(), 
-                                             self.opt_prob.objective.x_upper_bound()) {
+                if let (Some(lb), Some(ub)) = (self.opt_prob.objective.x_lower_bound(&self.x), 
+                                             self.opt_prob.objective.x_upper_bound(&self.x)) {
                     for i in 0..self.x.len() {
                         self.x[i] = self.x[i].max(lb[i]).min(ub[i]);
                     }
