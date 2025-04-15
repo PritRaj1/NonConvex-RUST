@@ -11,8 +11,8 @@ fn bench_pt_unconstrained(c: &mut Criterion) {
     let config = Config {
         opt_conf: OptConf {
             max_iter: 10,
-            rtol: 0.0,
-            atol: 0.0,
+            rtol: -1e8,
+            atol: -1e8,
         },
         alg_conf: AlgConf::PT(PTConf {
             num_replicas: 10,
@@ -46,8 +46,8 @@ fn bench_pt_constrained(c: &mut Criterion) {
     let config = Config {
         opt_conf: OptConf {
             max_iter: 10,
-            rtol: 0.0,
-            atol: 0.0,
+            rtol: -1e8,
+            atol: -1e8,
         },
         alg_conf: AlgConf::PT(PTConf {
             num_replicas: 10,

@@ -11,8 +11,8 @@ fn bench_adam_unconstrained(c: &mut Criterion) {
     let config = Config {
         opt_conf: OptConf {
             max_iter: 10,
-            rtol: 0.0,
-            atol: 0.0,
+            rtol: -1e8,
+            atol: -1e8,
         },
         alg_conf: AlgConf::Adam(AdamConf {
             learning_rate: 0.05,
@@ -40,8 +40,8 @@ fn bench_adam_constrained(c: &mut Criterion) {
     let config = Config {
         opt_conf: OptConf {
             max_iter: 10,
-            rtol: 0.0,
-            atol: 0.0,
+            rtol: -1e8,
+            atol: -1e8,
         },
         alg_conf: AlgConf::Adam(AdamConf {
             learning_rate: 0.05,
