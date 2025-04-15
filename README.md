@@ -64,9 +64,7 @@ let mut opt = NonConvexOpt::new(
 
 let result = opt.run();
 ```
-To see the differences between setting up unconstrained and constrained problems, please refer to the [benches/](./benches) subdirectory.
-
-See the [examples/](./examples) subdirectory for more samples on using the lib.
+To see the differences between setting up unconstrained and constrained problems, please refer to the [benches/](./benches) subdirectory. See the [examples/](./examples) subdirectory for more direction on using the lib.
 
 ## Examples
 
