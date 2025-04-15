@@ -51,9 +51,9 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
         let converged = (-current_best).exp() <= T::from_f64(self.conf.atol).unwrap() 
             || (current_best - previous_best).abs() <= T::from_f64(self.conf.rtol).unwrap();
         
-        if converged {
-            println!("Converged in {} iterations", iter);
-        }
+        // if converged {
+        //     println!("Converged in {} iterations", iter);
+        // }
         
         converged
     }
