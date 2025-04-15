@@ -30,6 +30,8 @@ pub struct Result<T: FloatNum> {
 pub struct NonConvexOpt<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub alg: OptAlg<T, F, G>,
     pub conf: OptConf,
+    pub iter: usize,
+    pub converged: bool,
 }
 
 impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonConvexOpt<T, F, G> {
@@ -42,16 +44,53 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             AlgConf::Adam(adam_conf) => OptAlg::Adam(Adam::new(adam_conf, init_pop.column(0).into(), opt_prob)),
         };
 
-        Self { alg, conf: conf.opt_conf }
+        Self { alg, conf: conf.opt_conf, iter: 0, converged: false }
+    }
+
+    fn check_convergence(&self, current_best: T, previous_best: T, iter: usize) -> bool {
+        let converged = (-current_best).exp() <= T::from_f64(self.conf.atol).unwrap() 
+            || (current_best - previous_best).abs() <= T::from_f64(self.conf.rtol).unwrap();
+        
+        if converged {
+            println!("Converged in {} iterations", iter);
+        }
+        
+        converged
     }
 
     pub fn step(&mut self) {
+        if self.converged {
+            return;
+        }
+
+        let previous_best_fitness = match &self.alg {
+            OptAlg::CGA(cga) => cga.best_fitness,
+            OptAlg::PT(pt) => pt.best_fitness,
+            OptAlg::TS(ts) => ts.best_fitness,
+            OptAlg::Adam(adam) => adam.best_fitness,
+        };
+
         match &mut self.alg {
             OptAlg::CGA(cga) => cga.step(),
             OptAlg::PT(pt) => pt.step(),
             OptAlg::TS(ts) => ts.step(),
             OptAlg::Adam(adam) => adam.step(),
         }
+
+        let current_best_fitness = match &self.alg {
+            OptAlg::CGA(cga) => cga.best_fitness,
+            OptAlg::PT(pt) => pt.best_fitness,
+            OptAlg::TS(ts) => ts.best_fitness,
+            OptAlg::Adam(adam) => adam.best_fitness,
+        };
+
+        self.converged = self.check_convergence(
+            current_best_fitness, 
+            previous_best_fitness, 
+            self.iter
+        );
+        
+        self.iter += 1;
     }
     
     pub fn get_population(&self) -> DMatrix<T> {
@@ -73,45 +112,8 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
     }
 
     pub fn run(&mut self) -> Result<T> {
-        let mut previous_best_fitness = T::infinity();
-        let mut iter = 0;
-        
-        for _ in 0..self.conf.max_iter {
+        while !self.converged && self.iter < self.conf.max_iter {
             self.step();
-            match &mut self.alg {
-                OptAlg::CGA(cga) => {
-                    if (-cga.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (cga.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
-                        println!("Converged in {} iterations", iter);
-                        break;
-                    }
-                    previous_best_fitness = cga.best_fitness;
-                    iter += 1;
-                },
-                OptAlg::PT(pt) => {
-                    if (-pt.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (pt.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
-                        println!("Converged in {} iterations", iter);
-                        break;
-                    }
-                    previous_best_fitness = pt.best_fitness;
-                    iter += 1;
-                },
-                OptAlg::TS(ts) => {
-                    if (-ts.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (ts.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
-                        println!("Converged in {} iterations", iter);
-                        break;
-                    }
-                    previous_best_fitness = ts.best_fitness;
-                    iter += 1;
-                },
-                OptAlg::Adam(adam) => {
-                    if (-adam.best_fitness).exp() <= T::from_f64(self.conf.atol).unwrap() || (adam.best_fitness - previous_best_fitness).abs() <= T::from_f64(self.conf.rtol).unwrap() {
-                        println!("Converged in {} iterations", iter);
-                        break;
-                    }
-                    previous_best_fitness = adam.best_fitness;
-                    iter += 1;
-                }
-            }
         }
 
         let (best_x, best_f, final_pop, final_fitness, final_constraints) = match &self.alg {
@@ -137,7 +139,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             final_pop,
             final_fitness,
             final_constraints,
-            convergence_iter: iter,
+            convergence_iter: self.iter,
         }
     }
 }
