@@ -65,11 +65,11 @@ let result = opt.run();
 ```
 To see the differences between setting up unconstrained and constrained problems, please refer to the [benches/](./benches) subdirectory.
 
-See the [examples/](./examples) subdirectory for more examples on how to use the lib in general.
+See the [examples/](./examples) subdirectory for more samples on using the lib.
 
 ## Examples
 
-The following GIFs are based on poor initializations of the [2D unconstrained maximization problems](./examples/test_functions.md) in the 'examples' subdirectory.
+The following GIFs are based on poor initializations of the [2D unconstrained maximization problems](./examples/test_functions.md) in the [examples/](./examples) subdirectory.
 
 |  |  |
 |-----------|---------------|
