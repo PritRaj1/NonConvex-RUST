@@ -27,8 +27,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let constraints = BoxConstraints;
 
     let init_x = DVector::from_vec(vec![
-        1.0,
-        6.0
+        4.0,
+        9.0
     ]);
     let mut opt = NonConvexOpt::new(
         config, 

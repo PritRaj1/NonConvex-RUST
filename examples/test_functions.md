@@ -34,7 +34,7 @@ These GIFs plot the evolution of the population overlayed on its 2D realization.
 
 ### Multimodal Gaussian Function
 ```math
-\max f(x,y) = 10 \cdot \left( e^{-\frac{(x-3)^2 + (y-3)^2}{0.5}} + e^{-\frac{(x-7)^2 + (y-7)^2}{0.3}} + e^{-\frac{(x-7)^2 + (y-3)^2}{0.2}} \right)
+\max f(x,y) = 10 \cdot e^{-\frac{(x-3)^2 + (y-3)^2}{0.5}} + 5 \cdot e^{-\frac{(x-7)^2 + (y-7)^2}{0.3}} + 5 \cdot e^{-\frac{(x-7)^2 + (y-3)^2}{0.2}}
 ```
 
 ```math
