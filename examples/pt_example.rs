@@ -33,8 +33,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let constraints = KBFConstraints;
 
     // Initialize population with random points
-    let mut init_pop = DMatrix::zeros(10, 2);
-    for i in 0..10 {
+    let mut init_pop = DMatrix::zeros(100, 2);
+    for i in 0..100 {
         for j in 0..2 {
             init_pop[(i, j)] = 3.0 + (rand::random::<f64>() * 5.0);
         }
