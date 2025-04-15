@@ -10,9 +10,9 @@ use common::fcns::{KBF, KBFConstraints};
 fn bench_cga_unconstrained(c: &mut Criterion) {
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 100,
-            rtol: 1e-6,
-            atol: 1e-6,
+            max_iter: 10,
+            rtol: 0.0,
+            atol: 0.0,
         },
         alg_conf: AlgConf::CGA(CGAConf {
             population_size: 100,
@@ -41,9 +41,9 @@ fn bench_cga_unconstrained(c: &mut Criterion) {
 fn bench_cga_constrained(c: &mut Criterion) {
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 100,
-            rtol: 1e-6,
-            atol: 1e-6,
+            max_iter: 10,
+            rtol: 0.0,
+            atol: 0.0,
         },
         alg_conf: AlgConf::CGA(CGAConf {
             population_size: 100,

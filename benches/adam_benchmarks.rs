@@ -10,9 +10,9 @@ use common::fcns::{RosenbrockFunction, RosenbrockConstraints};
 fn bench_adam_unconstrained(c: &mut Criterion) {
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 100,
-            rtol: 1e-6,
-            atol: 1e-6,
+            max_iter: 10,
+            rtol: 0.0,
+            atol: 0.0,
         },
         alg_conf: AlgConf::Adam(AdamConf {
             learning_rate: 0.05,
@@ -39,9 +39,9 @@ fn bench_adam_unconstrained(c: &mut Criterion) {
 fn bench_adam_constrained(c: &mut Criterion) {
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 100,
-            rtol: 1e-6,
-            atol: 1e-6,
+            max_iter: 10,
+            rtol: 0.0,
+            atol: 0.0,
         },
         alg_conf: AlgConf::Adam(AdamConf {
             learning_rate: 0.05,
