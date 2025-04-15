@@ -89,9 +89,7 @@ The config is structured as follows:
     - `TabuConf` - Tabu Search configuration
     - `AdamConf` - Adam configuration
 
-An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/blob/main/tests/config.json)
-
-The default values are:
+An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/blob/main/tests/config.json). The default values are:
 
 ```json
     {
