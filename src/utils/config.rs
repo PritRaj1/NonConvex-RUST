@@ -4,7 +4,7 @@ use thiserror::Error;
 use serde_with::serde_as;
 use serde_with::DisplayFromStr;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum AlgConf {
     CGA(CGAConf),
     PT(PTConf),
@@ -12,14 +12,14 @@ pub enum AlgConf {
     Adam(AdamConf),
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Config {
     pub opt_conf: OptConf,
     pub alg_conf: AlgConf,
 }
 
 #[serde_as]
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct OptConf {
     #[serde(default = "default_max_iter")]
     pub max_iter: usize,
@@ -35,7 +35,7 @@ fn default_max_iter() -> usize { 1000 }
 fn default_rtol() -> f64 { 1e-6 }
 fn default_atol() -> f64 { 1e-6 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CGAConf {    
     #[serde(default = "default_population_size")]
     pub population_size: usize,
@@ -58,7 +58,7 @@ fn default_crossover_method() -> String { "uniform".to_string() }
 fn default_crossover_prob() -> f64 { 0.8 }
 fn default_tournament_size() -> usize { 2 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct PTConf {
     #[serde(default = "default_num_replicas")]
     pub num_replicas: usize,
@@ -93,7 +93,7 @@ fn default_swap_frequency() -> f64 { 1.0 }
 fn default_swap_probability() -> f64 { 0.1 }
 fn default_mala_step_size() -> f64 { 0.01 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct TabuConf {
     #[serde(default = "default_tabu_list_size")]
     pub tabu_list_size: usize,

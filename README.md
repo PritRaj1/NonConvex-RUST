@@ -64,6 +64,14 @@ let mut opt = NonConvexOpt::new(
     Some(constraints) // Optional constraints
 );
 
+// Unconstrained optimization
+let mut opt = NonConvexOpt::new(
+    config,
+    init_x,
+    obj_f,
+    None::<EmptyConstraints>
+);
+
 let result = opt.run();
 ```
 ## Config
