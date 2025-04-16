@@ -68,7 +68,7 @@ To see the differences between setting up unconstrained and constrained problems
 
 ## Examples
 
-The following GIFs are based on poor initializations of the [2D unconstrained maximization problems](./examples/test_functions.md) in the [examples/](./examples) subdirectory.
+The following GIFs are based on the [2D unconstrained maximization problems](./examples/test_functions.md) in the [examples/](./examples) subdirectory.
 
 ### Population-Based 
 |  |  |
