@@ -15,9 +15,6 @@ pub struct CommonConf {
     pub num_parents: usize,
 }
 
-fn default_population_size() -> usize { 100 }
-fn default_num_parents() -> usize { 2 }
-
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum CrossoverConf {
     Random(RandomCrossoverConf),
@@ -30,15 +27,12 @@ pub struct RandomCrossoverConf {
     pub crossover_prob: f64,
 }
 
-fn default_crossover_prob() -> f64 { 0.8 }
-
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct HeuristicCrossoverConf {
     #[serde(default = "default_crossover_prob")]
     pub crossover_prob: f64,
 }
 
-fn default_crossover_prob() -> f64 { 0.8 }
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum SelectionConf {
     RouletteWheel(RouletteWheelSelectionConf),
@@ -55,7 +49,10 @@ pub struct TournamentSelectionConf {
     pub tournament_size: usize,
 }
 
-fn default_tournament_size() -> usize { 5 }
-
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ResidualSelectionConf {}
+
+fn default_population_size() -> usize { 100 }
+fn default_num_parents() -> usize { 2 }
+fn default_crossover_prob() -> f64 { 0.8 }
+fn default_tournament_size() -> usize { 5 }
