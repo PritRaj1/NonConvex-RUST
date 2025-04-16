@@ -11,7 +11,7 @@ use image::ImageReader;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config {
         opt_conf: OptConf {
-            max_iter: 100,
+            max_iter: 80,
             rtol: 1e-6,
             atol: 1e-6,
             rtol_max_iter_fraction: 1.0,
@@ -22,6 +22,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             perturbation_prob: 0.3,
             tabu_list_size: 50,
             tabu_threshold: 0.05,
+            tabu_type: "Reactive".to_string(),
+            min_tabu_size: 10,
+            max_tabu_size: 30,
+            increase_factor: 1.1,
+            decrease_factor: 0.9,
         }),
     };
 

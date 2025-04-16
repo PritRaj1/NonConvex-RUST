@@ -26,10 +26,10 @@ use nalgebra::{DVector, DMatrix};
 ## Usage
 
 ```rust
-// Load config from file
+// Load config from file (preferred, handles default values)
 let config = Config::new(include_str!("config.json")).unwrap();
 
-// Or create config directly
+// Or create config directly (does not handle default values)
 let config = Config {
     opt_conf: OptConf {
         max_iter: 1000,
@@ -126,7 +126,12 @@ An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/bl
             "num_neighbors": 50,
             "step_size": 0.1,
             "perturbation_prob": 0.3,
-            "tabu_threshold": 1e-6
+            "tabu_threshold": 1e-6,
+            "tabu_type": "Standard",
+            "min_tabu_size": 10,
+            "max_tabu_size": 30,
+            "increase_factor": 1.1,
+            "decrease_factor": 0.9
         },
         "grasp": {
             "num_candidates": 30,

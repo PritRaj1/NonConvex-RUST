@@ -1,102 +1,94 @@
 use nalgebra::DVector;
 use rand::Rng;
-use std::collections::VecDeque; // Double-ended queue
-use rayon::prelude::*;
 use crate::utils::config::TabuConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
-
+use crate::tabu_search::tabu_list::{TabuList, TabuType};
+use rayon::prelude::*;
 pub struct TabuSearch<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub conf: TabuConf,
     pub x: DVector<T>,
-    pub tabu_list: VecDeque<DVector<T>>,
     pub opt_prob: OptProb<T, F, G>,
     pub best_x: DVector<T>,
     pub best_fitness: T,
+    tabu_list: TabuList<T>,
+    iterations_since_improvement: usize,
 }
 
 impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> TabuSearch<T, F, G> {
     pub fn new(conf: TabuConf, init_x: DVector<T>, opt_prob: OptProb<T, F, G>) -> Self {
         let fitness = opt_prob.objective.f(&init_x);
-        let mut tabu_list = VecDeque::with_capacity(conf.tabu_list_size);
-        tabu_list.push_back(init_x.clone());
+        let tabu_type = TabuType::from(&conf);
         
         Self {
-            conf,
+            conf: conf.clone(),
             x: init_x.clone(),
-            tabu_list,
             opt_prob,
             best_x: init_x,
             best_fitness: fitness,
+            tabu_list: TabuList::new(conf.tabu_list_size, tabu_type),
+            iterations_since_improvement: 0,
         }
     }
 
-    fn generate_neighbors(&self, center: &DVector<T>) -> Vec<DVector<T>> {
-        (0..self.conf.num_neighbors)
-            .into_par_iter()
-            .map(|_| {
-                let mut rng = rand::rng();
-                let mut neighbor = center.clone();
-                
-                // Randomly perturb some dimensions
-                for i in 0..center.len() {
-                    if rng.random_bool(self.conf.perturbation_prob) {
-                        let perturbation = T::from_f64(
-                            rng.random_range(-self.conf.step_size..self.conf.step_size)
-                        ).unwrap();
-                        neighbor[i] += perturbation;
-                    }
-                }
-                
-                neighbor
-            })
-            .collect()
+    fn generate_neighbor(&self, rng: &mut impl Rng) -> DVector<T> {
+        let mut neighbor = self.x.clone();
+        neighbor.iter_mut().for_each(|val| {
+            if rng.random_bool(self.conf.perturbation_prob) {
+                *val += T::from_f64(
+                    rng.random_range(-self.conf.step_size..self.conf.step_size)
+                ).unwrap();
+            }
+        });
+        neighbor
     }
 
-    // Check if a neighbor is tabu
-    fn is_tabu(&self, x: &DVector<T>) -> bool {
-        self.tabu_list.iter().any(|tabu_x| {
-            let diff = x - tabu_x;
-            diff.iter().all(|&d| d.abs() < T::from_f64(self.conf.tabu_threshold).unwrap())
-        })
+    fn evaluate_neighbor(&self, neighbor: &DVector<T>) -> Option<T> {
+        if self.opt_prob.is_feasible(neighbor) 
+            && !self.tabu_list.is_tabu(neighbor, T::from_f64(self.conf.tabu_threshold).unwrap()) {
+            Some(self.opt_prob.objective.f(neighbor))
+        } else {
+            None
+        }
     }
 
     pub fn step(&mut self) {
-        let neighbors = self.generate_neighbors(&self.x);
+        let mut best_neighbor = self.x.clone();
+        let mut best_neighbor_fitness = T::neg_infinity();
         
-        let evaluations: Vec<(DVector<T>, T, bool)> = neighbors
+        // Generate and evaluate neighborhood
+        let neighbors: Vec<_> = (0..self.conf.num_neighbors)
             .into_par_iter()
-            .filter_map(|neighbor| {
-                let is_feasible = match &self.opt_prob.constraints {
-                    Some(constraints) => constraints.g(&neighbor),
-                    None => true,
-                };
-                
-                let fitness = self.opt_prob.objective.f(&neighbor);
-                if is_feasible && (!self.is_tabu(&neighbor) || fitness > self.best_fitness) {
-                    Some((neighbor, fitness, is_feasible))
-                } else {
-                    None
-                }
+            .map(|_| {
+                let mut local_rng = rand::rng();
+                let neighbor = self.generate_neighbor(&mut local_rng);
+                let fitness = self.evaluate_neighbor(&neighbor);
+                (neighbor, fitness)
+            })
+            .filter_map(|(neighbor, fitness)| {
+                fitness.map(|f| (neighbor, f))
             })
             .collect();
 
-        // Find best (maximum) non-tabu neighbor
-        if let Some((best_neighbor, best_neighbor_fitness, _)) = evaluations
-            .into_iter()
-            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
-        {
-            self.x = best_neighbor.clone();
+        for (neighbor, fitness) in neighbors {
+            if fitness > best_neighbor_fitness {
+                best_neighbor = neighbor;
+                best_neighbor_fitness = fitness;
+            }
+        }
+        
+        // Update current solution and best solution if improved
+        if best_neighbor_fitness > T::neg_infinity() {
+            self.tabu_list.update(self.x.clone(), self.iterations_since_improvement);
             
-            // Update fitness and tabu list
+            self.x = best_neighbor.clone();
+
             if best_neighbor_fitness > self.best_fitness {
                 self.best_fitness = best_neighbor_fitness;
-                self.best_x = best_neighbor.clone();
-            }
-            
-            self.tabu_list.push_back(best_neighbor);
-            if self.tabu_list.len() > self.conf.tabu_list_size {
-                self.tabu_list.pop_front();
-            }
+                self.best_x = best_neighbor;
+                self.iterations_since_improvement = 0;
+            } else {
+                self.iterations_since_improvement += 1;
+            } 
         }
     }
 } 
