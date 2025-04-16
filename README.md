@@ -70,13 +70,22 @@ To see the differences between setting up unconstrained and constrained problems
 
 The following GIFs are based on poor initializations of the [2D unconstrained maximization problems](./examples/test_functions.md) in the [examples/](./examples) subdirectory.
 
+### Population-Based 
 |  |  |
 |-----------|---------------|
 | [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) - Population-based natural selection | <img src="./examples/cga_kbf.gif" width="300" alt="CGA Example"> |
 | <img src="./examples/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Monte Carlo sampling |
+
+### Local Search 
+|  |  |
+|-----------|---------------|
 | [Tabu Search (TS)](./src/tabu_search/tabu.md) - Local search with memory | <img src="./examples/tabu_kbf.gif" width="300" alt="Tabu Example"> |
 | <img src="./examples/grasp_kbf.gif" width="300" alt="GRASP Example"> | [Greedy Randomized Adaptive Search Procedure (GRASP)](./src/grasp/GRASP.md) - Construction and local search |
-| [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation | <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> | 
+
+### Gradient-Based 
+|  |  |
+|-----------|---------------|
+| [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation | <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> |
 
 ## Config
 
