@@ -12,6 +12,7 @@ pub enum AlgConf {
     Adam(AdamConf),
     GRASP(GRASPConf),
     SGA(SGAConf),
+    NM(NelderMeadConf),
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -181,6 +182,23 @@ pub struct SGAConf {
 
 fn default_sga_learning_rate() -> f64 { 0.01 }
 fn default_sga_momentum() -> f64 { 0.9 }
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct NelderMeadConf {
+    #[serde(default = "default_nm_alpha")]
+    pub alpha: f64,  // Reflection coefficient
+    #[serde(default = "default_nm_gamma")]
+    pub gamma: f64,  // Expansion coefficient
+    #[serde(default = "default_nm_rho")]
+    pub rho: f64,    // Contraction coefficient
+    #[serde(default = "default_nm_sigma")]
+    pub sigma: f64,  // Shrink coefficient
+}
+
+fn default_nm_alpha() -> f64 { 1.0 }
+fn default_nm_gamma() -> f64 { 2.0 }
+fn default_nm_rho() -> f64 { 0.5 }
+fn default_nm_sigma() -> f64 { 0.5 }
 
 #[derive(Error, Debug)]
 pub enum ConfigError {

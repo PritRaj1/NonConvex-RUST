@@ -90,7 +90,15 @@ These work better with mini-batches!
 |-----------|---------------|
 | [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation | <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> |
 | <img src="./examples/sga_kbf.gif" width="300" alt="SGA Example"> | [Stochastic Gradient Ascent (SGA)](./src/sg_ascent/SGA.md) - Gradient-based optimization |
+
+### Direct Search
+
+|  |  |
+|-----------|---------------|
+| [Nelder-Mead](./src/nelder_mead/NM.md) - Direct search with simplex | <img src="./examples/nm_kbf.gif" width="300" alt="Nelder-Mead Example"> |
+
 ## Config
+
 
 The config is structured as follows:
 
@@ -101,7 +109,7 @@ The config is structured as follows:
     - `TabuConf` - Tabu Search configuration
     - `GRASPConf` - Greedy Randomized Adaptive Search Procedure configuration
     - `AdamConf` - Adam configuration
-
+    - `NelderMeadConf` - Nelder-Mead configuration
 An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/blob/main/tests/config.json). The default values are:
 
 ```json
@@ -161,6 +169,12 @@ An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/bl
         "sga": {
             "learning_rate": 0.05,
             "momentum": 0.9
+        },
+        "nm": {
+            "alpha": 1.0,
+            "gamma": 2.0,
+            "rho": 0.5,
+            "sigma": 0.5
         }
     }
 }

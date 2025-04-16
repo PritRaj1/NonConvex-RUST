@@ -5,6 +5,7 @@ pub mod tabu_search;
 pub mod adam;
 pub mod grasp;
 pub mod sg_ascent;
+pub mod nelder_mead;
 use nalgebra::{DVector, DMatrix};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
 use crate::continous_ga::cga::CGA;
@@ -13,6 +14,7 @@ use crate::adam::adam::Adam;
 use crate::sg_ascent::sga::SGAscent;
 use crate::tabu_search::tabu::TabuSearch;
 use crate::grasp::grasp::GRASP;
+use crate::nelder_mead::nm::NelderMead;
 use crate::utils::config::{Config, AlgConf, OptConf};
 
 pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
@@ -22,6 +24,7 @@ pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFuncti
     Adam(Adam<T, F, G>),
     GRASP(GRASP<T, F, G>),
     SGA(SGAscent<T, F, G>),
+    NM(NelderMead<T, F, G>),
 }
 
 pub struct Result<T: FloatNum> {
@@ -50,6 +53,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             AlgConf::Adam(adam_conf) => OptAlg::Adam(Adam::new(adam_conf, init_pop.column(0).into(), opt_prob)),
             AlgConf::GRASP(grasp_conf) => OptAlg::GRASP(GRASP::new(grasp_conf, init_pop.column(0).into(), opt_prob)),
             AlgConf::SGA(sga_conf) => OptAlg::SGA(SGAscent::new(sga_conf, init_pop.column(0).into(), opt_prob)),
+            AlgConf::NM(nm_conf) => OptAlg::NM(NelderMead::new(nm_conf, init_pop, opt_prob)),
         };
 
         Self { alg, conf: conf.opt_conf, iter: 0, converged: false }
@@ -77,6 +81,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::Adam(adam) => adam.best_fitness,
             OptAlg::GRASP(grasp) => grasp.best_fitness,
             OptAlg::SGA(sga) => sga.best_fitness,
+            OptAlg::NM(nm) => nm.best_fitness,
         };
 
         match &mut self.alg {
@@ -86,6 +91,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::Adam(adam) => adam.step(),
             OptAlg::GRASP(grasp) => grasp.step(),
             OptAlg::SGA(sga) => sga.step(),
+            OptAlg::NM(nm) => nm.step(),
         }
 
         let current_best_fitness = match &self.alg {
@@ -95,6 +101,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::Adam(adam) => adam.best_fitness,
             OptAlg::GRASP(grasp) => grasp.best_fitness,
             OptAlg::SGA(sga) => sga.best_fitness,
+            OptAlg::NM(nm) => nm.best_fitness,
         };
 
         self.converged = self.check_convergence(
@@ -114,6 +121,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::Adam(adam) => DMatrix::from_columns(&[adam.x.clone()]),
             OptAlg::GRASP(grasp) => DMatrix::from_columns(&[grasp.x.clone()]),
             OptAlg::SGA(sga) => DMatrix::from_columns(&[sga.x.clone()]),
+            OptAlg::NM(nm) => DMatrix::from_columns(&[nm.x.clone()]),
         }
     }
 
@@ -125,6 +133,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::Adam(adam) => adam.x.clone(),
             OptAlg::GRASP(grasp) => grasp.best_x.clone(),
             OptAlg::SGA(sga) => sga.x.clone(),
+            OptAlg::NM(nm) => nm.best_x.clone(),
         }
     }
 
@@ -159,6 +168,12 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
                 let fitness_vec = DVector::from_element(x_matrix.ncols(), sga.best_fitness);
                 let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
                 (sga.x.clone(), sga.best_fitness, x_matrix, fitness_vec, constraints_vec)
+            },
+            OptAlg::NM(nm) => {
+                let x_matrix = DMatrix::from_columns(&[nm.x.clone()]);
+                let fitness_vec = DVector::from_element(x_matrix.ncols(), nm.best_fitness);
+                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
+                (nm.best_x.clone(), nm.best_fitness, x_matrix, fitness_vec, constraints_vec)
             },
         };
 
