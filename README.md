@@ -161,7 +161,7 @@ An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/bl
 
 ## Benchmarking
 
-Benchmarks are collected withg criterion:
+Benchmarks are collected with criterion:
 ```bash
 cargo bench
 ```
