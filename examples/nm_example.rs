@@ -30,9 +30,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create initial simplex directly
     let init_simplex = DMatrix::from_columns(&[
-        DVector::from_vec(vec![1.6, 0.55]),
-        DVector::from_vec(vec![0.5, 9.9]),
-        DVector::from_vec(vec![9.9, 0.5]),
+        DVector::from_vec(vec![1.8, 1.0]),
+        DVector::from_vec(vec![0.5, 4.0]),
+        DVector::from_vec(vec![3.0, 3.0]),
     ]);
 
     let mut opt = NonConvexOpt::new(config, init_simplex, obj_f.clone(), Some(constraints.clone()));

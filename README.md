@@ -110,6 +110,7 @@ The config is structured as follows:
     - `GRASPConf` - Greedy Randomized Adaptive Search Procedure configuration
     - `AdamConf` - Adam configuration
     - `NelderMeadConf` - Nelder-Mead configuration
+    
 An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/blob/main/tests/config.json). The default values are:
 
 ```json
