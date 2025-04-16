@@ -2,33 +2,41 @@ mod common;
 use common::fcns::{KBF, KBFConstraints};
 use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::{Config, OptConf, AlgConf, PTConf};
+use non_convex_opt::utils::config::Config;
 use nalgebra::DMatrix;
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config {
-        opt_conf: OptConf {
-            max_iter: 100,
-            rtol: 1e-6,
-            atol: 1e-6,
-            rtol_max_iter_fraction: 1.0,
+
+    let conf_json = r#"
+    {
+        "opt_conf": {
+            "max_iter": 100,
+            "rtol": "1e-6",
+            "atol": "1e-6"
         },
-        alg_conf: AlgConf::PT(PTConf {
-            num_replicas: 10,
-            power_law_init: 2.0,
-            power_law_final: 0.5,
-            power_law_cycles: 1,
-            swap_check_type: "Always".to_string(),
-            alpha: 0.1,
-            omega: 2.1,
-            swap_frequency: 0.9,
-            swap_probability: 0.1,
-            mala_step_size: 0.1,
-        }),
-    };
+        "alg_conf": {
+            "PT": {
+                "common": {
+                    "num_replicas": 10,
+                    "power_law_init": 2.0,
+                    "power_law_final": 0.5,
+                    "power_law_cycles": 1,
+                    "alpha": 0.1,
+                    "omega": 2.1,
+                    "mala_step_size": 0.1
+                },
+                "swap_conf": {
+                    "Always": {}
+                }
+            }
+        }
+    }
+    "#;
+
+    let config = Config::new(conf_json).unwrap();
 
     let obj_f = KBF;
     let constraints = KBFConstraints;

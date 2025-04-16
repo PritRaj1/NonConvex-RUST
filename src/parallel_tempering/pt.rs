@@ -1,8 +1,8 @@
 use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
 use crate::parallel_tempering::replica_exchange::{SwapCheck, Periodic, Stochastic, Always};
-use crate::parallel_tempering::metropolis_hastings::{MetropolisHastings, update_step_size};
-use crate::utils::config::PTConf;
+use crate::parallel_tempering::metropolis_hastings::MetropolisHastings;
+use crate::utils::config::{PTConf, SwapConf};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
 
 pub struct PT<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
@@ -23,19 +23,23 @@ pub struct PT<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction
 impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T, F, G> {
     pub fn new(conf: PTConf, init_pop: DMatrix<T>, opt_prob: OptProb<T, F, G>, max_iter: usize) -> Self {
 
-        let swap_check = match conf.swap_check_type.as_str() {
-            "Periodic" => SwapCheck::Periodic(Periodic::new(conf.swap_frequency, max_iter)),
-            "Stochastic" => SwapCheck::Stochastic(Stochastic::new(conf.swap_probability)),
-            "Always" => SwapCheck::Always(Always::new()),
-            _ => panic!("Invalid swap check"),
+        let swap_check = match &conf.swap_conf {
+            SwapConf::Periodic(p) => SwapCheck::Periodic(Periodic::new(p.swap_frequency, max_iter)),
+            SwapConf::Stochastic(s) => SwapCheck::Stochastic(Stochastic::new(s.swap_probability)),
+            SwapConf::Always(_) => SwapCheck::Always(Always::new()),
         };
 
-        let metropolis_hastings = MetropolisHastings::new(opt_prob.clone(), T::from_f64(conf.mala_step_size).unwrap());
+        let metropolis_hastings = MetropolisHastings::new(
+            opt_prob.clone(), 
+            T::from_f64(conf.common.mala_step_size).unwrap(),
+            T::from_f64(conf.common.alpha).unwrap(), 
+            T::from_f64(conf.common.omega).unwrap()
+        );
 
         // Power law schedule for cyclic annealing
-        let p_init = conf.power_law_init;
-        let p_final = conf.power_law_final;
-        let p_cycles = conf.power_law_cycles;
+        let p_init = conf.common.power_law_init;
+        let p_final = conf.common.power_law_final;
+        let p_cycles = conf.common.power_law_cycles;
         let num_iters = max_iter;
 
         let x: Vec<f64> = (0..=num_iters)
@@ -47,7 +51,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
             .collect();
 
         // Initialize populations in parallel
-        let init_results: Vec<(DMatrix<T>, DVector<T>, DVector<bool>)> = (0..conf.num_replicas)
+        let init_results: Vec<(DMatrix<T>, DVector<T>, DVector<bool>)> = (0..conf.common.num_replicas)
             .into_par_iter()
             .map(|_| {
                 let mut pop = DMatrix::zeros(init_pop.nrows(), init_pop.ncols());
@@ -80,9 +84,9 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
             .collect();
 
         // Unzip the results
-        let mut population = Vec::with_capacity(conf.num_replicas);
-        let mut fitness = Vec::with_capacity(conf.num_replicas);
-        let mut constraints = Vec::with_capacity(conf.num_replicas);
+        let mut population = Vec::with_capacity(conf.common.num_replicas);
+        let mut fitness = Vec::with_capacity(conf.common.num_replicas);
+        let mut constraints = Vec::with_capacity(conf.common.num_replicas);
 
         for (pop, fit, constr) in init_results {
             population.push(pop);
@@ -93,7 +97,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
         // Find best individual across all replicas
         let mut best_idx = 0;
         let mut best_fitness = fitness[0][0];
-        for i in 0..conf.num_replicas {
+        for i in 0..conf.common.num_replicas {
             for j in 0..fitness[i].len() {
                 if fitness[i][j] > best_fitness && constraints[i][j] {
                     best_fitness = fitness[i][j];
@@ -104,7 +108,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
 
         let best_individual = population[best_idx].row(0).transpose();
         let iter = 0;
-        let step_sizes: Vec<Vec<DMatrix<T>>> = (0..conf.num_replicas)
+        let step_sizes: Vec<Vec<DMatrix<T>>> = (0..conf.common.num_replicas)
             .map(|_| {
                 (0..population[0].nrows())
                     .map(|_| DMatrix::identity(population[0].ncols(), population[0].ncols()))
@@ -187,15 +191,15 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
     }
             
     pub fn step(&mut self) {
-        let temperatures: Vec<T> = (0..self.conf.num_replicas)
+        let temperatures: Vec<T> = (0..self.conf.common.num_replicas)
             .map(|k| {
                 let power = self.p_schedule[self.iter].to_f64().unwrap();
-                T::from_f64((k as f64 / self.conf.num_replicas as f64).powf(power)).unwrap()
+                T::from_f64((k as f64 / self.conf.common.num_replicas as f64).powf(power)).unwrap()
             })
             .collect();
         
         // Local move
-        let updates: Vec<Vec<Option<(DVector<T>, T, bool, DMatrix<T>)>>> = (0..self.conf.num_replicas)
+        let updates: Vec<Vec<Option<(DVector<T>, T, bool, DMatrix<T>)>>> = (0..self.conf.common.num_replicas)
             .into_par_iter()
             .map(|i| {
                 (0..self.population[i].nrows())
@@ -213,12 +217,10 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
                             -T::from_f64(1.0).unwrap() // Send in negative to signal local move 
                         ) {
                             let new_step_size = if self.opt_prob.objective.gradient(&x_old).is_none() {
-                                update_step_size(
+                                self.metropolis_hastings.update_step_size(
                                     &self.step_sizes[i][j],
                                     &x_old,
-                                    &x_new,
-                                    T::from_f64(self.conf.alpha).unwrap(),
-                                    T::from_f64(self.conf.omega).unwrap()
+                                    &x_new
                                 )
                             } else {
                                 self.step_sizes[i][j].clone()
@@ -265,7 +267,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
         let mut best_idx = 0;
         let mut best_row = 0;
         let mut best_fitness = self.fitness[0][0];
-        for i in 0..self.conf.num_replicas {
+        for i in 0..self.conf.common.num_replicas {
             for j in 0..self.fitness[i].len() {
                 if self.fitness[i][j] > best_fitness && self.constraints[i][j] {
                     best_fitness = self.fitness[i][j];

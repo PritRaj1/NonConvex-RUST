@@ -11,11 +11,13 @@ pub struct MetropolisHastings<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanCo
     pub k: T,
     pub move_type: MoveType,
     pub prob: OptProb<T, F, G>,
+    pub alpha: T,
+    pub omega: T,
     pub mala_step_size: T,
 }
 
 impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> MetropolisHastings<T, F, G> {
-    pub fn new(prob: OptProb<T, F, G>, mala_step_size: T) -> Self {
+    pub fn new(prob: OptProb<T, F, G>, mala_step_size: T, alpha: T, omega: T) -> Self {
         let k = T::from_f64(1.38064852e-23).unwrap(); // Boltzmann constant
 
         let move_type = if prob.objective.gradient(&DVector::zeros(1)).is_some() {
@@ -24,7 +26,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
             MoveType::RandomDrift
         };
 
-        MetropolisHastings { k, move_type, prob, mala_step_size }
+        MetropolisHastings { k, move_type, prob, mala_step_size, alpha, omega }
     }
 
     pub fn local_move(&self, x_old: &DVector<T>, step_size: &DMatrix<T>, t: T) -> DVector<T> {
@@ -114,19 +116,13 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
         let u = T::from_f64(rng.random::<f64>()).unwrap();
         u < r
     }
-}
 
-pub fn update_step_size<T: FloatNum>(
-    step_size: &DMatrix<T>,
-    x_old: &DVector<T>,
-    x_new: &DVector<T>,
-    alpha: T,
-    omega: T,
-) -> DMatrix<T> {
-    let r = DVector::from_fn(x_old.len(), |i, _| (x_new[i] - x_old[i]).abs());
-    let mut step_size_new = step_size.clone();
-    for i in 0..x_old.len() {
-        step_size_new[(i, i)] = (T::one() - alpha) * step_size[(i, i)] + alpha * omega * r[i];
+    pub fn update_step_size(&self, step_size: &DMatrix<T>, x_old: &DVector<T>, x_new: &DVector<T>) -> DMatrix<T> {
+        let r = DVector::from_fn(x_old.len(), |i, _| (x_new[i] - x_old[i]).abs());
+        let mut step_size_new = step_size.clone();
+        for i in 0..x_old.len() {
+            step_size_new[(i, i)] = (T::one() - self.alpha) * step_size[(i, i)] + self.alpha * self.omega * r[i];
+        }
+        step_size_new
     }
-    step_size_new
 }

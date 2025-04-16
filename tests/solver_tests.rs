@@ -1,6 +1,6 @@
 mod common;
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::{Config, OptConf, AlgConf, PTConf};
+use non_convex_opt::utils::config::Config;
 use non_convex_opt::utils::opt_prob::ObjectiveFunction;
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
 use nalgebra::DMatrix;
@@ -33,26 +33,7 @@ fn test_cga() {
 
 #[test]
 fn test_pt() {
-    let conf = Config {
-        opt_conf: OptConf {
-            max_iter: 2,
-            rtol: 1e-2,
-            atol: 1e-2,
-            rtol_max_iter_fraction: 1.0,
-        },
-        alg_conf: AlgConf::PT(PTConf {
-            num_replicas: 1000,
-            power_law_init: 2.0,
-            power_law_final: 0.5,
-            power_law_cycles: 1,
-            alpha: 0.1,
-            omega: 2.1,
-            swap_check_type: "Always".to_string(),
-            swap_frequency: 1.0,
-            swap_probability: 0.1,
-            mala_step_size: 0.01,
-        }),
-    };
+    let conf = Config::new(include_str!("pt.json")).unwrap();
 
     let mut init_pop = DMatrix::zeros(10, 2);
     for i in 0..10 {
