@@ -1,28 +1,13 @@
 mod common;
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::{Config, OptConf, AlgConf, CGAConf, PTConf};
+use non_convex_opt::utils::config::{Config, OptConf, AlgConf, PTConf};
 use non_convex_opt::utils::opt_prob::ObjectiveFunction;
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
 use nalgebra::DMatrix;
 
 #[test]
 fn test_cga() {
-    let conf = Config {
-        opt_conf: OptConf {
-            max_iter: 100,
-            rtol: 1e-6,
-            atol: 1e-6,
-            rtol_max_iter_fraction: 1.0,
-        },
-        alg_conf: AlgConf::CGA(CGAConf {
-            population_size: 50,
-            num_parents: 10,
-            selection_method: "RouletteWheel".to_string(),
-            crossover_method: "Random".to_string(),
-            crossover_prob: 0.8,
-            tournament_size: 2,
-        }),
-    };
+    let conf = Config::new(include_str!("cga.json")).unwrap();
 
     let mut init_pop = DMatrix::zeros(50, 2);
     for i in 0..50 {

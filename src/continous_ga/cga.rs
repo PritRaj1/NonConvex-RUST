@@ -1,6 +1,6 @@
 use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
-use crate::utils::config::CGAConf;
+use crate::utils::config::{CGAConf, CrossoverConf, SelectionConf};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
 use crate::continous_ga::selection::*;
 use crate::continous_ga::crossover::*;
@@ -20,19 +20,17 @@ pub struct CGA<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunctio
 
 impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<T, F, G> {
     pub fn new(conf: CGAConf, init_pop: DMatrix<T>, opt_prob: OptProb<T, F, G>,) -> Self {
-        let selector = match conf.selection_method.as_str() {
-            "RouletteWheel" => SelectionOperator::RouletteWheel(RouletteWheel::new(conf.population_size, conf.num_parents)),
-            "Tournament" => SelectionOperator::Tournament(Tournament::new(conf.population_size, conf.num_parents, conf.tournament_size)),
-            "Residual" => SelectionOperator::Residual(Residual::new(conf.population_size, conf.num_parents)),
-            _ => panic!("Invalid selection method"),
+        let selector = match &conf.selection {
+            SelectionConf::RouletteWheel(_) => SelectionOperator::RouletteWheel(RouletteWheel::new(conf.common.population_size, conf.common.num_parents)),
+            SelectionConf::Tournament(tournament) => SelectionOperator::Tournament(Tournament::new(conf.common.population_size, conf.common.num_parents, tournament.tournament_size)),
+            SelectionConf::Residual(_) => SelectionOperator::Residual(Residual::new(conf.common.population_size, conf.common.num_parents)),
         };
 
-        let crossover = match conf.crossover_method.as_str() {
-            "Random" => CrossoverOperator::Random(Random::new(conf.crossover_prob, conf.population_size)),
-            "Heuristic" => CrossoverOperator::Heuristic(Heuristic::new(conf.crossover_prob, conf.population_size)),
-            _ => panic!("Invalid crossover method"),
+        let crossover = match &conf.crossover {
+            CrossoverConf::Random(random) => CrossoverOperator::Random(Random::new(random.crossover_prob, conf.common.population_size)),
+            CrossoverConf::Heuristic(heuristic) => CrossoverOperator::Heuristic(Heuristic::new(heuristic.crossover_prob, conf.common.population_size)),
         };
-
+        
         // Calculate initial fitness and constraints in parallel
         let (fitness, constraints): (Vec<T>, Vec<bool>) = (0..init_pop.nrows())
             .into_par_iter()

@@ -4,6 +4,10 @@ use thiserror::Error;
 use serde_with::serde_as;
 use serde_with::DisplayFromStr;
 
+pub use crate::utils::alg_conf::{
+    cga_conf::{CGAConf, CommonConf, CrossoverConf, SelectionConf}
+};
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum AlgConf {
     CGA(CGAConf),
@@ -40,29 +44,6 @@ fn default_max_iter() -> usize { 1000 }
 fn default_rtol() -> f64 { 1e-6 }
 fn default_atol() -> f64 { 1e-6 }
 fn default_rtol_max_iter_fraction() -> f64 { 1.0 }
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct CGAConf {    
-    #[serde(default = "default_population_size")]
-    pub population_size: usize,
-    #[serde(default = "default_num_parents")]
-    pub num_parents: usize,
-    #[serde(default = "default_selection_method")]
-    pub selection_method: String,
-    #[serde(default = "default_crossover_method")]
-    pub crossover_method: String,
-    #[serde(default = "default_crossover_prob")]
-    pub crossover_prob: f64,
-    #[serde(default = "default_tournament_size")]
-    pub tournament_size: usize,
-}
-
-fn default_population_size() -> usize { 100 }
-fn default_num_parents() -> usize { 2 }
-fn default_selection_method() -> String { "tournament".to_string() }
-fn default_crossover_method() -> String { "uniform".to_string() }
-fn default_crossover_prob() -> f64 { 0.8 }
-fn default_tournament_size() -> usize { 2 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct PTConf {

@@ -1,5 +1,5 @@
 mod common;
-use non_convex_opt::utils::config::CGAConf;
+use non_convex_opt::utils::config::{Config, AlgConf};
 use non_convex_opt::utils::opt_prob::OptProb;
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
 use non_convex_opt::continous_ga::selection::{RouletteWheel, Tournament, Residual};
@@ -68,18 +68,18 @@ fn test_heuristic_crossover() {
 
 #[test]
 fn test_cga() {
-    let conf = CGAConf {
-        population_size: 50,
-        num_parents: 10,
-        selection_method: "RouletteWheel".to_string(),
-        crossover_method: "Random".to_string(),
-        crossover_prob: 0.8,
-        tournament_size: 2,
+    let conf = Config::new(include_str!("cga.json")).unwrap();
+
+    let cga_conf = match conf.alg_conf {
+        AlgConf::CGA(cga_conf) => cga_conf,
+        _ => panic!("Expected CGAConf"),
     };
 
+    let pop_size = cga_conf.common.population_size;
+
     // Initialize population
-    let mut init_pop = DMatrix::zeros(conf.population_size, 2);
-    for i in 0..conf.population_size {
+    let mut init_pop = DMatrix::zeros(pop_size, 2);
+    for i in 0..pop_size {
         for j in 0..2 {
             init_pop[(i, j)] = rand::random::<f64>() * 4.0 - 2.0; // Random values in [-2, 2]
         }
@@ -88,7 +88,7 @@ fn test_cga() {
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(obj_f, Some(constraints));
-    let mut cga = CGA::new(conf, init_pop, opt_prob);
+    let mut cga = CGA::new(cga_conf, init_pop, opt_prob);
 
     // Run a few iterations
     for _ in 0..5 {

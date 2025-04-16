@@ -6,7 +6,7 @@ pub mod adam;
 pub mod grasp;
 pub mod sg_ascent;
 pub mod nelder_mead;
-use nalgebra::{DVector, DMatrix};
+
 use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
 use crate::continous_ga::cga::CGA;
 use crate::parallel_tempering::pt::PT;
@@ -16,6 +16,8 @@ use crate::tabu_search::tabu::TabuSearch;
 use crate::grasp::grasp::GRASP;
 use crate::nelder_mead::nm::NelderMead;
 use crate::utils::config::{Config, AlgConf, OptConf};
+
+use nalgebra::{DVector, DMatrix};
 
 pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     CGA(CGA<T, F, G>),

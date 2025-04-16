@@ -1,7 +1,7 @@
 # NonConvex-RUST
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
-Continous non-convex optimizers implemented in RUST for constrained and unconstrained maximization problems. 
+Continuous non-convex optimizers implemented in RUST for constrained and unconstrained maximization problems. 
 
 Sources/links to more information in the respective algorithm .md files.
 
@@ -18,7 +18,7 @@ non_convex_opt = "0.1.0"
 
 ```rust
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::{Config, OptConf, AlgConf, CGAConf, PTConf, TabuConf, GRASPConf, AdamConf};
+use non_convex_opt::utils::config::{Config, OptConf, AlgConf};
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
 use nalgebra::{DVector, DMatrix};
 ```
@@ -29,23 +29,33 @@ use nalgebra::{DVector, DMatrix};
 // Load config from file, (preferred - handles default values)
 let config = Config::new(include_str!("config.json")).unwrap();
 
-// Or create config directly, (does not handle default values)
-let config = Config {
-    opt_conf: OptConf {
-        max_iter: 1000,
-        rtol: 1e-6,
-        atol: 1e-6,
-        rtol_max_iter_fraction: 1.0,
+// Or create config from JSON string
+let config_json = r#"{
+    "opt_conf": {
+        "max_iter": 1000,
+        "rtol": "1e-6", 
+        "atol": "1e-6",
+        "rtol_max_iter_fraction": 1.0
     },
-    alg_conf: AlgConf::CGA(CGAConf {
-        population_size: 100,
-        num_parents: 2,
-        selection_method: "Tournament".to_string(),
-        crossover_method: "Random".to_string(),
-        crossover_prob: 0.8,
-        tournament_size: 2,
-    }),
-};
+    "alg_conf": {
+        "CGA": {
+            "population_size": 100,
+            "num_parents": 2,
+            "selection": {
+                "Tournament": {
+                    "tournament_size": 2
+                }
+            },
+            "crossover": {
+                "Random": {
+                    "crossover_prob": 0.8
+                }
+            }
+        }
+    }
+}"#;
+
+let config = Config::new(config_json).unwrap();
 
 let mut opt = NonConvexOpt::new(
     config,
@@ -105,81 +115,99 @@ The config is structured as follows:
 - `OptConf` - Optimization configuration
 - `AlgConf` - Algorithm configuration, containing one of:
     - `CGAConf` - Continuous Genetic Algorithm configuration
+        - `SelectionConf` - Selection method configuration
+        - `CrossoverConf` - Crossover method configuration
     - `PTConf` - Parallel Tempering configuration
+        - `SwapCheckConf` - Swap check configuration
     - `TabuConf` - Tabu Search configuration
+        - `TabuListConf` - Tabu list configuration
+        - `ReactiveTabuConf` - Reactive tabu configuration
     - `GRASPConf` - Greedy Randomized Adaptive Search Procedure configuration
     - `AdamConf` - Adam configuration
+    - `SGAConf` - Stochastic Gradient Ascent configuration
     - `NelderMeadConf` - Nelder-Mead configuration
+    - `LBFGSConf` - Limited-memory Broyden-Fletcher-Goldfarb-Shanno (L-BFGS) configuration
+        - `LineSearchConf` - Line search configuration
 
 An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/blob/main/tests/config.json). The default values are:
 
-```json
-    {
+{
     "opt_conf": {
-            "max_iter": 1000,
-            "rtol": 1e-6,
-            "atol": 1e-6,
-            "rtol_max_iter_fraction": 1.0
-        },
+        "max_iter": 1000,
+        "rtol": "1e-6", 
+        "atol": "1e-6",
+        "rtol_max_iter_fraction": 1.0
+    },
     "alg_conf": {
-        "cga": {
+        "CGA": {
             "population_size": 100,
-            "num_parents": 2,
-            "selection_method": "tournament",
-            "crossover_method": "uniform",
-            "crossover_prob": 0.8,
-            "tournament_size": 2
+            "num_parents": 10,
+            "selection": {
+                "Tournament": {
+                    "tournament_size": 2
+                }
+            },
+            "crossover": {
+                "Random": {
+                    "crossover_prob": 0.8
+                }
+            }
         },
-        "pt": {
+        "PT": {
             "num_replicas": 10,
-            "power_law_init": 2.0,
-            "power_law_final": 0.5,
-            "power_law_cycles": 1,
-            "alpha": 0.1,
-            "omega": 2.1,
-            "swap_check_type": "Always",
-            "swap_frequency": 1.0,
-            "swap_probability": 0.1,
-            "mala_step_size": 0.01
+            "min_temp": 0.1,
+            "max_temp": 2.0,
+            "swap_check": {
+                "Always": {
+                    "swap_probability": 0.1
+                }
+            }
         },
-        "ts": {
-            "tabu_list_size": 20,
+        "TS": {
             "num_neighbors": 50,
             "step_size": 0.1,
             "perturbation_prob": 0.3,
-            "tabu_threshold": 1e-6,
-            "tabu_type": "Standard",
-            "min_tabu_size": 10,
-            "max_tabu_size": 30,
-            "increase_factor": 1.1,
-            "decrease_factor": 0.9
+            "tabu_threshold": "1e-6",
+            "tabu_list": {
+                "Standard": {
+                    "tabu_list_size": 20
+                }
+            }
         },
-        "grasp": {
+        "GRASP": {
             "num_candidates": 30,
             "alpha": 0.3,
             "num_neighbors": 10,
             "step_size": 0.1,
             "perturbation_prob": 0.3
         },
-        "adam": {
+        "Adam": {
             "learning_rate": 0.01,
             "beta1": 0.9,
             "beta2": 0.999,
-            "epsilon": 1e-8
+            "epsilon": "1e-8"
         },
-        "sga": {
+        "SGA": {
             "learning_rate": 0.05,
             "momentum": 0.9
         },
-        "nm": {
+        "NM": {
             "alpha": 1.0,
             "gamma": 2.0,
             "rho": 0.5,
             "sigma": 0.5
+        },
+        "LBFGS": {
+            "memory_size": 10,
+            "line_search": {
+                "Backtracking": {
+                    "c1": 1e-4,
+                    "rho": 0.5
+                }
+            }
         }
     }
 }
-```
 
 ## Contributing
 

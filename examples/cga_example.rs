@@ -2,42 +2,57 @@ mod common;
 use common::fcns::{KBF, KBFConstraints};
 use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::{Config, OptConf, AlgConf, CGAConf};
+use non_convex_opt::utils::config::{Config, AlgConf};
+use serde_json;
 use nalgebra::DMatrix;
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-
-    let config = Config {
-        opt_conf: OptConf {
-            max_iter: 100,
-            rtol: 1e-6,
-            atol: 1e-6,
-            rtol_max_iter_fraction: 1.0,
+    
+    let config_json = r#"
+    {
+        "opt_conf": {
+            "max_iter": 100,
+            "rtol": "1e-6",
+            "atol": "1e-6",
+            "rtol_max_iter_fraction": 1.0
         },
-        alg_conf: AlgConf::CGA(CGAConf {
-            population_size: 100,
-            num_parents: 20,
-            selection_method: "Tournament".to_string(),
-            crossover_method: "Heuristic".to_string(),
-            crossover_prob: 0.5,
-            tournament_size: 50,
-        }),
+        "alg_conf": {
+            "CGA": {
+                "common": {
+                    "population_size": 100,
+                    "num_parents": 20
+                },
+                "crossover": {
+                    "Heuristic": {
+                        "crossover_prob": 0.5
+                    }
+                },
+                "selection": {
+                    "Tournament": {
+                        "tournament_size": 50
+                    }
+                }
+            }
+        }
+    }"#;
+
+    let config: Config = serde_json::from_str(config_json).unwrap();
+
+    let cga_conf = match &config.alg_conf {
+        AlgConf::CGA(cga_conf) => cga_conf,
+        _ => panic!("Expected CGAConf"),
     };
+
 
     let obj_f = KBF;
     let constraints = KBFConstraints;
 
-    let cga_conf = match &config.alg_conf {
-        AlgConf::CGA(conf) => conf,
-        _ => panic!("Expected CGA configuration"),
-    };
-
     // Randomly spread initial population across domain
-    let mut init_pop = DMatrix::zeros(cga_conf.population_size, 2);
-    for i in 0..cga_conf.population_size {
+    let mut init_pop = DMatrix::zeros(cga_conf.common.population_size, 2);
+    for i in 0..cga_conf.common.population_size {
         for j in 0..2 {
             init_pop[(i, j)] = rand::random::<f64>() * 10.0;
         }

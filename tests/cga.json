@@ -1,0 +1,25 @@
+{
+    "opt_conf": {
+        "max_iter": 100,
+        "rtol": "1e-6",
+        "atol": "1e-6"
+    },
+    "alg_conf": {
+        "CGA": {
+            "common": {
+                "population_size": 50,
+                "num_parents": 10
+            },
+            "crossover": {
+                "Heuristic": {
+                    "crossover_prob": 0.8
+                }
+            },
+            "selection": {
+                "Tournament": {
+                    "tournament_size": 2
+                }
+            }
+        }
+    }
+}
