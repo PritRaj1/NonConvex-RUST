@@ -157,6 +157,10 @@ An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/bl
             "beta1": 0.9,
             "beta2": 0.999,
             "epsilon": 1e-8
+        },
+        "sga": {
+            "learning_rate": 0.05,
+            "momentum": 0.9
         }
     }
 }
