@@ -5,5 +5,5 @@ The Nelder-Mead method uses Simplex (a geometric figure with N+1 vertices in N-d
 ## Sources and more information
 
 - [Simplex](doi:10.1093/comjnl/7.4.308)
-- [Downhill Simplex visuals](https://www.brnt.eu/phd/node10.html#SECTION00622200000000000000)
+- [Downhill Simplex visuals (for convex opt)](https://www.brnt.eu/phd/node10.html#SECTION00622200000000000000)
 - [Nelder-Mead may converge to non-stationary points](doi:10.1137/S1052623496303482)
