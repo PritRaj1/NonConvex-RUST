@@ -43,3 +43,11 @@ harness = false
 [[bench]]
 name = "adam_benchmarks"
 harness = false
+
+[[bench]]
+name = "nm_benchmarks"
+harness = false
+
+[[bench]]
+name = "grasp_benchmarks"
+harness = false
