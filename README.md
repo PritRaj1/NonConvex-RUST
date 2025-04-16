@@ -159,6 +159,19 @@ An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/bl
 }
 ```
 
+## Benchmarking
+
+Benchmarks are collected withg criterion:
+```bash
+cargo bench
+```
+To view the results, run:
+```bash
+open target/criterion/report/index.html  # on macOS
+xdg-open target/criterion/report/index.html  # on Linux
+start target/criterion/report/index.html  # on Windows
+```
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
