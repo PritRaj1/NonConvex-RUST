@@ -194,8 +194,9 @@ An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/bl
     xdg-open target/criterion/report/index.html  # on Linux
     start target/criterion/report/index.html  # on Windows
     ```
-6. Commit and push
-7. Open a Pull Request
+6. Add sources and more information to the respective algorithm .md file - so that others can learn and share too!
+7. Commit and push
+8. Open a Pull Request
 
 ## License
 
