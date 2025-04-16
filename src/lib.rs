@@ -4,11 +4,13 @@ pub mod parallel_tempering;
 pub mod tabu_search;
 pub mod adam;
 pub mod grasp;
+pub mod sg_ascent;
 use nalgebra::{DVector, DMatrix};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
 use crate::continous_ga::cga::CGA;
 use crate::parallel_tempering::pt::PT;
 use crate::adam::adam::Adam;
+use crate::sg_ascent::sga::SGAscent;
 use crate::tabu_search::tabu::TabuSearch;
 use crate::grasp::grasp::GRASP;
 use crate::utils::config::{Config, AlgConf, OptConf};
@@ -19,6 +21,7 @@ pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFuncti
     TS(TabuSearch<T, F, G>),
     Adam(Adam<T, F, G>),
     GRASP(GRASP<T, F, G>),
+    SGA(SGAscent<T, F, G>),
 }
 
 pub struct Result<T: FloatNum> {
@@ -46,6 +49,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             AlgConf::TS(ts_conf) => OptAlg::TS(TabuSearch::new(ts_conf, init_pop.column(0).into(), opt_prob)),
             AlgConf::Adam(adam_conf) => OptAlg::Adam(Adam::new(adam_conf, init_pop.column(0).into(), opt_prob)),
             AlgConf::GRASP(grasp_conf) => OptAlg::GRASP(GRASP::new(grasp_conf, init_pop.column(0).into(), opt_prob)),
+            AlgConf::SGA(sga_conf) => OptAlg::SGA(SGAscent::new(sga_conf, init_pop.column(0).into(), opt_prob)),
         };
 
         Self { alg, conf: conf.opt_conf, iter: 0, converged: false }
@@ -72,6 +76,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::TS(ts) => ts.best_fitness,
             OptAlg::Adam(adam) => adam.best_fitness,
             OptAlg::GRASP(grasp) => grasp.best_fitness,
+            OptAlg::SGA(sga) => sga.best_fitness,
         };
 
         match &mut self.alg {
@@ -80,6 +85,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::TS(ts) => ts.step(),
             OptAlg::Adam(adam) => adam.step(),
             OptAlg::GRASP(grasp) => grasp.step(),
+            OptAlg::SGA(sga) => sga.step(),
         }
 
         let current_best_fitness = match &self.alg {
@@ -88,6 +94,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::TS(ts) => ts.best_fitness,
             OptAlg::Adam(adam) => adam.best_fitness,
             OptAlg::GRASP(grasp) => grasp.best_fitness,
+            OptAlg::SGA(sga) => sga.best_fitness,
         };
 
         self.converged = self.check_convergence(
@@ -106,6 +113,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::TS(ts) => DMatrix::from_columns(&[ts.x.clone()]),
             OptAlg::Adam(adam) => DMatrix::from_columns(&[adam.x.clone()]),
             OptAlg::GRASP(grasp) => DMatrix::from_columns(&[grasp.x.clone()]),
+            OptAlg::SGA(sga) => DMatrix::from_columns(&[sga.x.clone()]),
         }
     }
 
@@ -116,6 +124,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::TS(ts) => ts.best_x.clone(),
             OptAlg::Adam(adam) => adam.x.clone(),
             OptAlg::GRASP(grasp) => grasp.best_x.clone(),
+            OptAlg::SGA(sga) => sga.x.clone(),
         }
     }
 
@@ -144,6 +153,12 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
                 let fitness_vec = DVector::from_element(x_matrix.ncols(), grasp.best_fitness);
                 let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
                 (grasp.x.clone(), grasp.best_fitness, x_matrix, fitness_vec, constraints_vec)
+            },
+            OptAlg::SGA(sga) => {
+                let x_matrix = DMatrix::from_columns(&[sga.x.clone()]);
+                let fitness_vec = DVector::from_element(x_matrix.ncols(), sga.best_fitness);
+                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
+                (sga.x.clone(), sga.best_fitness, x_matrix, fitness_vec, constraints_vec)
             },
         };
 

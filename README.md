@@ -83,10 +83,13 @@ The following GIFs are based on poor initializations of the [2D unconstrained ma
 | <img src="./examples/grasp_kbf.gif" width="300" alt="GRASP Example"> | [Greedy Randomized Adaptive Search Procedure (GRASP)](./src/grasp/GRASP.md) - Construction and local search |
 
 ### Gradient-Based 
+
+These work better with mini-batches!
+
 |  |  |
 |-----------|---------------|
 | [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation | <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> |
-
+| <img src="./examples/sga_kbf.gif" width="300" alt="SGA Example"> | [Stochastic Gradient Ascent (SGA)](./src/sg_ascent/SGA.md) - Gradient-based optimization |
 ## Config
 
 The config is structured as follows:

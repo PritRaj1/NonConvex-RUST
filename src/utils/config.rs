@@ -11,6 +11,7 @@ pub enum AlgConf {
     TS(TabuConf),
     Adam(AdamConf),
     GRASP(GRASPConf),
+    SGA(SGAConf),
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -169,6 +170,17 @@ fn default_grasp_alpha() -> f64 { 0.3 }
 fn default_grasp_num_neighbors() -> usize { 50 }
 fn default_grasp_step_size() -> f64 { 0.1 }
 fn default_grasp_perturbation_prob() -> f64 { 0.3 }
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct SGAConf {
+    #[serde(default = "default_sga_learning_rate")]
+    pub learning_rate: f64,
+    #[serde(default = "default_sga_momentum")]
+    pub momentum: f64,
+}
+
+fn default_sga_learning_rate() -> f64 { 0.01 }
+fn default_sga_momentum() -> f64 { 0.9 }
 
 #[derive(Error, Debug)]
 pub enum ConfigError {
