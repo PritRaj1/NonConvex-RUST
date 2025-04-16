@@ -26,10 +26,10 @@ use nalgebra::{DVector, DMatrix};
 ## Usage
 
 ```rust
-// Load config from file (preferred, handles default values)
+// Load config from file, (preferred - handles default values)
 let config = Config::new(include_str!("config.json")).unwrap();
 
-// Or create config directly (does not handle default values)
+// Or create config directly, (does not handle default values)
 let config = Config {
     opt_conf: OptConf {
         max_iter: 1000,
