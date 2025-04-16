@@ -110,7 +110,7 @@ The config is structured as follows:
     - `GRASPConf` - Greedy Randomized Adaptive Search Procedure configuration
     - `AdamConf` - Adam configuration
     - `NelderMeadConf` - Nelder-Mead configuration
-    
+
 An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/blob/main/tests/config.json). The default values are:
 
 ```json
@@ -181,18 +181,21 @@ An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/bl
 }
 ```
 
-## Benchmarking
+## Contributing
 
-Benchmarks are collected with criterion:
-```bash
-cargo bench
-```
-To view the results, run:
-```bash
-open target/criterion/report/index.html  # on macOS
-xdg-open target/criterion/report/index.html  # on Linux
-start target/criterion/report/index.html  # on Windows
-```
+1. Fork the repository
+2. Create a new branch: `git checkout -b my-feature`
+3. Make your changes
+4. Run tests: `cargo test`
+5. Run benchmarks: `cargo bench`    
+    - To view the results, run:
+    ```bash
+    open target/criterion/report/index.html  # on macOS
+    xdg-open target/criterion/report/index.html  # on Linux
+    start target/criterion/report/index.html  # on Windows
+    ```
+6. Commit and push
+7. Open a Pull Request
 
 ## License
 

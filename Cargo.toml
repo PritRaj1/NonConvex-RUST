@@ -3,6 +3,10 @@ name = "non_convex_opt"
 version = "0.1.0"
 authors = ["PritManGuy <prithvi@exalaboratories.com>"]
 edition = "2021"
+license = "GNU GPLv3"
+description = "Some non-convex optimization algorithms"
+repository = "https://github.com/PritRaj1/NonConvex-RUST"
+homepage = "https://github.com/PritRaj1/NonConvex-RUST"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
