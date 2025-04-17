@@ -12,6 +12,9 @@ pub struct LBFGS<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunct
     pub linesearch: Box<dyn LineSearch<T, F, G>>,
     s: Vec<DVector<T>>,
     y: Vec<DVector<T>>,
+    has_bounds: bool,
+    lower_bounds: Option<DVector<T>>,
+    upper_bounds: Option<DVector<T>>,
 }
 
 impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> LBFGS<T, F, G> {
@@ -25,6 +28,11 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> LBFG
         };
 
         let f = opt_prob.objective.f(&init_x);
+        
+        // Check if problem has bounds
+        let lower_bounds = opt_prob.objective.x_lower_bound(&init_x);
+        let upper_bounds = opt_prob.objective.x_upper_bound(&init_x);
+        let has_bounds = lower_bounds.is_some() || upper_bounds.is_some();
 
         Self { 
             conf, 
@@ -35,20 +43,131 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> LBFG
             linesearch,
             s: Vec::new(),
             y: Vec::new(),
+            has_bounds,
+            lower_bounds,
+            upper_bounds,
         }
+    }
+
+    fn project_onto_bounds(&self, x: &mut DVector<T>) {
+        if let Some(ref lb) = self.lower_bounds {
+            for i in 0..x.len() {
+                x[i] = x[i].max(lb[i]);
+            }
+        }
+        if let Some(ref ub) = self.upper_bounds {
+            for i in 0..x.len() {
+                x[i] = x[i].min(ub[i]);
+            }
+        }
+    }
+
+    fn compute_cauchy_point(&self, g: &DVector<T>) -> DVector<T> {
+        let mut t = T::one();
+        let mut x_cp = self.x.clone();
+        
+        for i in 0..g.len() {
+            if g[i] != T::zero() {
+                if let (Some(ref lb), Some(ref ub)) = (&self.lower_bounds, &self.upper_bounds) {
+                    if g[i] < T::zero() {
+                        t = t.min((ub[i] - self.x[i]) / g[i]);
+                    } else {
+                        t = t.min((lb[i] - self.x[i]) / g[i]);
+                    }
+                }
+            }
+        }
+        
+        x_cp -= g * t;
+        self.project_onto_bounds(&mut x_cp);
+        x_cp
     }
 
     pub fn step(&mut self) {
         let g = self.opt_prob.objective.gradient(&self.x).unwrap();
         
-        let m = self.conf.common.memory_size;
+        if self.has_bounds {
+            self.step_with_bounds(&g); // L-BFGS-B
+        } else {
+            self.step_without_bounds(&g); // L-BFGS
+        }
+    }
+
+    fn step_with_bounds(&mut self, g: &DVector<T>) {
+        let x_cp = self.compute_cauchy_point(g);
+        let mut p = x_cp - &self.x;
         
-        // Search direction using L-BFGS two-loop recursion
+        let r = self.compute_reduced_gradient(g);
+        let z = self.two_loop_recursion(&r);
+
+        self.update_search_direction(&mut p, &z);
+
+        let alpha = self.linesearch.search(&self.x, &p, self.best_fitness, g, &self.opt_prob);
+        let mut x_new = &self.x + &p * alpha;
+        self.project_onto_bounds(&mut x_new);
+
+        self.update_s_y_vectors(&x_new, g);
+        self.update_best_solution(&x_new);
+        self.x = x_new;
+    }
+
+    fn step_without_bounds(&mut self, g: &DVector<T>) {
+        let p = self.compute_search_direction(g);
+        
+        let alpha = self.linesearch.search(&self.x, &p, self.best_fitness, g, &self.opt_prob);
+        
+        let x_new = &self.x + &p * alpha;
+        
+        self.update_s_y_vectors(&x_new, g);
+        self.update_best_solution(&x_new);
+        self.x = x_new;
+    }
+
+    fn compute_reduced_gradient(&self, g: &DVector<T>) -> DVector<T> {
+        let mut r = DVector::zeros(self.x.len());
+        for i in 0..self.x.len() {
+            if !self.is_at_bound(i) {
+                r[i] = g[i];
+            }
+        }
+        r
+    }
+
+    // Two-loop recursion to approximate the inverse Hessian
+    fn two_loop_recursion(&self, r: &DVector<T>) -> DVector<T> {
+        let m = self.conf.common.memory_size;
+        let mut q = r.clone();
+        let mut alpha = vec![T::zero(); m];
+        let mut rho = vec![T::zero(); m];
+        
+        for i in (0..self.s.len()).rev() {
+            rho[i] = T::one() / self.s[i].dot(&self.y[i]);
+            alpha[i] = rho[i] * self.s[i].dot(&q);
+            q -= &self.y[i] * alpha[i];
+        }
+        
+        let mut z = q.clone();
+        for i in 0..self.s.len() {
+            let beta = rho[i] * self.y[i].dot(&z);
+            z += &self.s[i] * (alpha[i] - beta);
+        }
+        z
+    }
+
+    fn update_search_direction(&self, p: &mut DVector<T>, z: &DVector<T>) {
+        for i in 0..self.x.len() {
+            if !self.is_at_bound(i) {
+                p[i] = z[i];
+            }
+        }
+    }
+
+    fn compute_search_direction(&self, g: &DVector<T>) -> DVector<T> {
+        let m = self.conf.common.memory_size;
         let mut q = g.clone();
         let mut alpha = vec![T::zero(); m];
         let mut rho = vec![T::zero(); m];
         
-        // First loop - compute alpha and update q
         for i in (0..m).rev() {
             if i < self.s.len() {
                 rho[i] = T::one() / self.y[i].dot(&self.s[i]);
@@ -57,13 +176,11 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> LBFG
             }
         }
         
-        // Scale q
         if !self.s.is_empty() {
             let gamma = self.s.last().unwrap().dot(self.y.last().unwrap()) / self.y.last().unwrap().dot(self.y.last().unwrap());
             q *= gamma;
         }
         
-        // Second loop - compute search direction p
         let mut p = q.clone();
         for i in 0..m {
             if i < self.s.len() {
@@ -71,40 +188,32 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> LBFG
                 p += &self.s[i] * (alpha[i] - beta);
             }
         }
-        
-        let alpha = self.linesearch.search(&self.x, &p, self.best_fitness, &g, &self.opt_prob);
-        
-        let mut x_new = &self.x + &p * alpha;
-        let f_new = self.opt_prob.objective.f(&x_new);
-        
-        // Project onto feasible set if needed
-        if let Some(ref constraints) = self.opt_prob.constraints {
-            if !constraints.g(&x_new) {
-                if let (Some(lb), Some(ub)) = (self.opt_prob.objective.x_lower_bound(&x_new), 
-                                             self.opt_prob.objective.x_upper_bound(&x_new)) {
-                    for i in 0..x_new.len() {
-                        x_new[i] = x_new[i].max(lb[i]).min(ub[i]);
-                    }
-                }
-            }
-        }
-        
-        let s_new = &x_new - &self.x;
-        let y_new = self.opt_prob.objective.gradient(&x_new).unwrap() - g;
-        
-        if self.s.len() == m {
+        p
+    }
+
+    fn update_s_y_vectors(&mut self, x_new: &DVector<T>, g: &DVector<T>) {
+        let s_new = x_new - &self.x;
+        let y_new = self.opt_prob.objective.gradient(x_new).unwrap() - g;
+
+        if self.s.len() == self.conf.common.memory_size {
             self.s.remove(0);
             self.y.remove(0);
         }
         self.s.push(s_new);
         self.y.push(y_new);
-        
-        let x_new_clone = x_new.clone();
-        self.x = x_new;
-        
+    }
+
+    fn update_best_solution(&mut self, x_new: &DVector<T>) {
+        let f_new = self.opt_prob.objective.f(x_new);
         if f_new > self.best_fitness {
             self.best_fitness = f_new;
-            self.best_x = x_new_clone;
+            self.best_x = x_new.clone();
         }
+    }
+
+    fn is_at_bound(&self, i: usize) -> bool {
+        let at_lower = self.lower_bounds.as_ref().map_or(false, |lb| self.x[i] == lb[i]);
+        let at_upper = self.upper_bounds.as_ref().map_or(false, |ub| self.x[i] == ub[i]);
+        at_lower || at_upper
     }
 }

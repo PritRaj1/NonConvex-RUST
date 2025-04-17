@@ -13,7 +13,7 @@ Limited Memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) is a quasi-Newton
 | More-Thuente | Robust cubic interpolation line search that ensures steady progress |
 | Golden Section | Classical line search using golden ratio, reliable but slower convergence |
 
-The two most suited for L-BFGS are probably Strong Wolfe and More-Thuente. I typically use More-Thuente.
+The two most suited for L-BFGS are the Wolfe methods; Strong Wolfe and More-Thuente. I typically use More-Thuente.
 
 ## Config example
 
