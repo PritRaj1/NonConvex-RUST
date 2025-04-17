@@ -43,10 +43,10 @@ pub trait ObjectiveFunction<T: FloatNumber>: Send + Sync + Clone {
     fn gradient(&self, _x: &DVector<T>) -> Option<DVector<T>> {
         None
     }
-    fn x_lower_bound(&self, x: &DVector<T>) -> Option<DVector<T>> {
+    fn x_lower_bound(&self, _x: &DVector<T>) -> Option<DVector<T>> {
         None
     }
-    fn x_upper_bound(&self, x: &DVector<T>) -> Option<DVector<T>> {
+    fn x_upper_bound(&self, _x: &DVector<T>) -> Option<DVector<T>> {
         None
     }
 }

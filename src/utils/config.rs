@@ -12,6 +12,7 @@ pub use crate::utils::alg_conf::{
     grasp_conf::GRASPConf,
     sga_conf::SGAConf,
     nm_conf::NelderMeadConf,
+    lbfgs_conf::{LBFGSConf, LineSearchConf, BacktrackingConf, StrongWolfeConf, HagerZhangConf, MoreThuenteConf, GoldenSectionConf},
 };
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -23,6 +24,7 @@ pub enum AlgConf {
     GRASP(GRASPConf),
     SGA(SGAConf),
     NM(NelderMeadConf),
+    LBFGS(LBFGSConf),
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
