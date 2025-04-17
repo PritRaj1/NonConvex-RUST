@@ -102,6 +102,7 @@ These work better with mini-batches!
 |-----------|---------------|
 | [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation | <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> |
 | <img src="./examples/sga_kbf.gif" width="300" alt="SGA Example"> | [Stochastic Gradient Ascent (SGA)](./src/sg_ascent/SGA.md) - Gradient-based optimization |
+| [Limited Memory BFGS (L-BFGS)](./src/limited_memory_bfgs/LBFGS.md) - Quasi-Newton gradient-based optimization | <img src="./examples/lbfgs_kbf.gif" width="300" alt="LBFGS Example"> |
 
 ### Direct Search
 

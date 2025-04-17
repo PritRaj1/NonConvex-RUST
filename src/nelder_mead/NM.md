@@ -31,6 +31,6 @@ Default values, (nothing needs to be specified):
 
 ## Sources and more information
 
-- [Simplex](doi:10.1093/comjnl/7.4.308)
+- [Simplex](https://doi:10.1093/comjnl/7.4.308)
 - [Downhill Simplex visuals (for convex opt)](https://www.brnt.eu/phd/node10.html#SECTION00622200000000000000)
-- [Nelder-Mead may converge to non-stationary points](doi:10.1137/S1052623496303482)
+- [Nelder-Mead may converge to non-stationary points](https://doi:10.1137/S1052623496303482)
