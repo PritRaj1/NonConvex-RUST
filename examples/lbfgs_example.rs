@@ -58,7 +58,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for frame in 0..100 {
         let mut chart = setup_chart(
             frame,
-            "Adam",
+            "LBFGS",
             resolution,
             &z_values,
             min_val,

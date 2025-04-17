@@ -11,31 +11,10 @@ use common::fcns::{KBF, KBFConstraints};
 
 static CONFIG_JSON: &str = r#"
 {
-    "opt": {
-        "max_iters": 100,
-        "max_time": null,
-        "target_cost": 1e-6
-    },
-    "alg": {
-        "Tabu": {
-            "tabu_list": {
-                "Standard": {
-                    "size": 20
-                }
-            },
-            "neighborhood_size": 10,
-            "step_size": 0.1,
-            "num_points": 50
-        }
-    }
-}"#;
-
-static REACTIVE_CONFIG_JSON: &str = r#"
-{
     "opt_conf": {
-        "max_iter": 10,
-        "rtol": "1e-8",
-        "atol": "1e-8",
+        "max_iter": 100,
+        "rtol": "-1e-8",
+        "atol": "-1e-8",
         "rtol_max_iter_fraction": 1.0
     },
     "alg_conf": {
@@ -45,7 +24,31 @@ static REACTIVE_CONFIG_JSON: &str = r#"
                 "step_size": 1.5,
                 "perturbation_prob": 0.3,
                 "tabu_list_size": 50,
-                "tabu_threshold": 0.05,
+                "tabu_threshold": 0.05
+            },
+            "list_type": {
+                "Standard": {}
+            }
+        }
+    }
+}"#;
+
+static REACTIVE_CONFIG_JSON: &str = r#"
+{
+    "opt_conf": {
+        "max_iter": 10,
+        "rtol": "-1e-8",
+        "atol": "-1e-8",
+        "rtol_max_iter_fraction": 1.0
+    },
+    "alg_conf": {
+        "TS": {
+            "common": {
+                "num_neighbors": 100,
+                "step_size": 1.5,
+                "perturbation_prob": 0.3,
+                "tabu_list_size": 50,
+                "tabu_threshold": 0.05
             },
             "list_type": {
                 "Reactive": {
