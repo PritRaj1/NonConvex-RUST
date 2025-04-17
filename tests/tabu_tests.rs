@@ -1,5 +1,5 @@
 mod common;
-use non_convex_opt::utils::config::TabuConf;
+use non_convex_opt::utils::config::{Config, AlgConf};
 use non_convex_opt::utils::opt_prob::OptProb;
 use non_convex_opt::tabu_search::tabu::TabuSearch;
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
@@ -7,17 +7,33 @@ use nalgebra::DVector;
 
 #[test]
 fn test_standard_tabu() {
-    let conf = TabuConf {
-        num_neighbors: 50,
-        step_size: 0.1,
-        perturbation_prob: 0.3,
-        tabu_list_size: 20,
-        tabu_threshold: 1e-6,
-        tabu_type: "Standard".to_string(),
-        min_tabu_size: 10,
-        max_tabu_size: 30,
-        increase_factor: 1.1,
-        decrease_factor: 0.9,
+
+    let conf_json = r#"{
+        "opt_conf": {
+            "max_iter": 100,
+            "rtol": "1e-6",
+            "atol": "1e-6"
+        },
+        "alg_conf": {
+            "TS": {
+                "common": {
+                    "tabu_list_size": 20,
+                    "num_neighbors": 50,
+                    "step_size": 0.1,
+                    "perturbation_prob": 0.3,
+                    "tabu_threshold": 1e-6
+                },
+                "list_type": {
+                    "Standard": {}
+                }
+            }
+        }
+    }"#;
+
+    let conf = Config::new(conf_json).unwrap();
+    let tabu_conf = match conf.alg_conf {
+        AlgConf::TS(tabu_conf) => tabu_conf,
+        _ => panic!("Expected TabuConf"),
     };
 
     let init_x = DVector::from_vec(vec![0.5, 0.5]);
@@ -25,7 +41,7 @@ fn test_standard_tabu() {
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(obj_f, Some(constraints));
     
-    let mut tabu = TabuSearch::new(conf, init_x.clone(), opt_prob);
+    let mut tabu = TabuSearch::new(tabu_conf, init_x.clone(), opt_prob);
     let initial_fitness = tabu.best_fitness;
     
     for _ in 0..10 {
@@ -38,17 +54,11 @@ fn test_standard_tabu() {
 
 #[test]
 fn test_reactive_tabu() {
-    let conf = TabuConf {
-        num_neighbors: 50,
-        step_size: 0.1,
-        perturbation_prob: 0.3,
-        tabu_list_size: 20,
-        tabu_threshold: 1e-6,
-        tabu_type: "Reactive".to_string(),
-        min_tabu_size: 10,
-        max_tabu_size: 30,
-        increase_factor: 1.1,
-        decrease_factor: 0.9,
+    let conf = Config::new(include_str!("jsons/tabu.json")).unwrap();
+
+    let tabu_conf = match conf.alg_conf {
+        AlgConf::TS(tabu_conf) => tabu_conf,
+        _ => panic!("Expected TabuConf"),
     };
 
     let init_x = DVector::from_vec(vec![0.5, 0.5]);
@@ -56,7 +66,7 @@ fn test_reactive_tabu() {
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(obj_f, Some(constraints));
     
-    let mut tabu = TabuSearch::new(conf, init_x.clone(), opt_prob);
+    let mut tabu = TabuSearch::new(tabu_conf, init_x.clone(), opt_prob);
     let initial_fitness = tabu.best_fitness;
     
     for _ in 0..10 {

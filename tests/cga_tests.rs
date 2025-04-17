@@ -68,7 +68,7 @@ fn test_heuristic_crossover() {
 
 #[test]
 fn test_cga() {
-    let conf = Config::new(include_str!("cga.json")).unwrap();
+    let conf = Config::new(include_str!("jsons/cga.json")).unwrap();
 
     let cga_conf = match conf.alg_conf {
         AlgConf::CGA(cga_conf) => cga_conf,

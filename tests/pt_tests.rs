@@ -56,7 +56,7 @@ fn test_metropolis_hastings_update_step_size() {
 
 #[test]
 fn test_pt_swap() {
-    let conf = Config::new(include_str!("pt.json")).unwrap();
+    let conf = Config::new(include_str!("jsons/pt.json")).unwrap();
     let pt_conf = match conf.alg_conf {
         AlgConf::PT(pt_conf) => pt_conf,
         _ => panic!("Expected PTConf"),
@@ -77,7 +77,7 @@ fn test_pt_swap() {
 
 #[test]
 fn test_pt_step() {
-    let conf = Config::new(include_str!("pt.json")).unwrap();
+    let conf = Config::new(include_str!("jsons/pt.json")).unwrap();
     let pt_conf = match conf.alg_conf {
         AlgConf::PT(pt_conf) => pt_conf,
         _ => panic!("Expected PTConf"),

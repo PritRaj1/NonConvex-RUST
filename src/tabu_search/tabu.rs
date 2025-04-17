@@ -4,6 +4,7 @@ use crate::utils::config::TabuConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
 use crate::tabu_search::tabu_list::{TabuList, TabuType};
 use rayon::prelude::*;
+
 pub struct TabuSearch<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub conf: TabuConf,
     pub x: DVector<T>,
@@ -25,7 +26,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Tabu
             opt_prob,
             best_x: init_x,
             best_fitness: fitness,
-            tabu_list: TabuList::new(conf.tabu_list_size, tabu_type),
+            tabu_list: TabuList::new(conf.common.tabu_list_size, tabu_type),
             iterations_since_improvement: 0,
         }
     }
@@ -33,9 +34,9 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Tabu
     fn generate_neighbor(&self, rng: &mut impl Rng) -> DVector<T> {
         let mut neighbor = self.x.clone();
         neighbor.iter_mut().for_each(|val| {
-            if rng.random_bool(self.conf.perturbation_prob) {
+            if rng.random_bool(self.conf.common.perturbation_prob) {
                 *val += T::from_f64(
-                    rng.random_range(-self.conf.step_size..self.conf.step_size)
+                    rng.random_range(-self.conf.common.step_size..self.conf.common.step_size)
                 ).unwrap();
             }
         });
@@ -44,7 +45,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Tabu
 
     fn evaluate_neighbor(&self, neighbor: &DVector<T>) -> Option<T> {
         if self.opt_prob.is_feasible(neighbor) 
-            && !self.tabu_list.is_tabu(neighbor, T::from_f64(self.conf.tabu_threshold).unwrap()) {
+            && !self.tabu_list.is_tabu(neighbor, T::from_f64(self.conf.common.tabu_threshold).unwrap()) {
             Some(self.opt_prob.objective.f(neighbor))
         } else {
             None
@@ -56,7 +57,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Tabu
         let mut best_neighbor_fitness = T::neg_infinity();
         
         // Generate and evaluate neighborhood
-        let neighbors: Vec<_> = (0..self.conf.num_neighbors)
+        let neighbors: Vec<_> = (0..self.conf.common.num_neighbors)
             .into_par_iter()
             .map(|_| {
                 let mut local_rng = rand::rng();

@@ -1,0 +1,26 @@
+{
+    "opt_conf": {
+        "max_iter": 100,
+        "rtol": "1e-6",
+        "atol": "1e-6"
+    },
+    "alg_conf": {
+        "TS": {
+            "common": {
+                "tabu_list_size": 20,
+                "num_neighbors": 50,
+                "step_size": 0.1,
+                "perturbation_prob": 0.3,
+                "tabu_threshold": 1e-6
+            },
+            "list_type": {
+                "Reactive": {
+                    "min_tabu_size": 10,
+                    "max_tabu_size": 30,
+                    "increase_factor": 1.1,
+                    "decrease_factor": 0.9
+                }
+            }
+        }
+    }
+}

@@ -2,33 +2,41 @@ mod common;
 use common::fcns::{KBF, KBFConstraints};
 use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::{Config, OptConf, AlgConf, TabuConf};
+use non_convex_opt::utils::config::Config;
 use nalgebra::{DVector, DMatrix};
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config {
-        opt_conf: OptConf {
-            max_iter: 80,
-            rtol: 1e-6,
-            atol: 1e-6,
-            rtol_max_iter_fraction: 1.0,
+    let conf_json = r#"{
+        "opt_conf": {
+            "max_iter": 80,
+            "rtol": "1e-6",
+            "atol": "1e-6"
         },
-        alg_conf: AlgConf::TS(TabuConf {
-            num_neighbors: 100,
-            step_size: 1.5,
-            perturbation_prob: 0.3,
-            tabu_list_size: 50,
-            tabu_threshold: 0.05,
-            tabu_type: "Reactive".to_string(),
-            min_tabu_size: 10,
-            max_tabu_size: 30,
-            increase_factor: 1.1,
-            decrease_factor: 0.9,
-        }),
-    };
+        "alg_conf": {
+            "TS": {
+                "common": {
+                    "tabu_list_size": 20,
+                    "num_neighbors": 50,
+                    "step_size": 1.5,
+                    "perturbation_prob": 0.3,
+                    "tabu_threshold": 0.05
+                },
+                "list_type": {
+                    "Reactive": {
+                        "min_tabu_size": 10,
+                        "max_tabu_size": 30,
+                        "increase_factor": 1.1,
+                        "decrease_factor": 0.9
+                    }
+                }
+            }
+        }
+    }"#;
+
+    let config = Config::new(conf_json).unwrap();
 
     let obj_f = KBF;
     let constraints = KBFConstraints;

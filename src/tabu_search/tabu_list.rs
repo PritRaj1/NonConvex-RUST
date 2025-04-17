@@ -1,7 +1,7 @@
 use nalgebra::DVector;
 use std::collections::VecDeque;
 use crate::utils::opt_prob::FloatNumber as FloatNum;
-use crate::utils::config::TabuConf;
+use crate::utils::config::{TabuConf, ListType};
 use rayon::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -17,14 +17,14 @@ pub enum TabuType {
 
 impl From<&TabuConf> for TabuType {
     fn from(conf: &TabuConf) -> Self {
-        match conf.tabu_type.as_str() {
-            "Reactive" => TabuType::Reactive {
+        match &conf.list_type {
+            ListType::Reactive(conf) => TabuType::Reactive {
                 min_size: conf.min_tabu_size,
                 max_size: conf.max_tabu_size,
                 increase_factor: conf.increase_factor,
                 decrease_factor: conf.decrease_factor,
             },
-            _ => TabuType::Standard,
+            ListType::Standard(_) => TabuType::Standard,
         }
     }
 }

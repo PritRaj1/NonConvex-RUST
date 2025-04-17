@@ -26,7 +26,7 @@ use nalgebra::{DVector, DMatrix};
 ## Usage
 
 ```rust
-// Load config from file, (preferred - handles default values)
+// Load config from file
 let config = Config::new(include_str!("config.json")).unwrap();
 
 // Or create config from JSON string

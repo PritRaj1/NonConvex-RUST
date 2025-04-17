@@ -7,6 +7,7 @@ use serde_with::DisplayFromStr;
 pub use crate::utils::alg_conf::{
     cga_conf::{CGAConf, CommonConf, CrossoverConf, SelectionConf},
     pt_conf::{PTConf, SwapConf},
+    tabu_conf::{TabuConf, ListType, ReactiveConf, StandardConf},
 };
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -45,42 +46,6 @@ fn default_max_iter() -> usize { 1000 }
 fn default_rtol() -> f64 { 1e-6 }
 fn default_atol() -> f64 { 1e-6 }
 fn default_rtol_max_iter_fraction() -> f64 { 1.0 }
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct TabuConf {
-    #[serde(default = "default_tabu_list_size")]
-    pub tabu_list_size: usize,
-    #[serde(default = "default_num_neighbors")]
-    pub num_neighbors: usize,
-    #[serde(default = "default_step_size")]
-    pub step_size: f64,
-    #[serde(default = "default_perturbation_prob")]
-    pub perturbation_prob: f64,
-    #[serde(default = "default_tabu_threshold")] // Aspiration
-    pub tabu_threshold: f64,
-    #[serde(default = "default_tabu_type")]
-    pub tabu_type: String,
-    // Reactive parameters
-    #[serde(default = "default_min_tabu_size")]
-    pub min_tabu_size: usize,
-    #[serde(default = "default_max_tabu_size")]
-    pub max_tabu_size: usize,
-    #[serde(default = "default_increase_factor")]
-    pub increase_factor: f64,
-    #[serde(default = "default_decrease_factor")]
-    pub decrease_factor: f64,
-}
-
-fn default_tabu_list_size() -> usize { 20 }
-fn default_num_neighbors() -> usize { 50 }
-fn default_step_size() -> f64 { 0.1 }
-fn default_perturbation_prob() -> f64 { 0.3 }
-fn default_tabu_threshold() -> f64 { 1e-6 }
-fn default_tabu_type() -> String { "Standard".to_string() }
-fn default_min_tabu_size() -> usize { 10 }
-fn default_max_tabu_size() -> usize { 30 }
-fn default_increase_factor() -> f64 { 1.1 }
-fn default_decrease_factor() -> f64 { 0.9 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AdamConf {

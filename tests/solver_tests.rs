@@ -7,7 +7,7 @@ use nalgebra::DMatrix;
 
 #[test]
 fn test_cga() {
-    let conf = Config::new(include_str!("cga.json")).unwrap();
+    let conf = Config::new(include_str!("jsons/cga.json")).unwrap();
 
     let mut init_pop = DMatrix::zeros(50, 2);
     for i in 0..50 {
@@ -33,7 +33,7 @@ fn test_cga() {
 
 #[test]
 fn test_pt() {
-    let conf = Config::new(include_str!("pt.json")).unwrap();
+    let conf = Config::new(include_str!("jsons/pt.json")).unwrap();
 
     let mut init_pop = DMatrix::zeros(10, 2);
     for i in 0..10 {
