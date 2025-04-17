@@ -133,6 +133,9 @@ The config is structured as follows:
     - `AdamConf` - Adam configuration
     - `SGAConf` - Stochastic Gradient Ascent configuration
     - `NelderMeadConf` - Nelder-Mead configuration
+    - `LBFGSConf` - Limited Memory BFGS configuration
+        - `CommonConf` - Common configuration
+        - `LineSearchConf` - Line search configuration
 
 Example configs are provided in [tests/jsons/](tests/jsons). More information on each config can be found in the respective algorithm .md files.
 
