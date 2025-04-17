@@ -20,7 +20,47 @@ Two variants of tabu search are implemented:
 | Escape Mechanism | Basic tabu restrictions | Enhanced escape from local optima through size adjustments |
 | When to Use | Well-understood problem spaces | Problems with varying landscape complexity |
 
+## Config example
 
+Fully-defined:
+
+```json
+{
+    "alg_conf": {
+        "TS": {
+            "common": {
+                "num_neighbors": 10,
+                "step_size": 0.1,
+                "perturbation_prob": 0.1
+            },
+            "tabu_list": {
+                "Standard": {
+                    "size": 10
+                }
+                // or
+                "Reactive": {
+                    "min_size": 10,
+                    "max_size": 100
+                }
+            }
+        }
+    }
+}
+```
+
+Default values, (only choices of tabu list must be specified):
+
+```json
+{
+    "alg_conf": {
+        "TS": {
+            "tabu_list": {
+                "Standard": {}
+            }
+        }
+    }
+}
+```
 ## Sources and more information
 
 - [Tabu Search](https://ieeexplore.ieee.org/document/9091743)

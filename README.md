@@ -39,16 +39,18 @@ let config_json = r#"{
     },
     "alg_conf": {
         "CGA": {
-            "population_size": 100,
-            "num_parents": 2,
+            "common": {
+                "population_size": 100,
+                "num_parents": 2,
+            },
+            "crossover": {
+                "Heuristic": {
+                    "crossover_prob": 0.8
+                }
+            },
             "selection": {
                 "Tournament": {
                     "tournament_size": 2
-                }
-            },
-            "crossover": {
-                "Random": {
-                    "crossover_prob": 0.8
                 }
             }
         }
@@ -115,99 +117,23 @@ The config is structured as follows:
 - `OptConf` - Optimization configuration
 - `AlgConf` - Algorithm configuration, containing one of:
     - `CGAConf` - Continuous Genetic Algorithm configuration
+        - `CommonConf` - Common configuration
         - `SelectionConf` - Selection method configuration
         - `CrossoverConf` - Crossover method configuration
     - `PTConf` - Parallel Tempering configuration
-        - `SwapCheckConf` - Swap check configuration
+        - `CommonConf` - Common configuration
+        - `SwapConf` - Swap configuration
     - `TabuConf` - Tabu Search configuration
-        - `TabuListConf` - Tabu list configuration
-        - `ReactiveTabuConf` - Reactive tabu configuration
+        - `CommonConf` - Common configuration
+        - `ListType` - List type configuration
+            - `StandardConf` - Standard list configuration
+            - `ReactiveConf` - Reactive list configuration
     - `GRASPConf` - Greedy Randomized Adaptive Search Procedure configuration
     - `AdamConf` - Adam configuration
     - `SGAConf` - Stochastic Gradient Ascent configuration
     - `NelderMeadConf` - Nelder-Mead configuration
-    - `LBFGSConf` - Limited-memory Broyden-Fletcher-Goldfarb-Shanno (L-BFGS) configuration
-        - `LineSearchConf` - Line search configuration
 
-An example is provided in [tests/](https://github.com/PritRaj1/NonConvex-RUST/blob/main/tests/config.json). The default values are:
-
-{
-    "opt_conf": {
-        "max_iter": 1000,
-        "rtol": "1e-6", 
-        "atol": "1e-6",
-        "rtol_max_iter_fraction": 1.0
-    },
-    "alg_conf": {
-        "CGA": {
-            "population_size": 100,
-            "num_parents": 10,
-            "selection": {
-                "Tournament": {
-                    "tournament_size": 2
-                }
-            },
-            "crossover": {
-                "Random": {
-                    "crossover_prob": 0.8
-                }
-            }
-        },
-        "PT": {
-            "num_replicas": 10,
-            "min_temp": 0.1,
-            "max_temp": 2.0,
-            "swap_check": {
-                "Always": {
-                    "swap_probability": 0.1
-                }
-            }
-        },
-        "TS": {
-            "num_neighbors": 50,
-            "step_size": 0.1,
-            "perturbation_prob": 0.3,
-            "tabu_threshold": "1e-6",
-            "tabu_list": {
-                "Standard": {
-                    "tabu_list_size": 20
-                }
-            }
-        },
-        "GRASP": {
-            "num_candidates": 30,
-            "alpha": 0.3,
-            "num_neighbors": 10,
-            "step_size": 0.1,
-            "perturbation_prob": 0.3
-        },
-        "Adam": {
-            "learning_rate": 0.01,
-            "beta1": 0.9,
-            "beta2": 0.999,
-            "epsilon": "1e-8"
-        },
-        "SGA": {
-            "learning_rate": 0.05,
-            "momentum": 0.9
-        },
-        "NM": {
-            "alpha": 1.0,
-            "gamma": 2.0,
-            "rho": 0.5,
-            "sigma": 0.5
-        },
-        "LBFGS": {
-            "memory_size": 10,
-            "line_search": {
-                "Backtracking": {
-                    "c1": 1e-4,
-                    "rho": 0.5
-                }
-            }
-        }
-    }
-}
+Example configs are provided in [tests/jsons/](tests/jsons). More information on each config can be found in the respective algorithm .md files.
 
 ## Contributing
 

@@ -35,6 +35,33 @@ Parameters
 - $ (\beta_1, \beta_2) \in [0,1]^2 $: Decay rates (typically $0.9$ and $0.999$ respectively)
 - $ \epsilon $: Small constant to prevent division by zero (typically $10^{-8}$)
 
+## Config example
+
+Fully-defined:
+
+```json
+{
+    "alg_conf": {
+        "Adam": {
+            "learning_rate": 0.001,
+            "beta1": 0.9,
+            "beta2": 0.999,
+            "epsilon": 1e-8
+        }
+    }
+}
+```
+
+Default values, (nothing needs to be specified):
+
+```json
+{
+    "alg_conf": {
+        "Adam": {}
+    }
+}
+```
+
 ## Sources and further information
 
 - [Adam](https://arxiv.org/abs/1412.6980)

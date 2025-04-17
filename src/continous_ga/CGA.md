@@ -21,6 +21,57 @@ Genetic algorithm for real valued (FP) vectors.
 | Heuristic     | - More exploitative and faster to converge (with good initial population) |
 |      | - More suitable to continous problems (by intuition). Uses a blend of parent characteristics. |
 
+## Config example
+
+Fully-defined:
+
+```json
+{
+    "alg_conf": {
+        "CGA": {
+            "common": {
+                "population_size": 100,
+                "num_parents": 2
+            },
+            "selection": {
+                "Tournament": { 
+                    "tournament_size": 2
+                }
+                // or
+                "Residual": {}
+                // or
+                "RouletteWheel": {}
+            },
+            "crossover": {
+                "Heuristic": {
+                    "crossover_prob": 0.8
+                }
+                // or
+                "Random": {}
+            }
+        }
+    }
+}
+```
+
+Default values, (only choices of selection and crossover must be specified):
+
+```json
+{
+    "alg_conf": {
+        "CGA": {
+            "common": {},
+            "selection": {
+                "Residual": {}
+            },
+            "crossover": {
+                "Random": {}
+            }
+        }
+    }
+}
+```
+
 ## Sources and more information
 
 - [Continuous Genetic Algorithm](https://doi.org/10.1002/0471671746.ch3)

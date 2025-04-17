@@ -14,6 +14,54 @@ In early iterations, $p$ is set large (>1) to cluster more temperatures towards 
 
 This ensures that early iterations are more explorative and later iterations are more exploitative.
 
+## Config example
+
+Fully-defined:
+
+```json
+{
+    "alg_conf": {
+        "PT": {
+            "common": {
+                "num_replicas": 10,
+                "power_law_init": 2.0,
+                "power_law_final": 0.5,
+                "power_law_cycles": 1,
+                "alpha": 0.1,
+                "omega": 2.1,
+                "mala_step_size": 0.1
+            },
+            "swap_conf": {
+                "Always": {}
+                // or
+                "Periodic": {
+                    "swap_frequency": 1.0
+                }
+                // or
+                "Stochastic": {
+                    "swap_probability": 0.1
+                }
+            }
+        }
+    }
+}
+```
+
+Default values, (only choices of swap check must be specified): 
+
+```json
+{
+    "alg_conf": {
+        "PT": {
+            "common": {},
+            "swap_conf": {
+                "Always": {}
+            }
+        }
+    }
+}
+```
+
 ## Sources and more information
 
 - [Parallel Tempering](https://arxiv.org/abs/physics/0508111)

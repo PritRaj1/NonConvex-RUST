@@ -2,6 +2,33 @@
 
 The Nelder-Mead method uses Simplex (a geometric figure with N+1 vertices in N-dimensional space) to search for the maximum of a function. The most important part of setting up this method is the choice of the initial Simplex.
 
+## Config example
+
+Fully-defined:
+
+```json
+{
+    "alg_conf": {
+        "NM": {
+            "alpha": 1.0,
+            "gamma": 2.0,
+            "rho": 0.5,
+            "sigma": 0.5
+        }
+    }
+}
+```
+
+Default values, (nothing needs to be specified):
+
+```json
+{
+    "alg_conf": {
+        "NM": {}
+    }
+}
+```
+
 ## Sources and more information
 
 - [Simplex](doi:10.1093/comjnl/7.4.308)
