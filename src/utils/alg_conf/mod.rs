@@ -1,3 +1,7 @@
 pub mod cga_conf;
 pub mod pt_conf;
 pub mod tabu_conf;
+pub mod adam_conf;
+pub mod grasp_conf;
+pub mod sga_conf;
+pub mod nm_conf;
