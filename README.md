@@ -78,6 +78,35 @@ let result = opt.run();
 ```
 To see the differences between setting up unconstrained and constrained problems, please refer to the [benches/](./benches) subdirectory. See the [examples/](./examples) subdirectory for more direction on using the lib.
 
+## Config
+
+The config is structured as follows:
+
+- `OptConf` - Optimization configuration
+- `AlgConf` - Algorithm configuration, containing one of:
+    - `CGAConf` - Continuous Genetic Algorithm configuration
+        - `CommonConf` - Common configuration
+        - `SelectionConf` - Selection method configuration
+        - `CrossoverConf` - Crossover method configuration
+    - `PTConf` - Parallel Tempering configuration
+        - `CommonConf` - Common configuration
+        - `SwapConf` - Swap configuration
+    - `TabuConf` - Tabu Search configuration
+        - `CommonConf` - Common configuration
+        - `ListType` - List type configuration
+            - `StandardConf` - Standard list configuration
+            - `ReactiveConf` - Reactive list configuration
+    - `GRASPConf` - Greedy Randomized Adaptive Search Procedure configuration
+    - `AdamConf` - Adam configuration
+    - `SGAConf` - Stochastic Gradient Ascent configuration
+    - `NelderMeadConf` - Nelder-Mead configuration
+    - `LBFGSConf` - Limited Memory BFGS configuration
+        - `CommonConf` - Common configuration
+        - `LineSearchConf` - Line search configuration
+
+Example configs are provided in [tests/jsons/](tests/jsons). More information on each config can be found in the respective algorithm .md files.
+
+
 ## Examples
 
 The following GIFs are based on the [2D unconstrained maximization problems](./examples/test_functions.md) in the [examples/](./examples) subdirectory.
@@ -109,35 +138,6 @@ These work better with mini-batches, and best for unconstrained problems!
 |  |  |
 |-----------|---------------|
 | [Nelder-Mead](./src/nelder_mead/NM.md) - Direct search with simplex | <img src="./examples/nm_kbf.gif" width="300" alt="Nelder-Mead Example"> |
-
-## Config
-
-
-The config is structured as follows:
-
-- `OptConf` - Optimization configuration
-- `AlgConf` - Algorithm configuration, containing one of:
-    - `CGAConf` - Continuous Genetic Algorithm configuration
-        - `CommonConf` - Common configuration
-        - `SelectionConf` - Selection method configuration
-        - `CrossoverConf` - Crossover method configuration
-    - `PTConf` - Parallel Tempering configuration
-        - `CommonConf` - Common configuration
-        - `SwapConf` - Swap configuration
-    - `TabuConf` - Tabu Search configuration
-        - `CommonConf` - Common configuration
-        - `ListType` - List type configuration
-            - `StandardConf` - Standard list configuration
-            - `ReactiveConf` - Reactive list configuration
-    - `GRASPConf` - Greedy Randomized Adaptive Search Procedure configuration
-    - `AdamConf` - Adam configuration
-    - `SGAConf` - Stochastic Gradient Ascent configuration
-    - `NelderMeadConf` - Nelder-Mead configuration
-    - `LBFGSConf` - Limited Memory BFGS configuration
-        - `CommonConf` - Common configuration
-        - `LineSearchConf` - Line search configuration
-
-Example configs are provided in [tests/jsons/](tests/jsons). More information on each config can be found in the respective algorithm .md files.
 
 ## Contributing
 
