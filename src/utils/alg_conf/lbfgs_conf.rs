@@ -59,8 +59,6 @@ pub struct MoreThuenteConf {
     pub ftol: f64,    // Function tolerance
     #[serde(default = "default_gtol")]
     pub gtol: f64,    // Gradient tolerance
-    #[serde(default = "default_xtol")]
-    pub xtol: f64,    // Step tolerance
     #[serde(default = "default_max_iters")]
     pub max_iters: usize,
 }
@@ -84,6 +82,5 @@ fn default_gamma() -> f64 { 0.5 }
 fn default_max_iters() -> usize { 100 }
 fn default_ftol() -> f64 { 1e-4 }
 fn default_gtol() -> f64 { 0.9 }
-fn default_xtol() -> f64 { 1e-8 }
 fn default_tol() -> f64 { 1e-6 }
 fn default_bracket_factor() -> f64 { 2.0 }

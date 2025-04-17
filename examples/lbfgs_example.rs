@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_json = r#"
     {
         "opt_conf": {
-            "max_iter": 100,
+            "max_iter": 10,
             "rtol": "1e-6",
             "atol": "1e-6",
             "rtol_max_iter_fraction": 1.0
@@ -55,7 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let color_palette = get_color_palette();
     let mut encoder = setup_gif("examples/lbfgs_kbf.gif")?;
 
-    for frame in 0..100 {
+    for frame in 0..10 {
         let mut chart = setup_chart(
             frame,
             "LBFGS",
@@ -92,7 +92,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 4; 
+        frame.delay = 40; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 

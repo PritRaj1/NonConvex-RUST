@@ -77,7 +77,6 @@ static MORE_THUENTE_JSON: &str = r#"
                 "MoreThuente": {
                     "ftol": 1e-4,
                     "gtol": 0.9,
-                    "xtol": 1e-8,
                     "max_iters": 100
                 }
             }       
