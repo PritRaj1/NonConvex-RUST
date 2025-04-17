@@ -96,7 +96,7 @@ The following GIFs are based on the [2D unconstrained maximization problems](./e
 
 ### Gradient-Based 
 
-These work better with mini-batches!
+These work better with mini-batches, and best for unconstrained problems!
 
 |  |  |
 |-----------|---------------|
