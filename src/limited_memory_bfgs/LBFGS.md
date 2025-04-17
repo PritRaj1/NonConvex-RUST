@@ -1,6 +1,6 @@
 # Limited Memory BFGS
 
-Limited Memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) is a quasi-Newton method that uses a limited memory approximation to the Hessian matrix. Many different line search methods can be used with L-BFGS.
+Limited Memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) is a quasi-Newton method that uses a limited memory approximation to the Hessian matrix. Many different line search methods can be used with L-BFGS. If box constraints are present, L-BFGS-B is used.
 
 ## Line Search Methods
 
@@ -83,5 +83,6 @@ Default values, (only choices of line search must be specified):
 
 - [L-BFGS](https://doi.org/10.1007/BF01589116)
 - [L-BFGS and line search](https://doi.org/10.1007/978-0-387-40065-5)
+- [L-BFGS-B](https://doi.org/10.1137/0916069)
 - [Line search](https://doi.org/10.1145/192115.192132)
 - [Hager-Zhang](https://doi.org/10.1145/1132973.1132979)
