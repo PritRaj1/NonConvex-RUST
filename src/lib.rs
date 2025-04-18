@@ -8,6 +8,8 @@ pub mod sg_ascent;
 pub mod nelder_mead;
 pub mod limited_memory_bfgs;
 pub mod multi_swarm;
+pub mod simulated_annealing;
+
 use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
 use crate::continous_ga::cga::CGA;
 use crate::parallel_tempering::pt::PT;
@@ -19,6 +21,7 @@ use crate::nelder_mead::nm::NelderMead;
 use crate::limited_memory_bfgs::lbfgs::LBFGS;
 use crate::multi_swarm::mspo::MSPO;
 use crate::utils::config::{Config, AlgConf, OptConf};
+use crate::simulated_annealing::sa::SimulatedAnnealing;
 
 use nalgebra::{DVector, DMatrix};
 
@@ -32,6 +35,7 @@ pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFuncti
     NM(NelderMead<T, F, G>),
     LBFGS(LBFGS<T, F, G>),
     MSPO(MSPO<T, F, G>),
+    SA(SimulatedAnnealing<T, F, G>),
 }
 
 pub struct Result<T: FloatNum> {
@@ -63,6 +67,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             AlgConf::NM(nm_conf) => OptAlg::NM(NelderMead::new(nm_conf, init_pop, opt_prob)),
             AlgConf::LBFGS(lbfgs_conf) => OptAlg::LBFGS(LBFGS::new(lbfgs_conf, init_pop.column(0).into(), opt_prob)),
             AlgConf::MSPO(mspo_conf) => OptAlg::MSPO(MSPO::new(mspo_conf, init_pop, opt_prob)),
+            AlgConf::SA(sa_conf) => OptAlg::SA(SimulatedAnnealing::new(sa_conf, init_pop.column(0).into(), opt_prob)),
         };
 
         Self { alg, conf: conf.opt_conf, iter: 0, converged: false }
@@ -93,6 +98,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::NM(nm) => nm.best_fitness,
             OptAlg::LBFGS(lbfgs) => lbfgs.best_fitness,
             OptAlg::MSPO(mspo) => mspo.best_fitness,
+            OptAlg::SA(sa) => sa.best_fitness,
         };
 
         match &mut self.alg {
@@ -105,6 +111,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::NM(nm) => nm.step(),
             OptAlg::LBFGS(lbfgs) => lbfgs.step(),
             OptAlg::MSPO(mspo) => mspo.step(),
+            OptAlg::SA(sa) => sa.step(),
         }
 
         let current_best_fitness = match &self.alg {
@@ -117,6 +124,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::NM(nm) => nm.best_fitness,
             OptAlg::LBFGS(lbfgs) => lbfgs.best_fitness,
             OptAlg::MSPO(mspo) => mspo.best_fitness,
+            OptAlg::SA(sa) => sa.best_fitness,
         };
 
         self.converged = self.check_convergence(
@@ -139,6 +147,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::NM(nm) => DMatrix::from_columns(&[nm.x.clone()]),
             OptAlg::LBFGS(lbfgs) => DMatrix::from_columns(&[lbfgs.best_x.clone()]),
             OptAlg::MSPO(mspo) => mspo.get_population(),
+            OptAlg::SA(sa) => DMatrix::from_columns(&[sa.x.clone()]),
         }
     }
 
@@ -153,6 +162,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::NM(nm) => nm.best_x.clone(),
             OptAlg::LBFGS(lbfgs) => lbfgs.best_x.clone(),
             OptAlg::MSPO(mspo) => mspo.best_x.clone(),
+            OptAlg::SA(sa) => sa.x.clone(),
         }
     }
 
@@ -205,6 +215,12 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
                 let fitness_vec = DVector::from_element(x_matrix.ncols(), mspo.best_fitness);
                 let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
                 (mspo.best_x.clone(), mspo.best_fitness, x_matrix, fitness_vec, constraints_vec)
+            },
+            OptAlg::SA(sa) => {
+                let x_matrix = DMatrix::from_columns(&[sa.x.clone()]);
+                let fitness_vec = DVector::from_element(x_matrix.ncols(), sa.best_fitness);
+                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
+                (sa.x.clone(), sa.best_fitness, x_matrix, fitness_vec, constraints_vec)
             },
         };
 
