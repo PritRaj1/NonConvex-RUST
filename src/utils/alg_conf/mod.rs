@@ -6,3 +6,4 @@ pub mod grasp_conf;
 pub mod sga_conf;
 pub mod nm_conf;
 pub mod lbfgs_conf;
+pub mod mspo_conf;
