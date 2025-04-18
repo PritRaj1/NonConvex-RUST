@@ -103,6 +103,7 @@ The config is structured as follows:
     - `LBFGSConf` - Limited Memory BFGS configuration
         - `CommonConf` - Common configuration
         - `LineSearchConf` - Line search configuration
+    - `MSPOConf` - Multi-Swarm Particle Optimization configuration
 
 Example configs are provided in [tests/jsons/](tests/jsons). More information on each config can be found in the respective algorithm .md files.
 
@@ -114,14 +115,14 @@ The following GIFs are based on the [2D unconstrained maximization problems](./e
 ### Population-Based 
 |  |  |
 |-----------|---------------|
-| [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) - Population-based natural selection | <img src="./examples/cga_kbf.gif" width="300" alt="CGA Example"> |
-| <img src="./examples/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Monte Carlo sampling |
-
+| [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) - Population-based natural selection | <img src="./examples/gifs/cga_kbf.gif" width="300" alt="CGA Example"> |
+| <img src="./examples/gifs/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Monte Carlo sampling |
+| [Multi-Swarm Particle Optimization (MSPO)](./src/multi_swarm/MSPO.md) - Multi-swarm particle optimization | <img src="./examples/gifs/mspo_kbf.gif" width="300" alt="MSPO Example"> |
 ### Local Search 
 |  |  |
 |-----------|---------------|
-| [Tabu Search (TS)](./src/tabu_search/tabu.md) - Local search with memory | <img src="./examples/tabu_kbf.gif" width="300" alt="Tabu Example"> |
-| <img src="./examples/grasp_kbf.gif" width="300" alt="GRASP Example"> | [Greedy Randomized Adaptive Search Procedure (GRASP)](./src/grasp/GRASP.md) - Construction and local search |
+| [Tabu Search (TS)](./src/tabu_search/tabu.md) - Local search with memory | <img src="./examples/gifs/tabu_kbf.gif" width="300" alt="Tabu Example"> |
+| <img src="./examples/gifs/grasp_kbf.gif" width="300" alt="GRASP Example"> | [Greedy Randomized Adaptive Search Procedure (GRASP)](./src/grasp/GRASP.md) - Construction and local search |
 
 ### Gradient-Based 
 
@@ -129,15 +130,15 @@ These work better with mini-batches, and best for unconstrained problems!
 
 |  |  |
 |-----------|---------------|
-| [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation | <img src="./examples/adam_kbf.gif" width="300" alt="Adam Example"> |
-| <img src="./examples/sga_kbf.gif" width="300" alt="SGA Example"> | [Stochastic Gradient Ascent (SGA)](./src/sg_ascent/SGA.md) - Gradient-based optimization |
-| [Limited Memory BFGS (L-BFGS)](./src/limited_memory_bfgs/LBFGS.md) - Quasi-Newton gradient-based optimization | <img src="./examples/lbfgs_kbf.gif" width="300" alt="LBFGS Example"> |
+| [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation | <img src="./examples/gifs/adam_kbf.gif" width="300" alt="Adam Example"> |
+| <img src="./examples/gifs/sga_kbf.gif" width="300" alt="SGA Example"> | [Stochastic Gradient Ascent (SGA)](./src/sg_ascent/SGA.md) - Gradient-based optimization |
+| [Limited Memory BFGS (L-BFGS)](./src/limited_memory_bfgs/LBFGS.md) - Quasi-Newton gradient-based optimization | <img src="./examples/gifs/lbfgs_kbf.gif" width="300" alt="LBFGS Example"> |
 
 ### Direct Search
 
 |  |  |
 |-----------|---------------|
-| [Nelder-Mead](./src/nelder_mead/NM.md) - Direct search with simplex | <img src="./examples/nm_kbf.gif" width="300" alt="Nelder-Mead Example"> |
+| [Nelder-Mead](./src/nelder_mead/NM.md) - Direct search with simplex | <img src="./examples/gifs/nm_kbf.gif" width="300" alt="Nelder-Mead Example"> |
 
 ## Contributing
 

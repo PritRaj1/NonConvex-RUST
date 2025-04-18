@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let resolution = 100;
     let (z_values, min_val, max_val) = create_contour_data(&obj_f, resolution);
     let color_palette = get_color_palette();
-    let mut encoder = setup_gif("examples/grasp_kbf.gif")?;
+    let mut encoder = setup_gif("examples/gifs/grasp_kbf.gif")?;
 
     for frame in 0..50 {
         let mut chart = setup_chart(

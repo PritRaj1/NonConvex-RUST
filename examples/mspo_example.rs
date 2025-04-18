@@ -59,7 +59,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let resolution = 100;
     let (z_values, min_val, max_val) = create_contour_data(&obj_f, resolution);
     let color_palette = get_color_palette();
-    let mut encoder = setup_gif("examples/mspo_kbf.gif")?;
+    let mut encoder = setup_gif("examples/gifs/mspo_kbf.gif")?;
 
     let num_frames = 50;
     let frame_delay = 10;
