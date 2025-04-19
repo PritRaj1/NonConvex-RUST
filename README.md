@@ -88,6 +88,7 @@ The config is structured as follows:
         - `CommonConf` - Common configuration
         - `SelectionConf` - Selection method configuration
         - `CrossoverConf` - Crossover method configuration
+        - `MutationConf` - Mutation method configuration
     - `PTConf` - Parallel Tempering configuration
         - `CommonConf` - Common configuration
         - `SwapConf` - Swap configuration
