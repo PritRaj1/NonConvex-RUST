@@ -48,6 +48,26 @@ Fully-defined:
                 }
                 // or
                 "Random": {}
+            },
+            "mutation": {
+                "NonUniform": {
+                    "mutation_rate": 0.05,
+                    "b": 5.0
+                }
+                // or
+                "Gaussian": {
+                    "mutation_rate": 0.05,
+                    "sigma": 0.1
+                }
+                // or
+                "Uniform": {
+                    "mutation_rate": 0.05
+                }
+                // or
+                "Polynomial": {
+                    "mutation_rate": 0.05,
+                    "eta_m": 20.0
+                }
             }
         }
     }

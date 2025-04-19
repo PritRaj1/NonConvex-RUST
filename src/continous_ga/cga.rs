@@ -4,6 +4,7 @@ use crate::utils::config::{CGAConf, CrossoverConf, SelectionConf};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
 use crate::continous_ga::selection::*;
 use crate::continous_ga::crossover::*;
+use crate::continous_ga::mutation::*;
 
 
 pub struct CGA<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
@@ -16,6 +17,8 @@ pub struct CGA<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunctio
     pub opt_prob: OptProb<T, F, G>,
     pub best_individual: DVector<T>,
     pub best_fitness: T,
+    pub mutation: MutationOperator,
+    pub iteration: usize,
 }
 
 impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<T, F, G> {
@@ -66,6 +69,8 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
             opt_prob,
             best_individual,
             best_fitness,
+            mutation: MutationOperator::Gaussian(Gaussian::new(0.01, 0.1)),
+            iteration: 0,
         }
     }
 
@@ -75,6 +80,20 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
         
         // Create offspring through crossover
         let mut offspring = self.crossover.crossover(&selected, &self.fitness);
+
+        // Apply mutation
+        let bounds = (
+            self.opt_prob.objective.x_lower_bound(&offspring.column(0).into())
+                .unwrap_or_else(|| DVector::from_element(offspring.ncols(), T::from_f64(-10.0).unwrap()))[0],
+            self.opt_prob.objective.x_upper_bound(&offspring.column(0).into())
+                .unwrap_or_else(|| DVector::from_element(offspring.ncols(), T::from_f64(10.0).unwrap()))[0]
+        );
+
+        for i in 0..offspring.nrows() {
+            let individual = offspring.row(i).transpose();
+            let mutated = self.mutation.mutate(&individual, bounds, self.iteration);
+            offspring.set_row(i, &mutated.transpose());
+        }
 
         // Evaluate offspring
         let (new_fitness, new_constraints): (Vec<T>, Vec<bool>) = (0..offspring.nrows())
@@ -128,5 +147,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
                 self.best_individual = self.population.row(i).transpose();
             }
         }
+
+        self.iteration += 1;
     }
 }

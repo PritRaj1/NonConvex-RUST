@@ -34,6 +34,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "Tournament": {
                         "tournament_size": 50
                     }
+                },
+                "mutation": {
+                    "NonUniform": {
+                        "mutation_rate": 0.05,
+                        "b": 5.0
+                    }
                 }
             }
         }
@@ -46,11 +52,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ => panic!("Expected CGAConf"),
     };
 
-
     let obj_f = KBF;
     let constraints = KBFConstraints;
 
-    // Randomly spread initial population across domain
+    // Initialize population with random points
     let mut init_pop = DMatrix::zeros(cga_conf.common.population_size, 2);
     for i in 0..cga_conf.common.population_size {
         for j in 0..2 {
