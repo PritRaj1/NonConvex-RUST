@@ -125,7 +125,7 @@ fn test_sa_acceptance() {
     };
 
     let init_x = DVector::from_vec(vec![0.5, 0.5]);
-    let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
+    let obj_f = QuadraticObjective{ a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(obj_f, Some(constraints));
     
@@ -134,6 +134,5 @@ fn test_sa_acceptance() {
     
     sa.step();
     
-        assert_ne!(sa.x, initial_x);
-    }
+    assert_ne!(sa.x, initial_x);
 } 

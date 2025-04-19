@@ -32,22 +32,26 @@ impl Random {
         let num_parents = selected.nrows();
         let mut offspring_count = 0;
 
+        // Keep trying until we fill the population
         while offspring_count < self.population_size {
             let i = rng.random_range(0..num_parents);
             let j = rng.random_range(0..num_parents);
-            
+
             if i != j && rng.random::<f64>() < self.crossover_prob {
                 let parent1 = selected.row(i);
                 let parent2 = selected.row(j);
 
-                let mut child = DVector::<T>::zeros(selected.ncols());
-                for k in 0..selected.ncols() {
-                    child[k] = if rng.random::<f64>() < 0.5 { parent1[k] } else { parent2[k] };
-                }
-
-                if offspring_count < self.population_size {
-                    offspring.set_row(offspring_count, &child.transpose());
-                    offspring_count += 1;
+                // Create two children through crossover
+                for _ in 0..2 {
+                    if offspring_count < self.population_size {
+                        let mut child = DVector::<T>::zeros(selected.ncols());
+                        for k in 0..selected.ncols() {
+                            let alpha = T::from_f64(rng.random::<f64>()).unwrap();
+                            child[k] = alpha * parent1[k] + (T::one() - alpha) * parent2[k];
+                        }
+                        offspring.set_row(offspring_count, &child.transpose());
+                        offspring_count += 1;
+                    }
                 }
             }
         }

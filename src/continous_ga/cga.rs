@@ -70,10 +70,13 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
     }
 
     pub fn step(&mut self) {
+        // Select parents
         let selected = self.selector.select(&self.population, &self.fitness, &self.constraints);
-        let offspring = self.crossover.crossover(&selected, &self.fitness);
         
-        // Evaluate new population in parallel
+        // Create offspring through crossover
+        let mut offspring = self.crossover.crossover(&selected, &self.fitness);
+
+        // Evaluate offspring
         let (new_fitness, new_constraints): (Vec<T>, Vec<bool>) = (0..offspring.nrows())
             .into_par_iter()
             .map(|i| {
@@ -84,28 +87,46 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
             })
             .unzip();
 
-        let new_fitness = DVector::from_vec(new_fitness);
-        let new_constraints = DVector::from_vec(new_constraints);
+        let mut new_fitness = DVector::from_vec(new_fitness);
+        let mut new_constraints = DVector::from_vec(new_constraints);
 
-        // Find best individual
-        let mut best_idx = 0;
-        let mut best_fitness = new_fitness[0];
-        for i in 1..new_fitness.len() {
-            if new_fitness[i] > best_fitness && new_constraints[i] {
-                best_idx = i;
-                best_fitness = new_fitness[i];
+        // Elitism: Keep the best individual from previous generation
+        let mut best_old_idx = 0;
+        let mut best_old_fitness = self.fitness[0];
+        for i in 1..self.fitness.len() {
+            if self.fitness[i] > best_old_fitness && self.constraints[i] {
+                best_old_idx = i;
+                best_old_fitness = self.fitness[i];
             }
         }
-        
-        // Update best solution if better
-        if best_fitness > self.best_fitness {
-            self.best_individual = offspring.row(best_idx).transpose();
-            self.best_fitness = best_fitness;
+
+        // Replace worst offspring with best old individual if better
+        let mut worst_new_idx = 0;
+        let mut worst_new_fitness = new_fitness[0];
+        for i in 1..new_fitness.len() {
+            if new_fitness[i] < worst_new_fitness {
+                worst_new_idx = i;
+                worst_new_fitness = new_fitness[i];
+            }
         }
 
-        // Update population
+        if best_old_fitness > worst_new_fitness {
+            offspring.set_row(worst_new_idx, &self.population.row(best_old_idx));
+            new_fitness[worst_new_idx] = best_old_fitness;
+            new_constraints[worst_new_idx] = self.constraints[best_old_idx];
+        }
+
+        // Update population and metrics
         self.population = offspring;
         self.fitness = new_fitness;
         self.constraints = new_constraints;
+
+        // Update best solution
+        for i in 0..self.fitness.len() {
+            if self.fitness[i] > self.best_fitness && self.constraints[i] {
+                self.best_fitness = self.fitness[i];
+                self.best_individual = self.population.row(i).transpose();
+            }
+        }
     }
 }
