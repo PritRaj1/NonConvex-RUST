@@ -104,6 +104,7 @@ The config is structured as follows:
         - `CommonConf` - Common configuration
         - `LineSearchConf` - Line search configuration
     - `MSPOConf` - Multi-Swarm Particle Optimization configuration
+    - `SAConf` - Simulated Annealing configuration
 
 Example configs are provided in [tests/jsons/](tests/jsons). More information on each config can be found in the respective algorithm .md files.
 
@@ -134,12 +135,12 @@ These work better with mini-batches, and best for unconstrained problems!
 | <img src="./examples/gifs/sga_kbf.gif" width="300" alt="SGA Example"> | [Stochastic Gradient Ascent (SGA)](./src/sg_ascent/SGA.md) - Gradient-based optimization |
 | [Limited Memory BFGS (L-BFGS)](./src/limited_memory_bfgs/LBFGS.md) - Quasi-Newton gradient-based optimization | <img src="./examples/gifs/lbfgs_kbf.gif" width="300" alt="LBFGS Example"> |
 
-### Direct Search
+### Direct Search and stochastic optimization
 
 |  |  |
 |-----------|---------------|
 | [Nelder-Mead](./src/nelder_mead/NM.md) - Direct search with simplex | <img src="./examples/gifs/nm_kbf.gif" width="300" alt="Nelder-Mead Example"> |
-
+| <img src="./examples/gifs/sa_kbf.gif" width="300" alt="SA Example"> | [Simulated Annealing (SA)](./src/simulated_annealing/SA.md) - Stochastic optimization |
 ## Contributing
 
 1. Fork the repository
