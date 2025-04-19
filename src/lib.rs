@@ -162,7 +162,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::NM(nm) => nm.best_x.clone(),
             OptAlg::LBFGS(lbfgs) => lbfgs.best_x.clone(),
             OptAlg::MSPO(mspo) => mspo.best_x.clone(),
-            OptAlg::SA(sa) => sa.x.clone(),
+            OptAlg::SA(sa) => sa.best_x.clone(),
         }
     }
 

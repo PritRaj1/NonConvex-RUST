@@ -36,7 +36,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Metr
         Self {
             acceptance_type,
             prob,
-            k: T::from_f64(1.380649e-23).unwrap(),
+            k: T::from_f64(1.0).unwrap(),
         }
     }
 
