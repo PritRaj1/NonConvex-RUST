@@ -2,6 +2,23 @@ use nalgebra::{DVector, DMatrix};
 use rand::Rng;
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
+pub trait MutationStrategy<T: FloatNum> {
+    fn generate_trial(
+        &self,
+        population: &DMatrix<T>,
+        best_x: Option<&DVector<T>>,
+        target_idx: usize,
+        f: T,
+        cr: T,
+    ) -> DVector<T>;
+}
+
+pub struct Rand1Bin;
+pub struct Best1Bin;
+pub struct RandToBest1Bin;
+pub struct Best2Bin;
+pub struct Rand2Bin;
+
 fn get_random_indices(count: usize, exclude: usize, pop_size: usize) -> Vec<usize> {
     let mut rng = rand::rng();
     let mut indices = Vec::new();
@@ -14,24 +31,10 @@ fn get_random_indices(count: usize, exclude: usize, pop_size: usize) -> Vec<usiz
     indices
 }
 
-pub fn rand1_bin<T: FloatNum>(
-    population: &DMatrix<T>,
-    target_idx: usize,
-    f: T,
-    cr: T,
-) -> DVector<T> {
+fn crossover<T: FloatNum>(donor: DVector<T>, target: DVector<T>, cr: T) -> DVector<T> {
     let mut rng = rand::rng();
-    let pop_size = population.nrows();
-    let dim = population.ncols();
-    
-    let indices = get_random_indices(3, target_idx, pop_size);
-    
-    let x_r1 = population.row(indices[0]).transpose();
-    let x_r2 = population.row(indices[1]).transpose();
-    let x_r3 = population.row(indices[2]).transpose();
-    let donor = x_r1 + (x_r2 - x_r3) * f;
-    
-    let mut trial = population.row(target_idx).transpose();
+    let dim = donor.len();
+    let mut trial = target.clone();
     let j_rand = rng.random_range(0..dim);
 
     for j in 0..dim {
@@ -39,122 +42,106 @@ pub fn rand1_bin<T: FloatNum>(
             trial[j] = donor[j];
         }
     }
-
     trial
 }
 
-pub fn best1_bin<T: FloatNum>(
-    population: &DMatrix<T>,
-    best_x: &DVector<T>,
-    target_idx: usize,
-    f: T,
-    cr: T,
-) -> DVector<T> {
-    let mut rng = rand::rng();
-    let pop_size = population.nrows();
-    let dim = population.ncols();
-    
-    let indices = get_random_indices(2, target_idx, pop_size);
-    
-    let x_r1 = population.row(indices[0]).transpose();
-    let x_r2 = population.row(indices[1]).transpose();
-    let donor = best_x + (x_r1 - x_r2) * f;
-    
-    let mut trial = population.row(target_idx).transpose();
-    let j_rand = rng.random_range(0..dim);
-
-    for j in 0..dim {
-        if rng.random::<f64>() < cr.to_f64().unwrap() || j == j_rand {
-            trial[j] = donor[j];
-        }
+impl<T: FloatNum> MutationStrategy<T> for Rand1Bin {
+    fn generate_trial(
+        &self,
+        population: &DMatrix<T>,
+        _best_x: Option<&DVector<T>>,
+        target_idx: usize,
+        f: T,
+        cr: T,
+    ) -> DVector<T> {
+        let indices = get_random_indices(3, target_idx, population.nrows());
+        let x_r1 = population.row(indices[0]).transpose();
+        let x_r2 = population.row(indices[1]).transpose();
+        let x_r3 = population.row(indices[2]).transpose();
+        
+        let donor = x_r1 + (x_r2 - x_r3) * f;
+        crossover(donor, population.row(target_idx).transpose(), cr)
     }
-
-    trial
 }
 
-pub fn rand_to_best1_bin<T: FloatNum>(
-    population: &DMatrix<T>,
-    best_x: &DVector<T>,
-    target_idx: usize,
-    f: T,
-    cr: T,
-) -> DVector<T> {
-    let mut rng = rand::rng();
-    let pop_size = population.nrows();
-    let dim = population.ncols();
-    
-    let indices = get_random_indices(2, target_idx, pop_size);
-    let x_r1 = population.row(indices[0]);
-    let x_r2 = population.row(indices[1]);
-    let x_i = population.row(target_idx);
-    
-    let mut trial = x_i.transpose();
-    let j_rand = rng.random_range(0..dim);
-
-    for j in 0..dim {
-        if rng.random::<f64>() < cr.to_f64().unwrap() || j == j_rand {
-            trial[j] = x_i[j] + f * (best_x[j] - x_i[j]) + f * (x_r1[j] - x_r2[j]);
-        }
+impl<T: FloatNum> MutationStrategy<T> for Best1Bin {
+    fn generate_trial(
+        &self,
+        population: &DMatrix<T>,
+        best_x: Option<&DVector<T>>,
+        target_idx: usize,
+        f: T,
+        cr: T,
+    ) -> DVector<T> {
+        let best_x = best_x.expect("Best1Bin requires best_x");
+        let indices = get_random_indices(2, target_idx, population.nrows());
+        let x_r1 = population.row(indices[0]).transpose();
+        let x_r2 = population.row(indices[1]).transpose();
+        
+        let donor = best_x + (x_r1 - x_r2) * f;
+        crossover(donor, population.row(target_idx).transpose(), cr)
     }
-
-    trial
 }
 
-pub fn best2_bin<T: FloatNum>(
-    population: &DMatrix<T>,
-    best_x: &DVector<T>,
-    target_idx: usize,
-    f: T,
-    cr: T,
-) -> DVector<T> {
-    let mut rng = rand::rng();
-    let pop_size = population.nrows();
-    let dim = population.ncols();
-    
-    let indices = get_random_indices(4, target_idx, pop_size);
-    let x_r1 = population.row(indices[0]);
-    let x_r2 = population.row(indices[1]);
-    let x_r3 = population.row(indices[2]);
-    let x_r4 = population.row(indices[3]);
-    
-    let mut trial = population.row(target_idx).transpose();
-    let j_rand = rng.random_range(0..dim);
-
-    for j in 0..dim {
-        if rng.random::<f64>() < cr.to_f64().unwrap() || j == j_rand {
-            trial[j] = best_x[j] + f * (x_r1[j] + x_r2[j] - x_r3[j] - x_r4[j]);
-        }
+impl<T: FloatNum> MutationStrategy<T> for RandToBest1Bin {
+    fn generate_trial(
+        &self,
+        population: &DMatrix<T>,
+        best_x: Option<&DVector<T>>,
+        target_idx: usize,
+        f: T,
+        cr: T,
+    ) -> DVector<T> {
+        let best_x = best_x.expect("RandToBest1Bin requires best_x");
+        let indices = get_random_indices(2, target_idx, population.nrows());
+        let x_r1 = population.row(indices[0]).transpose();
+        let x_r2 = population.row(indices[1]).transpose();
+        let x_i = population.row(target_idx).transpose();
+        
+        let donor = x_i.clone() + (best_x - &x_i) * f + (x_r1 - x_r2) * f;
+        crossover(donor, x_i, cr)
     }
-
-    trial
 }
 
-pub fn rand2_bin<T: FloatNum>(
-    population: &DMatrix<T>,
-    target_idx: usize,
-    f: T,
-    cr: T,
-) -> DVector<T> {
-    let mut rng = rand::rng();
-    let pop_size = population.nrows();
-    let dim = population.ncols();
-    
-    let indices = get_random_indices(5, target_idx, pop_size);
-    let x_r1 = population.row(indices[0]);
-    let x_r2 = population.row(indices[1]);
-    let x_r3 = population.row(indices[2]);
-    let x_r4 = population.row(indices[3]);
-    let x_r5 = population.row(indices[4]);
-    
-    let mut trial = population.row(target_idx).transpose();
-    let j_rand = rng.random_range(0..dim);
-
-    for j in 0..dim {
-        if rng.random::<f64>() < cr.to_f64().unwrap() || j == j_rand {
-            trial[j] = x_r1[j] + f * (x_r2[j] + x_r3[j] - x_r4[j] - x_r5[j]);
-        }
+impl<T: FloatNum> MutationStrategy<T> for Best2Bin {
+    fn generate_trial(
+        &self,
+        population: &DMatrix<T>,
+        best_x: Option<&DVector<T>>,
+        target_idx: usize,
+        f: T,
+        cr: T,
+    ) -> DVector<T> {
+        let best_x = best_x.expect("Best2Bin requires best_x");
+        let indices = get_random_indices(4, target_idx, population.nrows());
+        let x_r1 = population.row(indices[0]).transpose();
+        let x_r2 = population.row(indices[1]).transpose();
+        let x_r3 = population.row(indices[2]).transpose();
+        let x_r4 = population.row(indices[3]).transpose();
+        
+        let donor = best_x + (x_r1 + x_r2 - x_r3 - x_r4) * f;
+        crossover(donor, population.row(target_idx).transpose(), cr)
     }
+}
 
-    trial
+impl<T: FloatNum> MutationStrategy<T> for Rand2Bin {
+    fn generate_trial(
+        &self,
+        population: &DMatrix<T>,
+        _best_x: Option<&DVector<T>>,
+        target_idx: usize,
+        f: T,
+        cr: T,
+    ) -> DVector<T> {
+        let indices = get_random_indices(5, target_idx, population.nrows());
+        let x_r1 = population.row(indices[0]).transpose();
+        let x_r2 = population.row(indices[1]).transpose();
+        let x_r3 = population.row(indices[2]).transpose();
+        let x_r4 = population.row(indices[3]).transpose();
+        let x_r5 = population.row(indices[4]).transpose();
+        
+        let donor = x_r1 + (x_r2 + x_r3 - x_r4 - x_r5) * f;
+        crossover(donor, population.row(target_idx).transpose(), cr)
+    }
 }
 

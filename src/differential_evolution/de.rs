@@ -98,41 +98,24 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> DE<T
     }
 
     fn generate_trial_vector(&self, target_idx: usize) -> (DVector<T>, T, bool) {
-        let trial = match self.conf.strategy {
-            DEStrategy::Rand1Bin => rand1_bin(
-                &self.population,
-                target_idx,
-                T::from_f64(self.conf.f).unwrap(),
-                T::from_f64(self.conf.cr).unwrap(),
-            ),
-            DEStrategy::Best1Bin => best1_bin(
-                &self.population,
-                &self.best_x,
-                target_idx,
-                T::from_f64(self.conf.f).unwrap(),
-                T::from_f64(self.conf.cr).unwrap(),
-            ),
-            DEStrategy::RandToBest1Bin => rand_to_best1_bin(
-                &self.population,
-                &self.best_x,
-                target_idx,
-                T::from_f64(self.conf.f).unwrap(),
-                T::from_f64(self.conf.cr).unwrap(),
-            ),
-            DEStrategy::Best2Bin => best2_bin(
-                &self.population,
-                &self.best_x,
-                target_idx,
-                T::from_f64(self.conf.f).unwrap(),
-                T::from_f64(self.conf.cr).unwrap(),
-            ),
-            DEStrategy::Rand2Bin => rand2_bin(
-                &self.population,
-                target_idx,
-                T::from_f64(self.conf.f).unwrap(),
-                T::from_f64(self.conf.cr).unwrap(),
-            ),
+        let f = T::from_f64(self.conf.f).unwrap();
+        let cr = T::from_f64(self.conf.cr).unwrap();
+        
+        let strategy: &dyn MutationStrategy<T> = match self.conf.strategy {
+            DEStrategy::Rand1Bin => &Rand1Bin,
+            DEStrategy::Best1Bin => &Best1Bin,
+            DEStrategy::RandToBest1Bin => &RandToBest1Bin,
+            DEStrategy::Best2Bin => &Best2Bin,
+            DEStrategy::Rand2Bin => &Rand2Bin,
         };
+
+        let trial = strategy.generate_trial(
+            &self.population,
+            Some(&self.best_x),
+            target_idx,
+            f,
+            cr,
+        );
 
         let fitness = self.opt_prob.objective.f(&trial);
         let constraint = self.opt_prob.is_feasible(&trial);
