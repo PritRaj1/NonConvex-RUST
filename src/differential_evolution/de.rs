@@ -61,6 +61,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> DE<T
         };
 
         let archive_size = conf.common.archive_size;
+        let success_history_size = conf.common.success_history_size;
 
         Self {
             conf,
@@ -73,7 +74,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> DE<T
             iteration: 0,
             archive: Vec::with_capacity(archive_size),
             archive_fitness: Vec::with_capacity(archive_size),
-            success_history: VecDeque::with_capacity(50),
+            success_history: VecDeque::with_capacity(success_history_size),
             current_f: initial_f,
             current_cr: initial_cr,
         }
@@ -119,7 +120,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> DE<T
 
         for success in successes {
             self.success_history.push_back(success);
-            if self.success_history.len() > 50 {
+            if self.success_history.len() > self.conf.common.success_history_size {
                 self.success_history.pop_front();
             }
         }

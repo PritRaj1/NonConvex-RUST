@@ -14,6 +14,7 @@ fn test_de_basic() {
         common: CommonConf {
             population_size: 50,
             archive_size: 10,
+            success_history_size: 50,
         },
         mutation_type: MutationType::Standard(StandardConf {
             f: 0.8,
@@ -58,6 +59,7 @@ fn test_de_strategies() {
             common: CommonConf {
                 population_size: 50,
                 archive_size: 10,
+                success_history_size: 50,
             },
             mutation_type: MutationType::Standard(StandardConf {
                 f: 0.8,
@@ -95,6 +97,7 @@ fn test_adaptive_de() {
         common: CommonConf {
             population_size: 50,
             archive_size: 10,
+            success_history_size: 50,
         },
         mutation_type: MutationType::Adaptive(AdaptiveConf {
             strategy: DEStrategy::Best2Bin,

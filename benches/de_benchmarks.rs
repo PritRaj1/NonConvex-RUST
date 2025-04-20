@@ -20,7 +20,8 @@ static CONFIG_JSON: &str = r#"
         "DE": {
             "common": {
                 "population_size": 50,
-                "archive_size": 10
+                "archive_size": 10,
+                "success_history_size": 50
             },
             "mutation_type": {
                 "Adaptive": {

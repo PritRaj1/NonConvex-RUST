@@ -12,6 +12,8 @@ pub struct CommonConf {
     pub population_size: usize,
     #[serde(default = "default_archive_size")]
     pub archive_size: usize,
+    #[serde(default = "default_success_history_size")]
+    pub success_history_size: usize,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -61,4 +63,5 @@ fn default_strategy() -> DEStrategy { DEStrategy::Rand1Bin }
 fn default_f_min() -> f64 { 0.1 }
 fn default_f_max() -> f64 { 0.9 }
 fn default_cr_min() -> f64 { 0.1 }
-fn default_cr_max() -> f64 { 0.9 } 
+fn default_cr_max() -> f64 { 0.9 }
+fn default_success_history_size() -> usize { 50 } 
