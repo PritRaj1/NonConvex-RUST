@@ -8,3 +8,4 @@ pub mod nm_conf;
 pub mod lbfgs_conf;
 pub mod mspo_conf;
 pub mod sa_conf;
+pub mod de_conf;

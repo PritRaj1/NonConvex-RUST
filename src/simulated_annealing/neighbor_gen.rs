@@ -40,9 +40,9 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Gaus
             .par_chunks_mut(1)
             .enumerate()
             .for_each(|(i, val)| {
-                let mut thread_rng = rand::rng();
+                let mut rng = rand::rng();
                 let step = T::from_f64(
-                    thread_rng.sample::<f64, _>(Normal::new(0.0, step_size).unwrap())
+                    rng.sample::<f64, _>(Normal::new(0.0, step_size).unwrap())
                 ).unwrap();
                 val[0] = (current[i] + step).clamp(bounds.0, bounds.1);
             });

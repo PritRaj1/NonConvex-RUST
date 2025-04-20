@@ -15,6 +15,7 @@ pub use crate::utils::alg_conf::{
     lbfgs_conf::{LBFGSConf, LineSearchConf, BacktrackingConf, StrongWolfeConf, HagerZhangConf, MoreThuenteConf, GoldenSectionConf},
     mspo_conf::MSPOConf,
     sa_conf::SAConf,
+    de_conf::{DEConf, DEStrategy},
 };
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -29,6 +30,7 @@ pub enum AlgConf {
     LBFGS(LBFGSConf),
     MSPO(MSPOConf),
     SA(SAConf),
+    DE(DEConf),
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
