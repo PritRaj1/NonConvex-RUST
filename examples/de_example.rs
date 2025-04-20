@@ -19,10 +19,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         "alg_conf": {
             "DE": {
-                "population_size": 100,
-                "f": 0.8,
-                "cr": 0.9,
-                "strategy": "Best2Bin"
+                "common": {
+                    "population_size": 100,
+                    "archive_size": 10
+                },
+                "mutation_type": {
+                    "Adaptive": {
+                        "strategy": "Best2Bin",
+                        "f_min": 0.4,
+                        "f_max": 0.9,
+                        "cr_min": 0.1,
+                        "cr_max": 0.9
+                    }
+                }
             }
         }
     }"#;

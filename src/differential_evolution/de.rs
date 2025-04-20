@@ -1,8 +1,9 @@
 use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
-use crate::utils::alg_conf::de_conf::{DEConf, DEStrategy};
+use crate::utils::alg_conf::de_conf::{DEConf, DEStrategy, MutationType};
 use crate::differential_evolution::mutation::*;
+use std::collections::VecDeque;
 
 pub struct DE<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub conf: DEConf,
@@ -13,6 +14,11 @@ pub struct DE<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction
     pub best_x: DVector<T>,
     pub best_fitness: T,
     pub iteration: usize,
+    archive: Vec<DVector<T>>,
+    archive_fitness: Vec<T>,
+    success_history: VecDeque<bool>,
+    current_f: f64,
+    current_cr: f64,
 }
 
 impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> DE<T, F, G> {
@@ -45,6 +51,17 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> DE<T
             }
         }
 
+        // Initialize current F and CR based on mutation type
+        let (initial_f, initial_cr) = match &conf.mutation_type {
+            MutationType::Standard(standard) => (standard.f, standard.cr),
+            MutationType::Adaptive(adaptive) => (
+                (adaptive.f_min + adaptive.f_max) / 2.0,
+                (adaptive.cr_min + adaptive.cr_max) / 2.0
+            ),
+        };
+
+        let archive_size = conf.common.archive_size;
+
         Self {
             conf,
             population: init_pop.clone(),
@@ -54,28 +71,64 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> DE<T
             best_x: init_pop.row(best_idx).transpose(),
             best_fitness,
             iteration: 0,
+            archive: Vec::with_capacity(archive_size),
+            archive_fitness: Vec::with_capacity(archive_size),
+            success_history: VecDeque::with_capacity(50),
+            current_f: initial_f,
+            current_cr: initial_cr,
         }
     }
 
     pub fn step(&mut self) {
         let pop_size = self.population.nrows();
-        let mut new_population = self.population.clone();
-        let mut new_fitness = self.fitness.clone();
-        let mut new_constraints = self.constraints.clone();
-
-        let updates: Vec<(usize, DVector<T>, T, bool)> = (0..pop_size)
+        
+        let trials: Vec<_> = (0..pop_size)
             .into_par_iter()
-            .filter_map(|i| {
+            .map(|i| {
                 let (trial, trial_fitness, trial_constraint) = self.generate_trial_vector(i);
                 
-                // Replace if trial is better (greedy selection)
+                let success = self.select_trial(
+                    trial_fitness,
+                    trial_constraint,
+                    self.fitness[i],
+                    self.constraints[i]
+                );
+
+                (i, trial, trial_fitness, trial_constraint, success)
+            })
+            .collect();
+
+        let mut successes = Vec::new();
+
+        // Process trials sequentially for updates
+        let updates: Vec<_> = trials.into_iter()
+            .filter_map(|(i, trial, trial_fitness, trial_constraint, success)| {
                 if trial_constraint && trial_fitness > self.fitness[i] {
+                    self.update_archive(trial.clone(), trial_fitness);
+                }
+
+                successes.push(success);
+                
+                if success {
                     Some((i, trial, trial_fitness, trial_constraint))
                 } else {
                     None
                 }
             })
             .collect();
+
+        for success in successes {
+            self.success_history.push_back(success);
+            if self.success_history.len() > 50 {
+                self.success_history.pop_front();
+            }
+        }
+
+        self.update_parameters();
+
+        let mut new_population = self.population.clone();
+        let mut new_fitness = self.fitness.clone();
+        let mut new_constraints = self.constraints.clone();
 
         for (i, trial, trial_fitness, trial_constraint) in updates {
             new_population.set_row(i, &trial.transpose());
@@ -98,10 +151,12 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> DE<T
     }
 
     fn generate_trial_vector(&self, target_idx: usize) -> (DVector<T>, T, bool) {
-        let f = T::from_f64(self.conf.f).unwrap();
-        let cr = T::from_f64(self.conf.cr).unwrap();
-        
-        let strategy: &dyn MutationStrategy<T> = match self.conf.strategy {
+        let strategy = match &self.conf.mutation_type {
+            MutationType::Standard(standard) => &standard.strategy,
+            MutationType::Adaptive(adaptive) => &adaptive.strategy,
+        };
+
+        let strategy: &dyn MutationStrategy<T> = match strategy {
             DEStrategy::Rand1Bin => &Rand1Bin,
             DEStrategy::Best1Bin => &Best1Bin,
             DEStrategy::RandToBest1Bin => &RandToBest1Bin,
@@ -113,13 +168,63 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> DE<T
             &self.population,
             Some(&self.best_x),
             target_idx,
-            f,
-            cr,
+            T::from_f64(self.current_f).unwrap(),
+            T::from_f64(self.current_cr).unwrap(),
         );
 
         let fitness = self.opt_prob.objective.f(&trial);
         let constraint = self.opt_prob.is_feasible(&trial);
 
         (trial, fitness, constraint)
+    }
+
+    fn update_parameters(&mut self) {
+        if let MutationType::Adaptive(adaptive) = &self.conf.mutation_type {
+            let success_rate = self.success_history.iter().filter(|&&x| x).count() as f64 
+                / self.success_history.len() as f64;
+            
+            self.current_f = adaptive.f_min + success_rate * (adaptive.f_max - adaptive.f_min);
+            self.current_cr = adaptive.cr_min + success_rate * (adaptive.cr_max - adaptive.cr_min);
+        }
+    }
+
+    fn update_archive(&mut self, x: DVector<T>, fitness: T) {
+        if self.archive.len() < self.conf.common.archive_size {
+            self.archive.push(x);
+            self.archive_fitness.push(fitness);
+        } else {
+            if let Some(worst_idx) = self.archive_fitness.iter()
+                .enumerate()
+                .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                .map(|(i, _)| i)
+            {
+                if fitness > self.archive_fitness[worst_idx] {
+                    self.archive[worst_idx] = x;
+                    self.archive_fitness[worst_idx] = fitness;
+                }
+            }
+        }
+    }
+
+    fn select_trial(
+        &self,
+        trial_fitness: T,
+        trial_constraint: bool,
+        current_fitness: T,
+        current_constraint: bool,
+    ) -> bool {
+        match (trial_constraint, current_constraint) {
+            (true, true) => {
+                // Both feasible - compare fitness with tolerance
+                let eps = T::from_f64(1e-10).unwrap();
+                trial_fitness > current_fitness + eps
+            },
+            (true, false) => true,  // Prefer feasible
+            (false, true) => false, // Keep feasible
+            (false, false) => {
+                // Both infeasible - compare fitness
+                trial_fitness > current_fitness
+            }
+        }
     }
 } 

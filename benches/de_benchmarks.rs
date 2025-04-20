@@ -18,10 +18,19 @@ static CONFIG_JSON: &str = r#"
     },
     "alg_conf": {
         "DE": {
-            "population_size": 50,
-            "f": 0.8,
-            "cr": 0.9,
-            "strategy": "Rand1Bin"
+            "common": {
+                "population_size": 50,
+                "archive_size": 10
+            },
+            "mutation_type": {
+                "Adaptive": {
+                    "strategy": "Best2Bin",
+                    "f_min": 0.4,
+                    "f_max": 0.9,
+                    "cr_min": 0.1,
+                    "cr_max": 0.9
+                }
+            }
         }
     }
 }"#;
