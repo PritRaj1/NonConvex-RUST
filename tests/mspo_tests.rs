@@ -72,7 +72,6 @@ fn test_swarm_update() {
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(obj_f, Some(constraints));
 
-    // Create initial population
     let init_pop = DMatrix::from_vec(5, 2, vec![
         0.5, 0.5,
         0.6, 0.6,

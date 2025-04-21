@@ -57,7 +57,6 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Simu
             T::from_f64(self.conf.x_max).unwrap()
         );
 
-        // Generate and evaluate neighbors in parallel
         let neighbors: Vec<_> = (0..self.conf.num_neighbors)
             .into_par_iter()
             .map(|_| self.neighbor_gen.generate(&self.x, step_size, bounds, self.temperature))

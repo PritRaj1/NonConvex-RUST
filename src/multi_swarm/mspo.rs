@@ -21,7 +21,6 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> MSPO
         assert!(total_particles >= conf.num_swarms * conf.swarm_size, 
             "Initial population size must be at least num_swarms * swarm_size");
 
-        // Find best solution from initial population
         let (best_x, best_fitness) = Self::find_best_solution(&init_pop, &opt_prob);
 
         // Initialize swarms with different regions
@@ -137,7 +136,6 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> MSPO
             })
             .collect();
 
-        // Update global best - only check constraints for potential new best
         for (pos, fitness) in results {
             if fitness > self.best_fitness {
                 if self.opt_prob.is_feasible(&pos) {
