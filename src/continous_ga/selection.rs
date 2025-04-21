@@ -127,37 +127,41 @@ impl Residual {
         fitness: &DVector<T>, 
         constraint: &DVector<bool>
     ) -> DMatrix<T> {
-        
         let mut selected = DMatrix::<T>::zeros(self.num_parents, population.ncols());
         let mut rng = rand::rng();
 
+        // Calculate expected values
         let sum = fitness.iter()
             .zip(constraint.iter())
             .filter(|(_, &valid)| valid)
             .fold(T::zero(), |acc, (&x, _)| acc + x);
-
-        let mut expected_integer_copies = vec![0; fitness.len()];
+        
+        // Normalize and scale fitness to prevent very small residuals
+        let scale = T::from_f64(self.num_parents as f64).unwrap();
+        let mut expected_values = vec![T::zero(); fitness.len()];
         let mut residual_probabilities = vec![T::zero(); fitness.len()];
         let mut guaranteed_count = 0;
         let mut remaining_indices = Vec::new();
 
-        // Calculate expected integer copies and residual probabilities
+        // Calculate expected values and residuals
         for (j, (&fit, &valid)) in fitness.iter().zip(constraint.iter()).enumerate() {
             if valid {
-                let expected = (fit / sum) * T::from_usize(self.num_parents).unwrap();
-                let int_part = expected.floor().to_usize().unwrap();
-                expected_integer_copies[j] = int_part;
-                residual_probabilities[j] = expected - T::from_usize(int_part).unwrap();
+                let expected = (fit / sum) * scale;
+                let int_part = expected.floor();
+                expected_values[j] = int_part;
+                residual_probabilities[j] = expected - int_part;
                 
-                guaranteed_count += int_part;
-                remaining_indices.push(j); // Keep track of eligible individuals
+                guaranteed_count += int_part.to_usize().unwrap_or(0);
+                if residual_probabilities[j] > T::zero() {
+                    remaining_indices.push(j);
+                }
             }
         }
 
-        // Deterministic selections
+        // Deterministic selections first (integer replication)
         let mut parent_index = 0;
         for j in 0..fitness.len() {
-            for _ in 0..expected_integer_copies[j] {
+            for _ in 0..expected_values[j].to_usize().unwrap_or(0) {
                 if parent_index < self.num_parents {
                     selected.set_row(parent_index, &population.row(j));
                     parent_index += 1;
@@ -165,22 +169,51 @@ impl Residual {
             }
         }
 
-        // Stochastic remainder selections
-        let mut remaining_spots = self.num_parents - guaranteed_count;
-        while remaining_spots > 0 {
-            let chosen_index = *remaining_indices
-                .iter()
-                .max_by(|&&a, &&b| residual_probabilities[a].partial_cmp(&residual_probabilities[b]).unwrap())
-                .unwrap();
+        // Stochastic remainder selections - select based on residual probabilities
+        let mut remaining_spots = self.num_parents - parent_index;
+        
+        // If no remaining indices but spots left, add all valid individuals
+        if remaining_indices.is_empty() && remaining_spots > 0 {
+            remaining_indices = (0..population.nrows())
+                .filter(|&i| constraint[i])
+                .collect();
+        }
 
-            if rng.random::<f64>() < residual_probabilities[chosen_index].to_f64().unwrap() {
-                selected.set_row(parent_index, &population.row(chosen_index));
+        while remaining_spots > 0 && !remaining_indices.is_empty() {
+            let total_residual = remaining_indices.iter()
+                .fold(T::zero(), |acc, &i| acc + residual_probabilities[i]);
+
+            if total_residual <= T::zero() {
+                // If all residuals are zero, select randomly
+                let idx = remaining_indices[rng.random_range(0..remaining_indices.len())];
+                selected.set_row(parent_index, &population.row(idx));
                 parent_index += 1;
                 remaining_spots -= 1;
+                
+                // Remove selected index
+                if let Some(pos) = remaining_indices.iter().position(|&x| x == idx) {
+                    remaining_indices.swap_remove(pos);
+                }
+            } else {
+                let r = rng.random::<f64>();
+                let mut cumsum = T::zero();
+                
+                for &idx in &remaining_indices {
+                    cumsum += residual_probabilities[idx] / total_residual;
+                    if T::from_f64(r).unwrap() <= cumsum {
+                        selected.set_row(parent_index, &population.row(idx));
+                        parent_index += 1;
+                        remaining_spots -= 1;
+                        
+                        // Remove selected index and reset its probability
+                        if let Some(pos) = remaining_indices.iter().position(|&x| x == idx) {
+                            remaining_indices.swap_remove(pos);
+                        }
+                        residual_probabilities[idx] = T::zero();
+                        break;
+                    }
+                }
             }
-
-            // Reset probability after selection
-            residual_probabilities[chosen_index] = T::zero();
         }
 
         selected

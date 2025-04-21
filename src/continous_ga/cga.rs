@@ -75,10 +75,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
     }
 
     pub fn step(&mut self) {
-        // Select parents
         let selected = self.selector.select(&self.population, &self.fitness, &self.constraints);
-        
-        // Create offspring through crossover
         let mut offspring = self.crossover.crossover(&selected, &self.fitness);
 
         // Apply mutation
@@ -95,7 +92,6 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
             offspring.set_row(i, &mutated.transpose());
         }
 
-        // Evaluate offspring
         let (new_fitness, new_constraints): (Vec<T>, Vec<bool>) = (0..offspring.nrows())
             .into_par_iter()
             .map(|i| {
@@ -135,12 +131,10 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CGA<
             new_constraints[worst_new_idx] = self.constraints[best_old_idx];
         }
 
-        // Update population and metrics
         self.population = offspring;
         self.fitness = new_fitness;
         self.constraints = new_constraints;
 
-        // Update best solution
         for i in 0..self.fitness.len() {
             if self.fitness[i] > self.best_fitness && self.constraints[i] {
                 self.best_fitness = self.fitness[i];

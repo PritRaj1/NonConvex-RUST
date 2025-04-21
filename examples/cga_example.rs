@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "CGA": {
                 "common": {
                     "population_size": 100,
-                    "num_parents": 20
+                    "num_parents": 40
                 },
                 "crossover": {
                     "Heuristic": {
@@ -31,13 +31,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 },
                 "selection": {
-                    "Tournament": {
-                        "tournament_size": 50
-                    }
+                    "Residual": {}
                 },
                 "mutation": {
                     "NonUniform": {
-                        "mutation_rate": 0.05,
+                        "mutation_rate": 0.1,
                         "b": 5.0
                     }
                 }
@@ -70,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let color_palette = get_color_palette();
     let mut encoder = setup_gif("examples/gifs/cga_kbf.gif")?;
 
-    for frame in 0..5 {
+    for frame in 0..10 {
         let mut chart = setup_chart(
             frame,
             "CGA",
@@ -120,7 +118,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 80; 
+        frame.delay = 40; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 
