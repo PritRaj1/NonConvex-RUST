@@ -4,6 +4,7 @@ use crate::parallel_tempering::replica_exchange::{SwapCheck, Periodic, Stochasti
 use crate::parallel_tempering::metropolis_hastings::MetropolisHastings;
 use crate::utils::config::{PTConf, SwapConf};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
+use rand::Rng;
 
 pub struct PT<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub conf: PTConf,
@@ -134,28 +135,55 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
 
     // Replica exchange
     pub fn swap(&mut self) {
-        let n = self.population.len() - 1;
+        let n = self.population.len();
         let m = self.population[0].nrows();
 
-        // Initialize swap matrix
-        let mut swap_bool = DMatrix::from_element(n, m, false);
+        // Initialize swap matrix for all possible pairs
+        let mut swap_bool = DMatrix::from_element(n, n, false);
 
-        // Determine which pairs to swap
-        let swap_results: Vec<Vec<(usize, usize, bool)>> = (0..n).into_par_iter().map(|i| {
-            (0..m).into_par_iter().map(|j| {
-                let x_old = self.population[i].row(j).transpose();
-                let x_new = self.population[i+1].row(j).transpose();
-                let constraints_new = self.constraints[i+1][(j, 0)];
-                let t = self.p_schedule[self.iter];
-                let t_swap = self.p_schedule[self.iter+1];
-                let accept = self.metropolis_hastings.accept_reject(&x_old, &x_new, constraints_new, t, t_swap);
-                (i, j, accept)
-            }).collect()
-        }).collect();
+        // Randomly pick pairs to swap
+        let mut rng = rand::rng();
+        let num_attempts = n / 2;
+        let swap_pairs: Vec<(usize, usize)> = (0..num_attempts)
+            .map(|_| {
+                let i = rng.random_range(0..n-1);
+                let j = rng.random_range(i+1..n);
+                (i, j)
+            })
+            .collect();
 
-        for swap_result in swap_results {
-            for (i, j, accept) in swap_result {
-                swap_bool[(i, j)] = accept;
+        // Determine which pairs to swap with mh criterion
+        let swap_results: Vec<Vec<(usize, usize, usize, bool)>> = swap_pairs.par_iter()
+            .map(|&(i, j)| {
+                let power = self.p_schedule[self.iter].to_f64().unwrap();
+                let t_i = T::from_f64((i as f64 / self.conf.common.num_replicas as f64).powf(power)).unwrap();
+                let t_j = T::from_f64((j as f64 / self.conf.common.num_replicas as f64).powf(power)).unwrap();
+
+                (0..m).into_par_iter()
+                    .map(|k| {
+                        let x_old = self.population[i].row(k).transpose();
+                        let x_new = self.population[j].row(k).transpose();
+                        let constraints_new = self.constraints[j][k];
+                        
+                        let accept = self.metropolis_hastings.accept_reject(&x_old, &x_new, constraints_new, t_i, t_j);
+                        
+                        (i, j, k, accept)
+                    })
+                    .collect()
+            })
+            .collect();
+
+        // Apply random factors after parallel section
+        for swap_result in &swap_results {
+            for (i, j, _, accept) in swap_result {
+                if *accept {
+                    // Add distance penalty to acceptance probability
+                    let dist_factor = 0.9 + 0.1 * (1.0 - (*j - *i) as f64 / n as f64);
+                    let accept_with_penalty = rng.random::<f64>() < dist_factor;
+                    
+                    swap_bool[(*i, *j)] = swap_bool[(*i, *j)] || accept_with_penalty;
+                    swap_bool[(*j, *i)] = swap_bool[(*i, *j)];
+                }
             }
         }
 
@@ -164,23 +192,26 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> PT<T
         let mut new_fitness = self.fitness.clone();
         let mut new_constraints = self.constraints.clone();
 
+        // Process accepted swaps
         for i in 0..n {
-            for j in 0..m {
+            for j in (i+1)..n {
                 if swap_bool[(i, j)] {
-                    // Swap population rows
-                    let temp_row = self.population[i].row(j).clone_owned();
-                    new_population[i].set_row(j, &self.population[i+1].row(j));
-                    new_population[i+1].set_row(j, &temp_row);
+                    for k in 0..m {
+                        // Swap population rows
+                        let temp_row = self.population[i].row(k).clone_owned();
+                        new_population[i].set_row(k, &self.population[j].row(k));
+                        new_population[j].set_row(k, &temp_row);
 
-                    // Swap fitness values
-                    let temp_fit = self.fitness[i][(j, 0)];
-                    new_fitness[i][(j, 0)] = self.fitness[i+1][(j, 0)];
-                    new_fitness[i+1][(j, 0)] = temp_fit;
+                        // Swap fitness values
+                        let temp_fit = self.fitness[i][k];
+                        new_fitness[i][k] = self.fitness[j][k];
+                        new_fitness[j][k] = temp_fit;
 
-                    // Swap constraints
-                    let temp_const = self.constraints[i][(j, 0)];
-                    new_constraints[i][(j, 0)] = self.constraints[i+1][(j, 0)];
-                    new_constraints[i+1][(j, 0)] = temp_const;
+                        // Swap constraints
+                        let temp_const = self.constraints[i][k];
+                        new_constraints[i][k] = self.constraints[j][k];
+                        new_constraints[j][k] = temp_const;
+                    }
                 }
             }
         }

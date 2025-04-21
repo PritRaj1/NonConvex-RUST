@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let conf_json = r#"
     {
         "opt_conf": {
-            "max_iter": 50,
+            "max_iter": 100,
             "rtol": "1e-6",
             "atol": "1e-6"
         },
@@ -21,9 +21,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "PT": {
                 "common": {
                     "num_replicas": 10,
-                    "power_law_init": 2.0,
-                    "power_law_final": 0.5,
-                    "power_law_cycles": 1,
+                    "power_law_init": 4.0,
+                    "power_law_final": 0.25,
+                    "power_law_cycles": 0,
                     "alpha": 0.1,
                     "omega": 2.1,
                     "mala_step_size": 0.1
@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let color_palette = get_color_palette();
     let mut encoder = setup_gif("examples/gifs/pt_kbf.gif")?;
 
-    for frame in 0..50 {
+    for frame in 0..100 {
         let mut chart = setup_chart(
             frame,
             "Parallel Tempering",
@@ -106,7 +106,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 10;
+        frame.delay = 5;
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 
