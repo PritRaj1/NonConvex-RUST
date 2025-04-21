@@ -118,10 +118,10 @@ The config is structured as follows:
             - `StandardConf` - Standard mutation configuration
             - `AdaptiveConf` - Adaptive mutation configuration
 
-Example configs are provided in [tests/jsons/](tests/jsons). More information on each config can be found in the respective algorithm .md files.
+Example configs are provided in [tests/jsons/](tests/jsons). More information on each config can be found in the respective algorithm .md files, (links below).
 
 
-## Examples
+## Algorithms
 
 The following GIFs are based on the [2D unconstrained maximization problems](./examples/test_functions.md) in the [examples/](./examples) subdirectory.
 
