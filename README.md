@@ -18,7 +18,7 @@ non_convex_opt = "0.1.0"
 
 ```rust
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::{Config, OptConf, AlgConf};
+use non_convex_opt::utils::config::Config;
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
 use nalgebra::{DVector, DMatrix};
 ```
@@ -51,6 +51,12 @@ let config_json = r#"{
             "selection": {
                 "Tournament": {
                     "tournament_size": 2
+                }
+            },
+            "mutation": {
+                "NonUniform": {
+                    "mutation_rate": 0.23,
+                    "b": 5.0
                 }
             }
         }
