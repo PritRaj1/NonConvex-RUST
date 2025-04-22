@@ -107,14 +107,14 @@ fn test_swarm_update() {
 fn test_mspo() {
     let config_json = r#"{
         "opt_conf": {
-            "max_iter": 10,
+            "max_iter": 100,
             "rtol": "1e-6",
             "atol": "1e-6",
             "rtol_max_iter_fraction": 1.0
         },
         "alg_conf": {
             "MSPO": {
-                "num_swarms": 3,
+                "num_swarms": 5,
                 "swarm_size": 10,
                 "w": 0.729,
                 "c1": 2.05,
@@ -134,7 +134,7 @@ fn test_mspo() {
     };
 
     // Create initial population matrix
-    let init_pop = DMatrix::from_vec(30, 2, (0..60).map(|i| {
+    let init_pop = DMatrix::from_vec(50, 2, (0..100).map(|i| {
         0.5 + 0.1 * (i as f64)
     }).collect::<Vec<f64>>());
 
@@ -145,7 +145,7 @@ fn test_mspo() {
     let mut mspo = MSPO::new(mspo_conf, init_pop, opt_prob);
     let initial_fitness = mspo.best_fitness;
     
-    for _ in 0..5 {
+    for _ in 0..20 {
         mspo.step();
     }
 
