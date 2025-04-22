@@ -24,3 +24,8 @@ Default values, (nothing needs to be specified):
         "SGA": {}
     }
 }
+```
+
+## Sources and more information
+
+- [Stochastic Gradient Descent](https://doi.org/10.1037%2Fh0042519)
