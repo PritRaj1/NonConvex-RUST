@@ -77,7 +77,6 @@ fn test_cga() {
 
     let pop_size = cga_conf.common.population_size;
 
-    // Initialize population
     let mut init_pop = DMatrix::zeros(pop_size, 2);
     for i in 0..pop_size {
         for j in 0..2 {
@@ -90,7 +89,6 @@ fn test_cga() {
     let opt_prob = OptProb::new(obj_f, Some(constraints));
     let mut cga = CGA::new(cga_conf, init_pop, opt_prob);
 
-    // Run a few iterations
     for _ in 0..5 {
         cga.step();
     }
