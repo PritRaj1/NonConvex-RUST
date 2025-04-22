@@ -40,3 +40,5 @@ Default values:
 
 ## Sources and more information
 
+- [Multi-Swarm Particle Optimization](https://doi.org/10.1109/ACCESS.2022.3220239)
+- [Dynamic and adaptive tactics to improve convergence](https://doi.org/10.1016/j.engappai.2023.106215)
