@@ -147,6 +147,11 @@ The config is structured hierarchically, as follows:
     - `LBFGSConf` - Limited Memory BFGS configuration
         - `CommonConf` - Common configuration
         - `LineSearchConf` - Line search configuration
+            - `BacktrackingConf` - Backtracking configuration
+            - `StrongWolfeConf` - Strong Wolfe configuration
+            - `HagerZhangConf` - Hager Zhang configuration
+            - `MoreThuenteConf` - More Thuente configuration
+            - `GoldenSectionConf` - Golden Section configuration
     - `MSPOConf` - Multi-Swarm Particle Optimization configuration
     - `SAConf` - Simulated Annealing configuration
     - `DEConf` - Differential Evolution configuration

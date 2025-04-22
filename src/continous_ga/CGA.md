@@ -21,6 +21,18 @@ Genetic algorithm for real valued (FP) vectors.
 | Heuristic     | - More exploitative and faster to converge (with good initial population) |
 |      | - More suitable to continous problems (by intuition). Uses a blend of parent characteristics. |
 
+## Mutation
+| Mutation Methods         | Notes                                                                                   |
+|--------------------------|-----------------------------------------------------------------------------------------------|
+| Gaussian | - Standard mutation operator using normal distribution with mean 0 and configurable sigma                |
+|          | - Good for local search and fine-tuning solutions by adding normally distributed noise                  |
+| Uniform  | - Randomly replaces values with new ones uniformly sampled within bounds                               |
+|          | - More disruptive than Gaussian, helps maintain diversity through complete value replacement           |
+| Non-Uniform | - Decreasing mutation strength over generations based on generation number and shape parameter b     |
+|             | - Allows broad exploration early and fine-tuning later through decreasing step sizes                |
+| Polynomial | - Popular in multi-objective optimization, uses polynomial probability distribution                   |
+|            | - Parameter eta_m controls distribution shape - larger values give smaller perturbations near parent  |
+
 ## Config example
 
 Fully-defined:
