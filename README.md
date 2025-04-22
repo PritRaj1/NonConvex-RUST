@@ -1,5 +1,5 @@
 # NonConvex-RUST
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)(LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Continuous non-convex optimizers implemented in RUST for constrained and unconstrained maximization problems. These algorithms were implemented for educational purposes, but they may be useful and have been open-sourced.
 
