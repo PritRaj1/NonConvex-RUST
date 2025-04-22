@@ -16,6 +16,7 @@ pub use crate::utils::alg_conf::{
     mspo_conf::MSPOConf,
     sa_conf::SAConf,
     de_conf::{DEConf, DEStrategy},
+    cmaes_conf::CMAESConf,
 };
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -31,6 +32,7 @@ pub enum AlgConf {
     MSPO(MSPOConf),
     SA(SAConf),
     DE(DEConf),
+    CMAES(CMAESConf),
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

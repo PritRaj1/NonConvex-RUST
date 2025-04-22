@@ -10,6 +10,7 @@ pub mod limited_memory_bfgs;
 pub mod multi_swarm;
 pub mod simulated_annealing;
 pub mod differential_evolution;
+pub mod cma_es;
 
 use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
 use crate::continous_ga::cga::CGA;
@@ -24,6 +25,7 @@ use crate::multi_swarm::mspo::MSPO;
 use crate::utils::config::{Config, AlgConf, OptConf};
 use crate::simulated_annealing::sa::SimulatedAnnealing;
 use crate::differential_evolution::de::DE;
+use crate::cma_es::cma_es::CMAES;
 
 use nalgebra::{DVector, DMatrix};
 
@@ -39,6 +41,7 @@ pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFuncti
     MSPO(MSPO<T, F, G>),
     SA(SimulatedAnnealing<T, F, G>),
     DE(DE<T, F, G>),
+    CMAES(CMAES<T, F, G>),
 }
 
 pub struct Result<T: FloatNum> {
@@ -72,6 +75,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             AlgConf::MSPO(mspo_conf) => OptAlg::MSPO(MSPO::new(mspo_conf, init_pop, opt_prob)),
             AlgConf::SA(sa_conf) => OptAlg::SA(SimulatedAnnealing::new(sa_conf, init_pop.column(0).into(), opt_prob)),
             AlgConf::DE(de_conf) => OptAlg::DE(DE::new(de_conf, init_pop, opt_prob)),
+            AlgConf::CMAES(cma_es_conf) => OptAlg::CMAES(CMAES::new(cma_es_conf, init_pop.column(0).into(), opt_prob)),
         };
 
         Self { alg, conf: conf.opt_conf, iter: 0, converged: false }
@@ -104,6 +108,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::MSPO(mspo) => mspo.best_fitness,
             OptAlg::SA(sa) => sa.best_fitness,
             OptAlg::DE(de) => de.best_fitness,
+            OptAlg::CMAES(cma_es) => cma_es.best_fitness,
         };
 
         match &mut self.alg {
@@ -118,6 +123,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::MSPO(mspo) => mspo.step(),
             OptAlg::SA(sa) => sa.step(),
             OptAlg::DE(de) => de.step(),
+            OptAlg::CMAES(cma_es) => cma_es.step(),
         }
 
         let current_best_fitness = match &self.alg {
@@ -132,6 +138,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::MSPO(mspo) => mspo.best_fitness,
             OptAlg::SA(sa) => sa.best_fitness,
             OptAlg::DE(de) => de.best_fitness,
+            OptAlg::CMAES(cma_es) => cma_es.best_fitness,
         };
 
         self.converged = self.check_convergence(
@@ -156,6 +163,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::MSPO(mspo) => mspo.get_population(),
             OptAlg::SA(sa) => DMatrix::from_columns(&[sa.x.clone()]),
             OptAlg::DE(de) => de.population.clone(),
+            OptAlg::CMAES(cmaes) => cmaes.population.clone(),
         }
     }
 
@@ -172,6 +180,7 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             OptAlg::MSPO(mspo) => mspo.best_x.clone(),
             OptAlg::SA(sa) => sa.best_x.clone(),
             OptAlg::DE(de) => de.best_x.clone(),
+            OptAlg::CMAES(cma_es) => cma_es.best_x.clone(),
         }
     }
 
@@ -236,6 +245,12 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
                 let fitness_vec = DVector::from_element(x_matrix.ncols(), de.best_fitness);
                 let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
                 (de.best_x.clone(), de.best_fitness, x_matrix, fitness_vec, constraints_vec)
+            },
+            OptAlg::CMAES(cma_es) => {
+                let x_matrix = DMatrix::from_columns(&[cma_es.best_x.clone()]);
+                let fitness_vec = DVector::from_element(x_matrix.ncols(), cma_es.best_fitness);
+                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
+                (cma_es.best_x.clone(), cma_es.best_fitness, x_matrix, fitness_vec, constraints_vec)
             },
         };
 

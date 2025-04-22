@@ -9,3 +9,4 @@ pub mod lbfgs_conf;
 pub mod mspo_conf;
 pub mod sa_conf;
 pub mod de_conf;
+pub mod cmaes_conf;
