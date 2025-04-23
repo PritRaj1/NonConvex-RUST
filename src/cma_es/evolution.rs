@@ -58,8 +58,8 @@ pub fn update_covariance<T: FloatNum>(
     population: &DMatrix<T>,
     weights: &DVector<T>,
     sigma: T,
-    num_parents: usize,
-    n: usize
+    mu: usize,
+    n: usize,
 ) {
     let mut c_mat_new = DMatrix::zeros(n, n);
     let factor = T::one() - c1 - cmu;
@@ -92,7 +92,7 @@ pub fn update_covariance<T: FloatNum>(
     }
 
     // Rank-mu update
-    for k in 0..num_parents {
+    for k in 0..mu {
         if k >= indices.len() || k >= weights.len() {
             continue;
         }
@@ -123,47 +123,77 @@ pub fn update_covariance<T: FloatNum>(
 
     *c_mat = c_mat_new;
 
-    // Symmetric power iteration for eigendecomposition
+    // Symmetric power iteration with improvements
+    let mut eigenvectors: Vec<DVector<T>> = Vec::with_capacity(n);
+    let mut c_deflated = c_mat.clone();
+
     for i in 0..n {
+        // Initialize random vector
         let mut v = DVector::from_fn(n, |_, _| {
             T::from_f64(rand::random::<f64>()).unwrap() * T::from_f64(2.0).unwrap() - T::one()
         });
         
-        // Manual norm calculation and normalization
+        // Orthogonalize against previous eigenvectors
+        for prev_v in &eigenvectors {
+            let proj = prev_v.dot(&v);
+            for j in 0..n {
+                v[j] = v[j] - proj * prev_v[j];
+            }
+        }
+        
+        // Normalize
         let v_norm = T::sqrt(v.dot(&v));
         for j in 0..n {
             v[j] = v[j] / v_norm;
         }
 
-        // Power iteration
+        // Power iteration with Rayleigh quotient
+        let mut eigenvalue = T::zero();
+        let mut prev_eigenvalue = T::neg_infinity();
+        
         for _ in 0..20 {  // Usually converges in < 20 iterations
-            let v_new = &*c_mat * &v;  
+            let v_new = &c_deflated * &v;
             let norm = T::sqrt(v_new.dot(&v_new));
             
             if norm > T::from_f64(1e-10).unwrap() {
+                // Normalize v_new into v
                 for j in 0..n {
                     v[j] = v_new[j] / norm;
                 }
+                
+                // Rayleigh quotient for faster convergence
+                eigenvalue = v.dot(&(&c_deflated * &v));
+                
+                // Check convergence
+                let diff = (eigenvalue - prev_eigenvalue).abs();
+                if diff < T::from_f64(1e-12).unwrap() {
+                    break;
+                }
+                prev_eigenvalue = eigenvalue;
             }
         }
 
-        // Extract eigenvalue and update matrices
-        let c_v = &*c_mat * &v;
-        let eigenvalue = v.dot(&c_v);  // v^T * C * v
+        // Store eigenpair
         d_vec[i] = T::sqrt(T::max(eigenvalue.abs(), T::from_f64(1e-20).unwrap()));
         b_mat.set_column(i, &v);
+        eigenvectors.push(v.clone());
 
-        // Deflate matrix to find next eigenpair
-        let vvt = &v * &v.transpose();  // Outer product
-        for j in 0..n {
-            for k in 0..n {
-                c_mat[(j,k)] -= eigenvalue * vvt[(j,k)];
-            }
-        }
+        // Hotelling's deflation (more stable than simple deflation)
+        let vv_t = &v * &v.transpose();
+        c_deflated -= &vv_t * eigenvalue;
     }
 
-    // Restore C = BDB^T
+    // Restore C = BDB^T with improved numerical stability
     let d_mat = DMatrix::from_diagonal(&d_vec.map(|x| x * x));
     let temp = &*b_mat * &d_mat;
     *c_mat = &temp * &b_mat.transpose();
+    
+    // Enforce symmetry (can be lost due to numerical errors)
+    for i in 0..n {
+        for j in i+1..n {
+            let avg = (c_mat[(i,j)] + c_mat[(j,i)]) * T::from_f64(0.5).unwrap();
+            c_mat[(i,j)] = avg;
+            c_mat[(j,i)] = avg;
+        }
+    }
 } 
