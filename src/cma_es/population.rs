@@ -1,18 +1,9 @@
 use nalgebra::{DVector, DMatrix};
-use rand_distr::{Normal, Distribution};
 use rayon::prelude::*;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
 
-pub fn generate_samples(lambda: usize, n: usize) -> Vec<Vec<f64>> {
-    let normal = Normal::new(0.0, 1.0).unwrap();
-    let mut rng = rand::rng();
-    (0..lambda)
-        .map(|_| (0..n).map(|_| normal.sample(&mut rng)).collect())
-        .collect()
-}
-
 pub fn evaluate_samples<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>>(
-    samples: &[Vec<f64>],
+    samples: &[DVector<T>],
     mean: &DVector<T>,
     b_mat: &DMatrix<T>,
     d_vec: &DVector<T>,
@@ -21,9 +12,8 @@ pub fn evaluate_samples<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstrai
     n: usize
 ) -> Vec<(DVector<T>, T, bool)> {
     samples.par_iter()
-        .map(|z_vec| {
-            let z = DVector::from_iterator(n, z_vec.iter().map(|&z| T::from_f64(z).unwrap()));
-            let y = b_mat * &d_vec.component_mul(&z);
+        .map(|z| {
+            let y = b_mat * &d_vec.component_mul(z);
             let mut x = mean.clone();
             for i in 0..n {
                 x[i] = x[i] + sigma * y[i];

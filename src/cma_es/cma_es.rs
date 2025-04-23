@@ -2,8 +2,9 @@ use nalgebra::{DVector, DMatrix};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
 use crate::utils::config::CMAESConf;
 use crate::cma_es::parameters::Parameters;
-use crate::cma_es::population::{generate_samples, evaluate_samples, update_arrays, sort};
+use crate::cma_es::population::{evaluate_samples, update_arrays, sort};
 use crate::cma_es::evolution::{update_paths, update_covariance, compute_y};
+use rand_distr::{Normal, Distribution};
 
 pub struct CMAES<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub conf: CMAESConf,
@@ -44,15 +45,44 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CMAE
         let params = Parameters::new(&conf, &init_x);
         let initial_fitness = opt_prob.objective.f(&init_x);
 
+        // Initial population
+        let normal = Normal::new(0.0, 1.0).unwrap();
+        let mut rng = rand::rng();
+        let mut samples = Vec::with_capacity(params.lambda);
+        
+        for _ in 0..params.lambda {
+            let mut z = DVector::zeros(n);
+            for j in 0..n {
+                z[j] = T::from_f64(normal.sample(&mut rng)).unwrap();
+            }
+            samples.push(z);
+        }
+        let results = evaluate_samples(
+            &samples, &init_x, &DMatrix::identity(n, n), 
+            &DVector::from_element(n, T::one()),
+            T::from_f64(conf.initial_sigma).unwrap(),
+            &opt_prob, n
+        );
+
+        let mut population = DMatrix::zeros(params.lambda, n);
+        let mut fitness = DVector::zeros(params.lambda);
+        let mut constraints = DVector::from_element(params.lambda, false);
+
+        for (i, (x, f, c)) in results.iter().enumerate() {
+            population.set_row(i, &x.transpose());
+            fitness[i] = *f;
+            constraints[i] = *c;
+        }
+
         Self {
             conf: conf.clone(),
             opt_prob: opt_prob.clone(),
             x: init_x.clone(),
             best_x: init_x.clone(),
             best_fitness: initial_fitness,
-            population: DMatrix::zeros(params.lambda, n),
-            fitness: DVector::zeros(params.lambda),
-            constraints: DVector::from_element(params.lambda, true),
+            population,
+            fitness,
+            constraints,
             mean: init_x,
             pc: DVector::zeros(n),
             ps: DVector::zeros(n),
@@ -74,11 +104,24 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CMAE
         }
     }
 
+    fn generate_samples(&self, n: usize) -> Vec<DVector<T>> {
+        let normal = Normal::new(0.0, 1.0).unwrap();
+        let mut rng = rand::rng();
+        
+        (0..self.lambda)
+            .map(|_| {
+                DVector::from_iterator(n, 
+                    (0..n).map(|_| T::from_f64(normal.sample(&mut rng)).unwrap())
+                )
+            })
+            .collect()
+    }
+
     pub fn step(&mut self) {
         let n = self.mean.len();
         
         // Population updates
-        let samples = generate_samples(self.lambda, n);
+        let samples = self.generate_samples(n);
         let results = evaluate_samples(
             &samples, &self.mean, &self.b_mat, &self.d_vec,
             self.sigma, &self.opt_prob, n

@@ -2,7 +2,7 @@ mod common;
 use common::fcns::{KBF, KBFConstraints};
 use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::{Config, AlgConf};
+use non_convex_opt::utils::config::Config;
 use serde_json;
 use nalgebra::{DMatrix, DVector};
 use plotters::prelude::*;
@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_json = r#"
     {
         "opt_conf": {
-            "max_iter": 100,
+            "max_iter": 20,
             "rtol": "1e-6",
             "atol": "1e-6",
             "rtol_max_iter_fraction": 1.0
@@ -22,23 +22,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "alg_conf": {
             "CMAES": {
                 "population_size": 100,
-                "num_parents": 40,
-                "initial_sigma": 0.5
+                "num_parents": 50,
+                "initial_sigma": 1.5
             }
         }
     }"#;
 
     let config: Config = serde_json::from_str(config_json).unwrap();
 
-    let cmaes_conf = match &config.alg_conf {
-        AlgConf::CMAES(cmaes_conf) => cmaes_conf,
-        _ => panic!("Expected CMAESConf"),
-    };
-
     let obj_f = KBF;
     let constraints = KBFConstraints;
 
-    // Initialize population with random points
     let init_x = DVector::from_vec(vec![
         4.0,
         9.0
@@ -51,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let color_palette = get_color_palette();
     let mut encoder = setup_gif("examples/gifs/cmaes_kbf.gif")?;
 
-    for frame in 0..10 {
+    for frame in 0..20 {
         let mut chart = setup_chart(
             frame,
             "CMAES",
@@ -101,7 +95,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut frame = Frame::default();
         frame.width = 800;
         frame.height = 800;
-        frame.delay = 40; 
+        frame.delay = 20; 
         frame.buffer = std::borrow::Cow::from(indexed_pixels);
         encoder.write_frame(&frame)?;
 

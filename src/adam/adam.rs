@@ -1,6 +1,7 @@
 use nalgebra::DVector;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, ObjectiveFunction, BooleanConstraintFunction};
 use crate::utils::config::AdamConf;
+
 pub struct Adam<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
     pub conf: AdamConf,
     pub x: DVector<T>,
