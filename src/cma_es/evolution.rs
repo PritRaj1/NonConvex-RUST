@@ -121,12 +121,10 @@ pub fn update_covariance<T: FloatNum>(
         }
     }
 
-    // Update matrices
     *c_mat = c_mat_new;
 
     // Symmetric power iteration for eigendecomposition
     for i in 0..n {
-        // Initialize random vector
         let mut v = DVector::from_fn(n, |_, _| {
             T::from_f64(rand::random::<f64>()).unwrap() * T::from_f64(2.0).unwrap() - T::one()
         });
@@ -139,7 +137,7 @@ pub fn update_covariance<T: FloatNum>(
 
         // Power iteration
         for _ in 0..20 {  // Usually converges in < 20 iterations
-            let v_new = &*c_mat * &v;  // Proper borrowing
+            let v_new = &*c_mat * &v;  
             let norm = T::sqrt(v_new.dot(&v_new));
             
             if norm > T::from_f64(1e-10).unwrap() {
