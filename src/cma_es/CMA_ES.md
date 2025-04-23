@@ -31,3 +31,4 @@ Default values:
 ## Sources and more information
 
 - [CMA-ES + great bibliography](https://cma-es.github.io/)
+- [Power iteration eigen decomposition](https://en.wikipedia.org/wiki/Power_iteration)
