@@ -96,6 +96,7 @@ The following GIFs are based on the [2D unconstrained maximization problems](./e
 | <img src="./examples/gifs/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Monte Carlo sampling |
 | [Multi-Swarm Particle Optimization (MSPO)](./src/multi_swarm/MSPO.md) - Multi-swarm particle optimization | <img src="./examples/gifs/mspo_kbf.gif" width="300" alt="MSPO Example"> |
 | <img src="./examples/gifs/de_kbf.gif" width="300" alt="DE Example"> | [Differential Evolution (DE)](./src/differential_evolution/DE.md) - Differential evolution |
+| [Covariance Matrix Adaptation Evolution Strategy (CMA-ES)](./src/cma_es/CMA_ES.md) - Covariance matrix adaptation evolution strategy | <img src="./examples/gifs/cmaes_kbf.gif" width="300" alt="CMAES Example"> |
 
 
 ### Local Search 
@@ -159,7 +160,8 @@ The config is structured hierarchically, as follows:
         - `MutationType` - Mutation type configuration
             - `StandardConf` - Standard mutation configuration
             - `AdaptiveConf` - Adaptive mutation configuration
-
+    - `CMAESConf` - Covariance Matrix Adaptation Evolution 
+    
 Example configs are provided in [tests/jsons/](tests/jsons). More information on each config can be found in the respective algorithm .md files, (links above).
 
 ## Contributing
