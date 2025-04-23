@@ -123,19 +123,49 @@ pub fn update_covariance<T: FloatNum>(
 
     // Update matrices
     *c_mat = c_mat_new;
-    
-    // Decomposition
-    for i in 0..n {
-        d_vec[i] = T::sqrt(c_mat[(i,i)].abs());
-    }
 
-    *b_mat = DMatrix::identity(n, n);
+    // Symmetric power iteration for eigendecomposition
     for i in 0..n {
-        for j in (i+1)..n {
-            if d_vec[i] > T::zero() && d_vec[j] > T::zero() {
-                b_mat[(i,j)] = c_mat[(i,j)] / (d_vec[i] * d_vec[j]);
-                b_mat[(j,i)] = b_mat[(i,j)];
+        // Initialize random vector
+        let mut v = DVector::from_fn(n, |_, _| {
+            T::from_f64(rand::random::<f64>()).unwrap() * T::from_f64(2.0).unwrap() - T::one()
+        });
+        
+        // Manual norm calculation and normalization
+        let v_norm = T::sqrt(v.dot(&v));
+        for j in 0..n {
+            v[j] = v[j] / v_norm;
+        }
+
+        // Power iteration
+        for _ in 0..20 {  // Usually converges in < 20 iterations
+            let v_new = &*c_mat * &v;  // Proper borrowing
+            let norm = T::sqrt(v_new.dot(&v_new));
+            
+            if norm > T::from_f64(1e-10).unwrap() {
+                for j in 0..n {
+                    v[j] = v_new[j] / norm;
+                }
+            }
+        }
+
+        // Extract eigenvalue and update matrices
+        let c_v = &*c_mat * &v;
+        let eigenvalue = v.dot(&c_v);  // v^T * C * v
+        d_vec[i] = T::sqrt(T::max(eigenvalue.abs(), T::from_f64(1e-20).unwrap()));
+        b_mat.set_column(i, &v);
+
+        // Deflate matrix to find next eigenpair
+        let vvt = &v * &v.transpose();  // Outer product
+        for j in 0..n {
+            for k in 0..n {
+                c_mat[(j,k)] -= eigenvalue * vvt[(j,k)];
             }
         }
     }
+
+    // Restore C = BDB^T
+    let d_mat = DMatrix::from_diagonal(&d_vec.map(|x| x * x));
+    let temp = &*b_mat * &d_mat;
+    *c_mat = &temp * &b_mat.transpose();
 } 
