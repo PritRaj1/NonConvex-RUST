@@ -31,7 +31,6 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Adam
     }
 
     pub fn step(&mut self) {
-        // Get gradient
         let grad = self.opt_prob.objective.gradient(&self.x)
             .expect("ADAM requires gradient information");
         
@@ -49,14 +48,13 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Adam
         let v_hat = self.v.clone() / 
             (T::one() - T::from_f64(self.conf.beta2.powi(self.t as i32)).unwrap());
         
-        // Update parameters
         let step_size = T::from_f64(self.conf.learning_rate).unwrap();
         let epsilon = T::from_f64(self.conf.epsilon).unwrap();
         
         let update = m_hat.component_div(&v_hat.map(|x| x.sqrt() + epsilon)) * step_size;
         self.x += update;
 
-        // Project onto feasible set if needed
+        // Clamp onto feasible set if needed
         if let Some(ref constraints) = self.opt_prob.constraints {
             if !constraints.g(&self.x) {
                 if let (Some(lb), Some(ub)) = (self.opt_prob.objective.x_lower_bound(&self.x), 
@@ -68,7 +66,6 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> Adam
             }
         }
 
-        // Update best solution
         let fitness = self.opt_prob.objective.f(&self.x);
         if fitness > self.best_fitness {
             self.best_fitness = fitness;

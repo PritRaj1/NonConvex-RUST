@@ -28,7 +28,7 @@ pub struct CMAES<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunct
     pub generation: usize,       // Counts the number of generations
     
     // Derived values
-    pub mu: usize,              // Number of parents
+    pub mu: usize,              // Number of parents < λ
     pub lambda: usize,          // Population size
     pub mueff: T,               // Variance effective selection mass
     pub cc: T,                  // Time constant for cumulation for c_mat
@@ -128,18 +128,18 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CMAE
         );
         update_arrays(&mut self.population, &mut self.fitness, &mut self.constraints, &results);
         
-        // Sort and update mean
+        // Sort and update mean - weigthed average of μ selected points from sample space
         let indices = sort(&self.fitness, &self.constraints, self.lambda);
         let old_mean = self.mean.clone();
         self.mean = DVector::zeros(n);
         for i in 0..self.mu {
             let row = self.population.row(indices[i]).transpose();
             for j in 0..n {
-                self.mean[j] += self.weights[i] * row[j];
+                self.mean[j] += self.weights[i] * row[j]; 
             }
         }
 
-        // Evolution path updates
+        // Evolution path updates - update step size and covariance matrix
         let y = compute_y(&self.mean, &old_mean, self.sigma);
         let hsig = update_paths(
             &mut self.ps, &self.b_mat, &self.d_vec,
@@ -155,7 +155,6 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> CMAE
             n
         );
         
-        // Step size update
         let ps_norm = self.ps.dot(&self.ps).sqrt();
         self.sigma *= T::exp(T::min(
             T::one(),

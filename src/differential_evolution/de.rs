@@ -101,7 +101,6 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> DE<T
 
         let mut successes = Vec::new();
 
-        // Process trials sequentially for updates
         let updates: Vec<_> = trials.into_iter()
             .filter_map(|(i, trial, trial_fitness, trial_constraint, success)| {
                 if trial_constraint && trial_fitness > self.fitness[i] {

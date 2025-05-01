@@ -20,7 +20,6 @@ pub fn update_paths<T: FloatNum>(
     y: &DVector<T>,
     n: usize
 ) -> bool {
-    // Avoid double reference by dereferencing b_mat
     let b_mat = &*b_mat;
     let d_inv = d_vec.map(|d| T::one()/d);
     let b_trans_y = b_mat.transpose() * y;
@@ -28,7 +27,7 @@ pub fn update_paths<T: FloatNum>(
     
     let cs_factor = T::sqrt(cs * (T::from_f64(2.0).unwrap() - cs) * mueff);
     
-    // Update ps
+    // Update ps 
     let mut ps_new = DVector::zeros(n);
     for i in 0..n {
         ps_new[i] = (T::one() - cs) * ps[i] + cs_factor * bdinvy[i];
@@ -127,13 +126,16 @@ pub fn update_covariance<T: FloatNum>(
     let mut eigenvectors: Vec<DVector<T>> = Vec::with_capacity(n);
     let mut c_deflated = c_mat.clone();
 
+    /* Could parallelize this with Rayon - power iteration is used because covariance is
+    positive semi-definite and symmetric, and it's memory efficient + stable.
+    */
     for i in 0..n {
         // Initialize random vector
         let mut v = DVector::from_fn(n, |_, _| {
             T::from_f64(rand::random::<f64>()).unwrap() * T::from_f64(2.0).unwrap() - T::one()
         });
         
-        // Orthogonalize against previous eigenvectors
+        // Orthogonalize against previous eigenvectors - this prevents repetition of eigenvectors
         for prev_v in &eigenvectors {
             let proj = prev_v.dot(&v);
             for j in 0..n {
@@ -147,11 +149,11 @@ pub fn update_covariance<T: FloatNum>(
             v[j] = v[j] / v_norm;
         }
 
-        // Power iteration with Rayleigh quotient
+        // Power iteration with Rayleigh quotient to improve convergence speed
         let mut eigenvalue = T::zero();
         let mut prev_eigenvalue = T::neg_infinity();
         
-        for _ in 0..20 {  // Usually converges in < 20 iterations
+        for _ in 0..20 {  // Usually converges to machine precision in < 20 iterations - but might need to fiddle?
             let v_new = &c_deflated * &v;
             let norm = T::sqrt(v_new.dot(&v_new));
             
@@ -161,10 +163,9 @@ pub fn update_covariance<T: FloatNum>(
                     v[j] = v_new[j] / norm;
                 }
                 
-                // Rayleigh quotient for faster convergence
+                // Rayleigh quotient for faster convergence - break if eigenvalue is stable
                 eigenvalue = v.dot(&(&c_deflated * &v));
                 
-                // Check convergence
                 let diff = (eigenvalue - prev_eigenvalue).abs();
                 if diff < T::from_f64(1e-12).unwrap() {
                     break;
@@ -178,17 +179,17 @@ pub fn update_covariance<T: FloatNum>(
         b_mat.set_column(i, &v);
         eigenvectors.push(v.clone());
 
-        // Hotelling's deflation (more stable than simple deflation)
+        // Hotelling's deflation (more stable than simple deflation) - this may improve numerical stability
         let vv_t = &v * &v.transpose();
         c_deflated -= &vv_t * eigenvalue;
     }
 
-    // Restore C = BDB^T with improved numerical stability
+    // Restore C = BDB^T 
     let d_mat = DMatrix::from_diagonal(&d_vec.map(|x| x * x));
     let temp = &*b_mat * &d_mat;
     *c_mat = &temp * &b_mat.transpose();
     
-    // Enforce symmetry (can be lost due to numerical errors)
+    // Enforce symmetry (could be lost due to numerical errors)
     for i in 0..n {
         for j in i+1..n {
             let avg = (c_mat[(i,j)] + c_mat[(j,i)]) * T::from_f64(0.5).unwrap();
