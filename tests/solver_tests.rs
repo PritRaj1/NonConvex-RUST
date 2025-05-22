@@ -3,10 +3,9 @@ mod common;
 use nalgebra::DMatrix;
 use non_convex_opt::NonConvexOpt;
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
-use non_convex_opt::algorithms::continous_ga::cga::CGA;
 use non_convex_opt::utils::{
     config::Config,
-    opt_prob::{OptProb, OptimizationAlgorithm},
+    opt_prob::ObjectiveFunction,
 };
 
 #[test]

@@ -1,9 +1,12 @@
 mod common;
+
+use nalgebra::DMatrix;
 use non_convex_opt::algorithms::grasp::grasp::GRASP;
-use non_convex_opt::utils::config::GRASPConf;
-use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
-use nalgebra::DVector;
+use non_convex_opt::utils::{
+    config::GRASPConf,
+    opt_prob::{OptProb, OptimizationAlgorithm, BooleanConstraintFunction}
+};
 
 #[test]
 fn test_grasp_unconstrained() {
@@ -15,9 +18,9 @@ fn test_grasp_unconstrained() {
         perturbation_prob: 0.3,
     };
 
-    let init_x = DMatrix::from_columns(vec![0.0, 0.0]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
-    let opt_prob = OptProb::new(Box::new(obj_f), None::<RosenbrockConstraints>);
+    let opt_prob = OptProb::new(Box::new(obj_f), None::<Box<dyn BooleanConstraintFunction<f64>>>);
     
     let mut grasp = GRASP::new(conf, init_x.clone(), opt_prob);
     
@@ -40,7 +43,7 @@ fn test_grasp_constrained() {
         perturbation_prob: 0.3,
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -67,7 +70,7 @@ fn test_grasp_construction_and_local_search() {
         perturbation_prob: 0.3,
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -91,7 +94,7 @@ fn test_grasp_bounds() {
         perturbation_prob: 0.3,
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -100,6 +103,6 @@ fn test_grasp_bounds() {
     
     for _ in 0..10 {
         grasp.step();
-        assert!(grasp.x.iter().all(|&x| x >= 0.0 && x <= 1.0));
+        assert!(grasp.st.best_x.iter().all(|&x| x >= 0.0 && x <= 1.0));
     }
 } 

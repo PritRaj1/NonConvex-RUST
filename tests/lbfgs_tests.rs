@@ -1,6 +1,6 @@
 mod common;
 
-use nalgebra::DVector;
+use nalgebra::DMatrix;
 use non_convex_opt::algorithms::limited_memory_bfgs::lbfgs::LBFGS;
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
 use non_convex_opt::utils::{
@@ -32,7 +32,7 @@ fn test_lbfgs() {
         }),
     };
 
-    let init_x = DMatrix::from_columns(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -60,7 +60,7 @@ fn test_backtracking_line_search() {
         }),
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -89,7 +89,7 @@ fn test_strong_wolfe_line_search() {
         }),
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -119,7 +119,7 @@ fn test_hager_zhang_line_search() {
         }),
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -147,7 +147,7 @@ fn test_more_thuente_line_search() {
         }),
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -175,7 +175,7 @@ fn test_golden_section_line_search() {
         }),
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));

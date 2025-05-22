@@ -1,6 +1,6 @@
 mod common;
 
-use nalgebra::DVector;
+use nalgebra::{DVector, DMatrix};
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
 use non_convex_opt::algorithms::cma_es::cma_es::CMAES;
 use non_convex_opt::utils::{
@@ -16,7 +16,7 @@ fn test_cmaes_initialization() {
         initial_sigma: 0.5,
     };
 
-    let init_x = DMatrix::from_columns(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -24,13 +24,13 @@ fn test_cmaes_initialization() {
     let cmaes = CMAES::new(conf, init_x.clone(), opt_prob);
     
     // Check dims
-    assert_eq!(cmaes.population.nrows(), 20);
-    assert_eq!(cmaes.population.ncols(), 2);
-    assert_eq!(cmaes.fitness.len(), 20);
-    assert_eq!(cmaes.constraints.len(), 20);
+    assert_eq!(cmaes.st.pop.nrows(), 20);
+    assert_eq!(cmaes.st.pop.ncols(), 2);
+    assert_eq!(cmaes.st.fitness.len(), 20);
+    assert_eq!(cmaes.st.constraints.len(), 20);
     
     // Check init
-    assert_eq!(cmaes.x, init_x);
+    assert_eq!(cmaes.st.best_x, init_x);
 }
 
 #[test]
@@ -41,7 +41,7 @@ fn test_cmaes() {
         initial_sigma: 0.3,
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -50,7 +50,7 @@ fn test_cmaes() {
     
     for _ in 0..20 {
         cmaes.step();
-        assert!(cmaes.best_x.iter().all(|&x| x >= 0.0 && x <= 1.0),
-            "Best solution violated constraints: {:?}", cmaes.best_x);
+        assert!(cmaes.st.best_x.iter().all(|&x| x >= 0.0 && x <= 1.0),
+            "Best solution violated constraints: {:?}", cmaes.st.best_x);
     }
 }

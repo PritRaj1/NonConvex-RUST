@@ -5,7 +5,7 @@ use common::fcns::{QuadraticObjective, QuadraticConstraints};
 use non_convex_opt::algorithms::nelder_mead::nm::NelderMead;
 use non_convex_opt::utils::{
     config::NelderMeadConf,
-    opt_prob::{OptProb, OptimizationAlgorithm},
+    opt_prob::OptProb,
 };
 
 #[test]

@@ -1,6 +1,6 @@
 mod common;
 
-use nalgebra::DVector;
+use nalgebra::DMatrix;
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
 use non_convex_opt::algorithms::simulated_annealing::sa::SimulatedAnnealing;
 use non_convex_opt::utils::{
@@ -21,7 +21,7 @@ fn test_sa_basic() {
         x_max: 10.0,
     };
 
-    let init_x = DMatrix::from_columns(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -49,7 +49,7 @@ fn test_sa_cooling() {
         x_max: 10.0,
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -80,7 +80,7 @@ fn test_sa_neighbor_generation() {
         x_max: 10.0,
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -88,7 +88,7 @@ fn test_sa_neighbor_generation() {
     let mut sa = SimulatedAnnealing::new(conf, init_x.clone(), opt_prob);
     
     sa.step();
-    assert!(sa.x.iter().all(|&x| x >= -10.0 && x <= 10.0));
+    assert!(sa.st.best_x.iter().all(|&x| x >= -10.0 && x <= 10.0));
 }
 
 #[test]
@@ -103,7 +103,7 @@ fn test_sa_with_constraints() {
         x_max: 10.0,
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -128,15 +128,15 @@ fn test_sa_acceptance() {
         x_max: 10.0,
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective{ a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     
     let mut sa = SimulatedAnnealing::new(conf, init_x.clone(), opt_prob);
-    let initial_x = sa.x.clone();
+    let initial_x = sa.st.best_x.clone();
     
     sa.step();
     
-    assert_ne!(sa.x, initial_x);
+    assert_ne!(sa.st.best_x, initial_x);
 } 

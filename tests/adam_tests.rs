@@ -1,6 +1,6 @@
 mod common;
 
-use nalgebra::DVector;
+use nalgebra::DMatrix;
 use non_convex_opt::algorithms::adam::adam::Adam;
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
 use non_convex_opt::utils::{
@@ -17,7 +17,7 @@ fn test_adam() {
         epsilon: 1e-8,
     };
 
-    let init_x = DMatrix::from_columns(vec![1.0, 1.0]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));

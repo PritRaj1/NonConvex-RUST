@@ -30,7 +30,7 @@ fn bench_adam_unconstrained(c: &mut Criterion) {
                 config.clone(),
                 black_box(init_pop),
                 RosenbrockFunction,
-                None::<RosenbrockConstraints>,
+                None::<Box<dyn BooleanConstraintFunction<f64>>>,
             );
             opt.run()
         })

@@ -7,8 +7,8 @@ use non_convex_opt::utils::{
     opt_prob::{OptProb, OptimizationAlgorithm},
 };
 use non_convex_opt::algorithms::continous_ga::{
-    selection::{RouletteWheel, Tournament, Residual},
-    crossover::{Random, Heuristic},
+    selection::{SelectionOperator, RouletteWheel, Tournament, Residual},
+    crossover::{CrossoverOperator, Random, Heuristic},
     cga::CGA,
 };
 
@@ -66,7 +66,7 @@ fn test_heuristic_crossover() {
     let constraint = DVector::from_vec(vec![true; 10]);
     let selected = selection.select(&population, &fitness, &constraint);
     let crossover = Heuristic::new(0.9, 10);
-    let offspring = crossover.crossover(&selected, &fitness);
+    let offspring = crossover.crossover(&selected);
     assert_eq!(offspring.nrows(), 10);
     assert_eq!(offspring.ncols(), 5);
 }
@@ -92,7 +92,7 @@ fn test_cga() {
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
-    let mut cga = CGA::new(cga_conf, init_pop, opt_prob);
+    let mut cga = CGA::new(cga_conf, init_pop, opt_prob, 5);
 
     for _ in 0..5 {
         cga.step();

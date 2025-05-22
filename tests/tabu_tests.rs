@@ -1,6 +1,6 @@
 mod common;
 
-use nalgebra::DVector;
+use nalgebra::DMatrix;
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
 use non_convex_opt::algorithms::tabu_search::tabu::TabuSearch;
 use non_convex_opt::utils::{
@@ -39,7 +39,7 @@ fn test_standard_tabu() {
         _ => panic!("Expected TabuConf"),
     };
 
-    let init_x = DMatrix::from_columns(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -64,7 +64,7 @@ fn test_reactive_tabu() {
         _ => panic!("Expected TabuConf"),
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));

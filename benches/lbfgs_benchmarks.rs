@@ -160,7 +160,7 @@ fn bench_lbfgs_backtracking(c: &mut Criterion) {
     c.bench_function("lbfgs_backtracking", |b| {
         b.iter(|| {
             let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
-            let mut opt = NonConvexOpt::new(BACKTRACKING_CONFIG.clone(), black_box(init_pop), RosenbrockFunction, None::<RosenbrockConstraints>);
+            let mut opt = NonConvexOpt::new(BACKTRACKING_CONFIG.clone(), black_box(init_pop), RosenbrockFunction, None::<Box<dyn BooleanConstraintFunction<f64>>>);
             opt.run()
         })
     }); 
@@ -170,7 +170,7 @@ fn bench_lbfgs_hager_zhang(c: &mut Criterion) {
     c.bench_function("lbfgs_hager_zhang", |b| {
         b.iter(|| {
             let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
-            let mut opt = NonConvexOpt::new(HAGER_ZHANG_CONFIG.clone(), black_box(init_pop), RosenbrockFunction, None::<RosenbrockConstraints>);
+            let mut opt = NonConvexOpt::new(HAGER_ZHANG_CONFIG.clone(), black_box(init_pop), RosenbrockFunction, None::<Box<dyn BooleanConstraintFunction<f64>>>);
             opt.run()
         })
     });
@@ -180,7 +180,7 @@ fn bench_lbfgs_more_thuente(c: &mut Criterion) {
     c.bench_function("lbfgs_more_thuente", |b| {
         b.iter(|| {
             let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
-            let mut opt = NonConvexOpt::new(MORE_THUENTE_CONFIG.clone(), black_box(init_pop), RosenbrockFunction, None::<RosenbrockConstraints>);
+            let mut opt = NonConvexOpt::new(MORE_THUENTE_CONFIG.clone(), black_box(init_pop), RosenbrockFunction, None::<Box<dyn BooleanConstraintFunction<f64>>>);
             opt.run()
         })
     });
@@ -190,7 +190,7 @@ fn bench_lbfgs_golden_section(c: &mut Criterion) {
     c.bench_function("lbfgs_golden_section", |b| {
         b.iter(|| {
             let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
-            let mut opt = NonConvexOpt::new(GOLDEN_SECTION_CONFIG.clone(), black_box(init_pop), RosenbrockFunction, None::<RosenbrockConstraints>);
+            let mut opt = NonConvexOpt::new(GOLDEN_SECTION_CONFIG.clone(), black_box(init_pop), RosenbrockFunction, None::<Box<dyn BooleanConstraintFunction<f64>>>);
             opt.run()
         })
     });
@@ -200,7 +200,7 @@ fn bench_lbfgs_strong_wolfe(c: &mut Criterion) {
     c.bench_function("lbfgs_strong_wolfe", |b| {
         b.iter(|| {
             let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
-            let mut opt = NonConvexOpt::new(STRONG_WOLFE_CONFIG.clone(), black_box(init_pop), RosenbrockFunction, None::<RosenbrockConstraints>);
+            let mut opt = NonConvexOpt::new(STRONG_WOLFE_CONFIG.clone(), black_box(init_pop), RosenbrockFunction, None::<Box<dyn BooleanConstraintFunction<f64>>>);
             opt.run()
         })
     });
