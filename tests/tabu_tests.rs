@@ -1,9 +1,12 @@
 mod common;
-use non_convex_opt::utils::config::{Config, AlgConf};
-use non_convex_opt::utils::opt_prob::OptProb;
-use non_convex_opt::tabu_search::tabu::TabuSearch;
-use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+
 use nalgebra::DVector;
+use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+use non_convex_opt::algorithms::tabu_search::tabu::TabuSearch;
+use non_convex_opt::utils::{
+    config::{Config, AlgConf},
+    opt_prob::{OptProb, OptimizationAlgorithm},
+};
 
 #[test]
 fn test_standard_tabu() {
@@ -36,20 +39,20 @@ fn test_standard_tabu() {
         _ => panic!("Expected TabuConf"),
     };
 
-    let init_x = DVector::from_vec(vec![0.5, 0.5]);
+    let init_x = DMatrix::from_columns(vec![0.5, 0.5]);
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
-    let opt_prob = OptProb::new(obj_f, Some(constraints));
+    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     
     let mut tabu = TabuSearch::new(tabu_conf, init_x.clone(), opt_prob);
-    let initial_fitness = tabu.best_fitness;
+    let initial_fitness = tabu.st.best_f;
     
     for _ in 0..10 {
         tabu.step();
     }
 
-    assert!(tabu.best_fitness > initial_fitness);
-    assert!(tabu.best_x.iter().all(|&x| x >= 0.0 && x <= 1.0));
+    assert!(tabu.st.best_f > initial_fitness);
+    assert!(tabu.st.best_x.iter().all(|&x| x >= 0.0 && x <= 1.0));
 }
 
 #[test]
@@ -64,15 +67,15 @@ fn test_reactive_tabu() {
     let init_x = DVector::from_vec(vec![0.5, 0.5]);
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
-    let opt_prob = OptProb::new(obj_f, Some(constraints));
+    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     
     let mut tabu = TabuSearch::new(tabu_conf, init_x.clone(), opt_prob);
-    let initial_fitness = tabu.best_fitness;
+    let initial_fitness = tabu.st.best_f;
     
     for _ in 0..10 {
         tabu.step();
     }
 
-    assert!(tabu.best_fitness > initial_fitness);
-    assert!(tabu.best_x.iter().all(|&x| x >= 0.0 && x <= 1.0));
+    assert!(tabu.st.best_f > initial_fitness);
+    assert!(tabu.st.best_x.iter().all(|&x| x >= 0.0 && x <= 1.0));
 } 

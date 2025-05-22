@@ -1,11 +1,16 @@
 mod common;
-use non_convex_opt::utils::config::{Config, AlgConf};
-use non_convex_opt::utils::opt_prob::OptProb;
-use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
-use non_convex_opt::continous_ga::selection::{RouletteWheel, Tournament, Residual};
-use non_convex_opt::continous_ga::crossover::{Random, Heuristic};
-use non_convex_opt::continous_ga::cga::CGA;
+
 use nalgebra::{DMatrix, DVector};
+use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+use non_convex_opt::utils::{
+    config::{Config, AlgConf},
+    opt_prob::{OptProb, OptimizationAlgorithm},
+};
+use non_convex_opt::algorithms::continous_ga::{
+    selection::{RouletteWheel, Tournament, Residual},
+    crossover::{Random, Heuristic},
+    cga::CGA,
+};
 
 #[test]
 fn test_roulette_wheel_selection() {
@@ -86,12 +91,12 @@ fn test_cga() {
 
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
-    let opt_prob = OptProb::new(obj_f, Some(constraints));
+    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     let mut cga = CGA::new(cga_conf, init_pop, opt_prob);
 
     for _ in 0..5 {
         cga.step();
     }
 
-    assert!(cga.best_fitness.is_finite());
+    assert!(cga.st.best_f.is_finite());
 }

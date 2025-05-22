@@ -5,6 +5,7 @@ pub struct CGAConf {
     pub common: CommonConf,
     pub crossover: CrossoverConf,
     pub selection: SelectionConf,
+    pub mutation: MutationConf,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

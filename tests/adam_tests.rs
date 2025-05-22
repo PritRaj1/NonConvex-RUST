@@ -1,9 +1,12 @@
 mod common;
-use non_convex_opt::adam::adam::Adam;
-use non_convex_opt::utils::config::AdamConf;
-use non_convex_opt::utils::opt_prob::OptProb;
-use common::fcns::{QuadraticObjective, QuadraticConstraints};
+
 use nalgebra::DVector;
+use non_convex_opt::algorithms::adam::adam::Adam;
+use common::fcns::{QuadraticObjective, QuadraticConstraints};
+use non_convex_opt::utils::{
+    config::AdamConf,
+    opt_prob::{OptProb, OptimizationAlgorithm},
+};
 
 #[test]
 fn test_adam() {
@@ -14,18 +17,18 @@ fn test_adam() {
         epsilon: 1e-8,
     };
 
-    let init_x = DVector::from_vec(vec![1.0, 1.0]);
+    let init_x = DMatrix::from_columns(vec![1.0, 1.0]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
-    let opt_prob = OptProb::new(obj_f, Some(constraints));
+    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     
     let mut adam = Adam::new(conf, init_x.clone(), opt_prob);
     
-    let initial_fitness = adam.best_fitness;
+    let initial_fitness = adam.st.best_f;
     
     for _ in 0..10 {
         adam.step();
     }
 
-    assert!(adam.best_fitness > initial_fitness);
+    assert!(adam.st.best_f > initial_fitness);
 } 

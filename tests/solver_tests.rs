@@ -1,9 +1,13 @@
 mod common;
-use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::Config;
-use non_convex_opt::utils::opt_prob::ObjectiveFunction;
-use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+
 use nalgebra::DMatrix;
+use non_convex_opt::NonConvexOpt;
+use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+use non_convex_opt::algorithms::continous_ga::cga::CGA;
+use non_convex_opt::utils::{
+    config::Config,
+    opt_prob::{OptProb, OptimizationAlgorithm},
+};
 
 #[test]
 fn test_cga() {

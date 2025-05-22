@@ -1,48 +1,32 @@
-pub mod utils;
-pub mod continous_ga;
-pub mod parallel_tempering;
-pub mod tabu_search;
-pub mod adam;
-pub mod grasp;
-pub mod sg_ascent;
-pub mod nelder_mead;
-pub mod limited_memory_bfgs;
-pub mod multi_swarm;
-pub mod simulated_annealing;
-pub mod differential_evolution;
-pub mod cma_es;
-
-use crate::utils::opt_prob::{FloatNumber as FloatNum, ObjectiveFunction, BooleanConstraintFunction, OptProb};
-use crate::continous_ga::cga::CGA;
-use crate::parallel_tempering::pt::PT;
-use crate::adam::adam::Adam;
-use crate::sg_ascent::sga::SGAscent;
-use crate::tabu_search::tabu::TabuSearch;
-use crate::grasp::grasp::GRASP;
-use crate::nelder_mead::nm::NelderMead;
-use crate::limited_memory_bfgs::lbfgs::LBFGS;
-use crate::multi_swarm::mspo::MSPO;
-use crate::utils::config::{Config, AlgConf, OptConf};
-use crate::simulated_annealing::sa::SimulatedAnnealing;
-use crate::differential_evolution::de::DE;
-use crate::cma_es::cma_es::CMAES;
-
 use nalgebra::{DVector, DMatrix};
+use crate::utils::config::{Config, AlgConf, OptConf};
 
-pub enum OptAlg<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
-    CGA(CGA<T, F, G>),
-    PT(PT<T, F, G>),
-    TS(TabuSearch<T, F, G>),
-    Adam(Adam<T, F, G>),
-    GRASP(GRASP<T, F, G>),
-    SGA(SGAscent<T, F, G>),
-    NM(NelderMead<T, F, G>),
-    LBFGS(LBFGS<T, F, G>),
-    MSPO(MSPO<T, F, G>),
-    SA(SimulatedAnnealing<T, F, G>),
-    DE(DE<T, F, G>),
-    CMAES(CMAES<T, F, G>),
-}
+pub mod algorithms;
+pub mod utils;
+
+use crate::algorithms::{
+    continous_ga::cga::CGA,
+    parallel_tempering::pt::PT,
+    adam::adam::Adam,
+    sg_ascent::sga::SGAscent,
+    tabu_search::tabu::TabuSearch,
+    grasp::grasp::GRASP,
+    nelder_mead::nm::NelderMead,
+    limited_memory_bfgs::lbfgs::LBFGS,
+    multi_swarm::mspo::MSPO,
+    simulated_annealing::sa::SimulatedAnnealing,
+    differential_evolution::de::DE,
+    cma_es::cma_es::CMAES,
+};
+
+use crate::utils::opt_prob::{
+    FloatNumber as FloatNum, 
+    OptProb, 
+    ObjectiveFunction, 
+    BooleanConstraintFunction,
+    OptimizationAlgorithm,
+    State
+};
 
 pub struct Result<T: FloatNum> {
     pub best_x: DVector<T>,
@@ -53,39 +37,50 @@ pub struct Result<T: FloatNum> {
     pub convergence_iter: usize,
 }
 
-pub struct NonConvexOpt<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> {
-    pub alg: OptAlg<T, F, G>,
+pub struct NonConvexOpt<T: FloatNum> {
+    pub alg: Box<dyn OptimizationAlgorithm<T>>,
     pub conf: OptConf,
-    pub iter: usize,
     pub converged: bool,
 }
 
-impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonConvexOpt<T, F, G> {
-    pub fn new(conf: Config, init_pop: DMatrix<T>, obj_f: F, constr_f: Option<G>) -> Self {
-        let opt_prob = OptProb::new(obj_f, constr_f);
-        let alg = match conf.alg_conf {
-            AlgConf::CGA(cga_conf) => OptAlg::CGA(CGA::new(cga_conf, init_pop, opt_prob)),
-            AlgConf::PT(pt_conf) => OptAlg::PT(PT::new(pt_conf, init_pop, opt_prob, conf.opt_conf.max_iter)),
-            AlgConf::TS(ts_conf) => OptAlg::TS(TabuSearch::new(ts_conf, init_pop.column(0).into(), opt_prob)),
-            AlgConf::Adam(adam_conf) => OptAlg::Adam(Adam::new(adam_conf, init_pop.column(0).into(), opt_prob)),
-            AlgConf::GRASP(grasp_conf) => OptAlg::GRASP(GRASP::new(grasp_conf, init_pop.column(0).into(), opt_prob)),
-            AlgConf::SGA(sga_conf) => OptAlg::SGA(SGAscent::new(sga_conf, init_pop.column(0).into(), opt_prob)),
-            AlgConf::NM(nm_conf) => OptAlg::NM(NelderMead::new(nm_conf, init_pop, opt_prob)),
-            AlgConf::LBFGS(lbfgs_conf) => OptAlg::LBFGS(LBFGS::new(lbfgs_conf, init_pop.column(0).into(), opt_prob)),
-            AlgConf::MSPO(mspo_conf) => OptAlg::MSPO(MSPO::new(mspo_conf, init_pop, opt_prob)),
-            AlgConf::SA(sa_conf) => OptAlg::SA(SimulatedAnnealing::new(sa_conf, init_pop.column(0).into(), opt_prob)),
-            AlgConf::DE(de_conf) => OptAlg::DE(DE::new(de_conf, init_pop, opt_prob)),
-            AlgConf::CMAES(cma_es_conf) => OptAlg::CMAES(CMAES::new(cma_es_conf, init_pop.column(0).into(), opt_prob)),
+impl<T: FloatNum> NonConvexOpt<T> {
+    pub fn new<F: ObjectiveFunction<T> + 'static, G: BooleanConstraintFunction<T> + 'static>(
+        conf: Config, 
+        init_pop: DMatrix<T>, 
+        obj_f: F, 
+        constr_f: Option<G>,
+    ) -> Self {
+        let opt_prob = OptProb::new(
+            Box::new(obj_f), 
+            match constr_f {
+                Some(constr_f) => Some(Box::new(constr_f)),
+                None => None,
+            }
+        );
+
+        let alg: Box<dyn OptimizationAlgorithm<T>> = match conf.alg_conf {
+            AlgConf::CGA(cga_conf) => Box::new(CGA::new(cga_conf, init_pop, opt_prob, conf.opt_conf.max_iter)),
+            AlgConf::PT(pt_conf) => Box::new(PT::new(pt_conf, init_pop, opt_prob, conf.opt_conf.max_iter)),
+            AlgConf::TS(ts_conf) => Box::new(TabuSearch::new(ts_conf, init_pop, opt_prob)),
+            AlgConf::Adam(adam_conf) => Box::new(Adam::new(adam_conf, init_pop, opt_prob)),
+            AlgConf::GRASP(grasp_conf) => Box::new(GRASP::new(grasp_conf, init_pop, opt_prob)),
+            AlgConf::SGA(sga_conf) => Box::new(SGAscent::new(sga_conf, init_pop, opt_prob)),
+            AlgConf::NM(nm_conf) => Box::new(NelderMead::new(nm_conf, init_pop, opt_prob)),
+            AlgConf::LBFGS(lbfgs_conf) => Box::new(LBFGS::new(lbfgs_conf, init_pop, opt_prob)),
+            AlgConf::MSPO(mspo_conf) => Box::new(MSPO::new(mspo_conf, init_pop, opt_prob)),
+            AlgConf::SA(sa_conf) => Box::new(SimulatedAnnealing::new(sa_conf, init_pop, opt_prob)),
+            AlgConf::DE(de_conf) => Box::new(DE::new(de_conf, init_pop, opt_prob)),
+            AlgConf::CMAES(cma_es_conf) => Box::new(CMAES::new(cma_es_conf, init_pop, opt_prob)),
         };
 
-        Self { alg, conf: conf.opt_conf, iter: 0, converged: false }
+        Self { alg, conf: conf.opt_conf, converged: false }
     }
 
-    fn check_convergence(&self, current_best: T, previous_best: T, iter: usize) -> bool {
+    fn check_convergence(&self, current_best: T, previous_best: T) -> bool {
         let converged = (-current_best).exp() <= T::from_f64(self.conf.atol).unwrap()
-            || ((current_best - previous_best).abs() <= T::from_f64(self.conf.rtol).unwrap() && iter > (self.conf.max_iter as f64 * self.conf.rtol_max_iter_fraction).floor() as usize);
+            || ((current_best - previous_best).abs() <= T::from_f64(self.conf.rtol).unwrap() && self.alg.state().iter > (self.conf.max_iter as f64 * self.conf.rtol_max_iter_fraction).floor() as usize);
         if converged {
-            println!("Converged in {} iterations", iter);
+            println!("Converged in {} iterations", self.alg.state().iter);
         }
         
         converged
@@ -96,171 +91,28 @@ impl<T: FloatNum, F: ObjectiveFunction<T>, G: BooleanConstraintFunction<T>> NonC
             return;
         }
 
-        let previous_best_fitness = match &self.alg {
-            OptAlg::CGA(cga) => cga.best_fitness,
-            OptAlg::PT(pt) => pt.best_fitness,
-            OptAlg::TS(ts) => ts.best_fitness,
-            OptAlg::Adam(adam) => adam.best_fitness,
-            OptAlg::GRASP(grasp) => grasp.best_fitness,
-            OptAlg::SGA(sga) => sga.best_fitness,
-            OptAlg::NM(nm) => nm.best_fitness,
-            OptAlg::LBFGS(lbfgs) => lbfgs.best_fitness,
-            OptAlg::MSPO(mspo) => mspo.best_fitness,
-            OptAlg::SA(sa) => sa.best_fitness,
-            OptAlg::DE(de) => de.best_fitness,
-            OptAlg::CMAES(cma_es) => cma_es.best_fitness,
-        };
-
-        match &mut self.alg {
-            OptAlg::CGA(cga) => cga.step(),
-            OptAlg::PT(pt) => pt.step(),
-            OptAlg::TS(ts) => ts.step(),
-            OptAlg::Adam(adam) => adam.step(),
-            OptAlg::GRASP(grasp) => grasp.step(),
-            OptAlg::SGA(sga) => sga.step(),
-            OptAlg::NM(nm) => nm.step(),
-            OptAlg::LBFGS(lbfgs) => lbfgs.step(),
-            OptAlg::MSPO(mspo) => mspo.step(),
-            OptAlg::SA(sa) => sa.step(),
-            OptAlg::DE(de) => de.step(),
-            OptAlg::CMAES(cma_es) => cma_es.step(),
-        }
-
-        let current_best_fitness = match &self.alg {
-            OptAlg::CGA(cga) => cga.best_fitness,
-            OptAlg::PT(pt) => pt.best_fitness,
-            OptAlg::TS(ts) => ts.best_fitness,
-            OptAlg::Adam(adam) => adam.best_fitness,
-            OptAlg::GRASP(grasp) => grasp.best_fitness,
-            OptAlg::SGA(sga) => sga.best_fitness,
-            OptAlg::NM(nm) => nm.best_fitness,
-            OptAlg::LBFGS(lbfgs) => lbfgs.best_fitness,
-            OptAlg::MSPO(mspo) => mspo.best_fitness,
-            OptAlg::SA(sa) => sa.best_fitness,
-            OptAlg::DE(de) => de.best_fitness,
-            OptAlg::CMAES(cma_es) => cma_es.best_fitness,
-        };
+        let previous_best_fitness = self.alg.state().best_f;
+        self.alg.step();
+        let current_best_fitness = self.alg.state().best_f;
 
         self.converged = self.check_convergence(
             current_best_fitness, 
-            previous_best_fitness, 
-            self.iter
+            previous_best_fitness
         );
-        
-        self.iter += 1;
     }
-    
-    pub fn get_population(&self) -> DMatrix<T> {
-        match &self.alg {
-            OptAlg::CGA(cga) => cga.population.clone(),
-            OptAlg::PT(pt) => pt.population[pt.population.len()-1].clone(),
-            OptAlg::TS(ts) => DMatrix::from_columns(&[ts.x.clone()]),
-            OptAlg::Adam(adam) => DMatrix::from_columns(&[adam.x.clone()]),
-            OptAlg::GRASP(grasp) => DMatrix::from_columns(&[grasp.x.clone()]),
-            OptAlg::SGA(sga) => DMatrix::from_columns(&[sga.x.clone()]),
-            OptAlg::NM(nm) => DMatrix::from_columns(&[nm.x.clone()]),
-            OptAlg::LBFGS(lbfgs) => DMatrix::from_columns(&[lbfgs.best_x.clone()]),
-            OptAlg::MSPO(mspo) => mspo.get_population(),
-            OptAlg::SA(sa) => DMatrix::from_columns(&[sa.x.clone()]),
-            OptAlg::DE(de) => de.population.clone(),
-            OptAlg::CMAES(cmaes) => cmaes.population.clone(),
+
+    pub fn run(&mut self) -> &State<T> {
+        while !self.converged && self.alg.state().iter < self.conf.max_iter {
+            self.step();
         }
+        self.alg.state()
     }
 
     pub fn get_best_individual(&self) -> DVector<T> {
-        match &self.alg {
-            OptAlg::CGA(cga) => cga.best_individual.clone(),
-            OptAlg::PT(pt) => pt.best_individual.clone(),
-            OptAlg::TS(ts) => ts.best_x.clone(),
-            OptAlg::Adam(adam) => adam.x.clone(),
-            OptAlg::GRASP(grasp) => grasp.best_x.clone(),
-            OptAlg::SGA(sga) => sga.x.clone(),
-            OptAlg::NM(nm) => nm.best_x.clone(),
-            OptAlg::LBFGS(lbfgs) => lbfgs.best_x.clone(),
-            OptAlg::MSPO(mspo) => mspo.best_x.clone(),
-            OptAlg::SA(sa) => sa.best_x.clone(),
-            OptAlg::DE(de) => de.best_x.clone(),
-            OptAlg::CMAES(cma_es) => cma_es.best_x.clone(),
-        }
+        self.alg.state().best_x.clone()
     }
 
-    pub fn run(&mut self) -> Result<T> {
-        while !self.converged && self.iter < self.conf.max_iter {
-            self.step();
-        }
-
-        let (best_x, best_f, final_pop, final_fitness, final_constraints) = match &self.alg {
-            OptAlg::CGA(cga) => (cga.best_individual.clone(), cga.best_fitness, cga.population.clone(), cga.fitness.clone(), cga.constraints.clone()),
-            OptAlg::PT(pt) => (pt.best_individual.clone(), pt.best_fitness, pt.population[pt.population.len()-1].clone(), pt.fitness[pt.fitness.len()-1].clone(), pt.constraints[pt.constraints.len()-1].clone()),
-            OptAlg::TS(ts) => {
-                let x_matrix = DMatrix::from_columns(&[ts.x.clone()]);
-                let fitness_vec = DVector::from_element(x_matrix.ncols(), ts.best_fitness);
-                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
-                (ts.best_x.clone(), ts.best_fitness, x_matrix, fitness_vec, constraints_vec)
-            },
-            OptAlg::Adam(adam) => {
-                let x_matrix = DMatrix::from_columns(&[adam.x.clone()]);
-                let fitness_vec = DVector::from_element(x_matrix.ncols(), adam.best_fitness);
-                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
-                (adam.x.clone(), adam.best_fitness, x_matrix, fitness_vec, constraints_vec)
-            },
-            OptAlg::GRASP(grasp) => {
-                let x_matrix = DMatrix::from_columns(&[grasp.x.clone()]);
-                let fitness_vec = DVector::from_element(x_matrix.ncols(), grasp.best_fitness);
-                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
-                (grasp.x.clone(), grasp.best_fitness, x_matrix, fitness_vec, constraints_vec)
-            },
-            OptAlg::SGA(sga) => {
-                let x_matrix = DMatrix::from_columns(&[sga.x.clone()]);
-                let fitness_vec = DVector::from_element(x_matrix.ncols(), sga.best_fitness);
-                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
-                (sga.x.clone(), sga.best_fitness, x_matrix, fitness_vec, constraints_vec)
-            },
-            OptAlg::NM(nm) => {
-                let x_matrix = DMatrix::from_columns(&[nm.x.clone()]);
-                let fitness_vec = DVector::from_element(x_matrix.ncols(), nm.best_fitness);
-                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
-                (nm.best_x.clone(), nm.best_fitness, x_matrix, fitness_vec, constraints_vec)
-            },
-            OptAlg::LBFGS(lbfgs) => {
-                let x_matrix = DMatrix::from_columns(&[lbfgs.best_x.clone()]);
-                let fitness_vec = DVector::from_element(x_matrix.ncols(), lbfgs.best_fitness);
-                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
-                (lbfgs.best_x.clone(), lbfgs.best_fitness, x_matrix, fitness_vec, constraints_vec)
-            },
-            OptAlg::MSPO(mspo) => {
-                let x_matrix = DMatrix::from_columns(&[mspo.best_x.clone()]);
-                let fitness_vec = DVector::from_element(x_matrix.ncols(), mspo.best_fitness);
-                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
-                (mspo.best_x.clone(), mspo.best_fitness, x_matrix, fitness_vec, constraints_vec)
-            },
-            OptAlg::SA(sa) => {
-                let x_matrix = DMatrix::from_columns(&[sa.x.clone()]);
-                let fitness_vec = DVector::from_element(x_matrix.ncols(), sa.best_fitness);
-                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
-                (sa.x.clone(), sa.best_fitness, x_matrix, fitness_vec, constraints_vec)
-            },
-            OptAlg::DE(de) => {
-                let x_matrix = DMatrix::from_columns(&[de.best_x.clone()]);
-                let fitness_vec = DVector::from_element(x_matrix.ncols(), de.best_fitness);
-                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
-                (de.best_x.clone(), de.best_fitness, x_matrix, fitness_vec, constraints_vec)
-            },
-            OptAlg::CMAES(cma_es) => {
-                let x_matrix = DMatrix::from_columns(&[cma_es.best_x.clone()]);
-                let fitness_vec = DVector::from_element(x_matrix.ncols(), cma_es.best_fitness);
-                let constraints_vec = DVector::from_element(x_matrix.ncols(), true);
-                (cma_es.best_x.clone(), cma_es.best_fitness, x_matrix, fitness_vec, constraints_vec)
-            },
-        };
-
-        Result {
-            best_x,
-            best_f,
-            final_pop,
-            final_fitness,
-            final_constraints,
-            convergence_iter: self.iter,
-        }
+    pub fn get_population(&self) -> DMatrix<T> {
+        self.alg.state().pop.clone()
     }
 }

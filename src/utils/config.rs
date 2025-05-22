@@ -5,7 +5,7 @@ use serde_with::serde_as;
 use serde_with::DisplayFromStr;
 
 pub use crate::utils::alg_conf::{
-    cga_conf::{CGAConf, CommonConf, CrossoverConf, SelectionConf},
+    cga_conf::{CGAConf, CommonConf, CrossoverConf, SelectionConf, MutationConf},
     pt_conf::{PTConf, SwapConf},
     tabu_conf::{TabuConf, ListType, ReactiveConf, StandardConf},
     adam_conf::AdamConf,

@@ -1,0 +1,200 @@
+use nalgebra::{DVector, DMatrix};
+use rayon::prelude::*;
+
+use crate::utils::config::{CGAConf, CrossoverConf, SelectionConf, MutationConf};
+use crate::utils::opt_prob::{
+    FloatNumber as FloatNum, 
+    OptProb, 
+    OptimizationAlgorithm,
+    State
+};
+
+use crate::algorithms::continous_ga::{
+    selection::*,
+    crossover::*,
+    mutation::{MutationOperator, Gaussian, Uniform, NonUniform, Polynomial},
+};
+
+
+pub struct CGA<T: FloatNum> 
+where 
+    T: Send + Sync 
+{
+    pub conf: CGAConf,
+    pub st: State<T>,
+    pub opt_prob: OptProb<T>,
+    pub selector: Box<dyn SelectionOperator<T> + Send + Sync>,
+    pub crossover: Box<dyn CrossoverOperator<T> + Send + Sync>,
+    pub mutation: Box<dyn MutationOperator<T> + Send + Sync>,
+}
+
+impl<T: FloatNum> CGA<T> 
+where 
+    T: Send + Sync 
+{
+    pub fn new(conf: CGAConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>, max_iter: usize) -> Self {
+        let selector: Box<dyn SelectionOperator<T> + Send + Sync> = match &conf.selection {
+            SelectionConf::RouletteWheel(_) => Box::new(RouletteWheel::new(
+                conf.common.population_size, 
+                conf.common.num_parents
+            )),
+            SelectionConf::Tournament(tournament) => Box::new(Tournament::new(
+                conf.common.population_size, 
+                conf.common.num_parents, 
+                tournament.tournament_size
+            )),
+            SelectionConf::Residual(_) => Box::new(Residual::new(
+                conf.common.population_size, 
+                conf.common.num_parents
+            )),
+        };
+
+        let crossover: Box<dyn CrossoverOperator<T> + Send + Sync> = match &conf.crossover {
+            CrossoverConf::Random(random) => Box::new(Random::new(
+                random.crossover_prob, 
+                conf.common.population_size
+            )),
+            CrossoverConf::Heuristic(heuristic) => Box::new(Heuristic::new(
+                heuristic.crossover_prob, 
+                conf.common.population_size
+            )),
+        };
+
+        let mutation: Box<dyn MutationOperator<T> + Send + Sync> = match &conf.mutation {
+            MutationConf::Gaussian(gaussian) => Box::new(Gaussian::new(
+                gaussian.mutation_rate, 
+                gaussian.sigma
+            )),
+            MutationConf::Uniform(uniform) => Box::new(Uniform::new(
+                uniform.mutation_rate
+            )),
+            MutationConf::NonUniform(non_uniform) => Box::new(NonUniform::new(
+                non_uniform.mutation_rate,
+                non_uniform.b,
+                max_iter
+            )),
+            MutationConf::Polynomial(polynomial) => Box::new(Polynomial::new(
+                polynomial.mutation_rate,
+                polynomial.eta_m
+            )),
+        };
+        
+        // Calculate initial fitness and constraints in parallel
+        let (fitness, constraints): (Vec<T>, Vec<bool>) = (0..init_pop.nrows())
+            .into_par_iter()
+            .map(|i| {
+                let individual = init_pop.row(i).transpose();
+                let fit = opt_prob.evaluate(&individual);
+                let constr = opt_prob.is_feasible(&individual);
+                (fit, constr)
+            })
+            .unzip();
+
+        let fitness = DVector::from_vec(fitness);
+        let constraints = DVector::from_vec(constraints);
+
+        // Find best individual
+        let mut best_idx = 0;
+        let mut best_fitness = fitness[0];
+        for i in 1..fitness.len() {
+            if fitness[i] > best_fitness && constraints[i] {
+                best_idx = i;
+                best_fitness = fitness[i];
+            }
+        }
+        let best_individual = init_pop.row(best_idx).transpose();
+
+        Self { 
+            conf,
+            st: State {
+                pop: init_pop,
+                fitness,
+                constraints,
+                best_x: best_individual,
+                best_f: best_fitness,
+                iter: 1
+            },
+            opt_prob,
+            selector,
+            crossover,
+            mutation,
+        }
+    }
+}
+
+impl<T: FloatNum> OptimizationAlgorithm<T> for CGA<T> {
+    fn step(&mut self) {
+        let selected = self.selector.select(&self.st.pop, &self.st.fitness, &self.st.constraints);
+        let mut offspring = self.crossover.crossover(&selected);
+
+        // Apply mutation
+        let bounds = (
+            self.opt_prob.objective.x_lower_bound(&offspring.column(0).into())
+                .unwrap_or_else(|| DVector::from_element(offspring.ncols(), T::from_f64(-10.0).unwrap()))[0],
+            self.opt_prob.objective.x_upper_bound(&offspring.column(0).into())
+                .unwrap_or_else(|| DVector::from_element(offspring.ncols(), T::from_f64(10.0).unwrap()))[0]
+        );
+
+        for i in 0..offspring.nrows() {
+            let individual = offspring.row(i).transpose();
+            let mutated = self.mutation.mutate(&individual, bounds, self.st.iter);
+            offspring.set_row(i, &mutated.transpose());
+        }
+
+        let (new_fitness, new_constraints): (Vec<T>, Vec<bool>) = (0..offspring.nrows())
+            .into_par_iter()
+            .map(|i| {
+                let individual = offspring.row(i).transpose();
+                let fit = self.opt_prob.evaluate(&individual);
+                let constr = self.opt_prob.is_feasible(&individual);
+                (fit, constr)
+            })
+            .unzip();
+
+        let mut new_fitness = DVector::from_vec(new_fitness);
+        let mut new_constraints = DVector::from_vec(new_constraints);
+
+        // Elitism: Keep the best individual from previous generation
+        let mut best_old_idx = 0;
+        let mut best_old_fitness = self.st.fitness[0];
+        for i in 1..self.st.fitness.len() {
+            if self.st.fitness[i] > best_old_fitness && self.st.constraints[i] {
+                best_old_idx = i;
+                best_old_fitness = self.st.fitness[i];
+            }
+        }
+
+        // Replace worst offspring with best old individual if better
+        let mut worst_new_idx = 0;
+        let mut worst_new_fitness = new_fitness[0];
+        for i in 1..new_fitness.len() {
+            if new_fitness[i] < worst_new_fitness {
+                worst_new_idx = i;
+                worst_new_fitness = new_fitness[i];
+            }
+        }
+
+        if best_old_fitness > worst_new_fitness {
+            offspring.set_row(worst_new_idx, &self.st.pop.row(best_old_idx));
+            new_fitness[worst_new_idx] = best_old_fitness;
+            new_constraints[worst_new_idx] = self.st.constraints[best_old_idx];
+        }
+
+        self.st.pop = offspring;
+        self.st.fitness = new_fitness;
+        self.st.constraints = new_constraints;
+
+        for i in 0..self.st.fitness.len() {
+            if self.st.fitness[i] > self.st.best_f && self.st.constraints[i] {
+                self.st.best_f = self.st.fitness[i];
+                self.st.best_x = self.st.pop.row(i).transpose();
+            }
+        }
+
+        self.st.iter += 1;
+    }
+
+    fn state(&self) -> &State<T> {
+        &self.st
+    }
+}

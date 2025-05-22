@@ -1,9 +1,12 @@
 mod common;
-use non_convex_opt::nelder_mead::nm::NelderMead;
-use non_convex_opt::utils::config::NelderMeadConf;
-use non_convex_opt::utils::opt_prob::OptProb;
-use common::fcns::{QuadraticObjective, QuadraticConstraints};
+
 use nalgebra::{DVector, DMatrix};
+use common::fcns::{QuadraticObjective, QuadraticConstraints};
+use non_convex_opt::algorithms::nelder_mead::nm::NelderMead;
+use non_convex_opt::utils::{
+    config::NelderMeadConf,
+    opt_prob::{OptProb, OptimizationAlgorithm},
+};
 
 #[test]
 fn test_nm_new() {
@@ -22,7 +25,7 @@ fn test_nm_new() {
 
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
-    let opt_prob = OptProb::new(obj_f, Some(constraints));
+    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     
     let nm = NelderMead::new(conf, init_simplex.clone(), opt_prob);
     
@@ -49,7 +52,7 @@ fn test_nm_centroid() {
 
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
-    let opt_prob = OptProb::new(obj_f, Some(constraints));
+    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     
     let nm = NelderMead::new(conf, init_simplex, opt_prob);
     

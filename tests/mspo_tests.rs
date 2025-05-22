@@ -1,11 +1,16 @@
 mod common;
-use non_convex_opt::utils::config::{Config, AlgConf};
-use non_convex_opt::utils::opt_prob::OptProb;
-use non_convex_opt::multi_swarm::mspo::MSPO;
-use non_convex_opt::multi_swarm::swarm::Swarm;
-use non_convex_opt::multi_swarm::particle::Particle;
-use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+
 use nalgebra::{DVector, DMatrix};
+use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+use non_convex_opt::utils::{
+    config::{Config, AlgConf},
+    opt_prob::{OptProb, OptimizationAlgorithm},
+};
+use non_convex_opt::algorithms::multi_swarm::{
+    mspo::MSPO,
+    swarm::Swarm,
+    particle::Particle,
+};
 
 #[test]
 fn test_particle_update() {
@@ -16,7 +21,7 @@ fn test_particle_update() {
     let global_best = DVector::from_vec(vec![1.0, 1.0]);
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
-    let opt_prob = OptProb::new(obj_f, Some(constraints));
+    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     
     particle.update_velocity_and_position(
         &global_best, 
@@ -35,7 +40,7 @@ fn test_particle_update() {
 fn test_swarm_initialization() {
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
-    let opt_prob = OptProb::new(obj_f, Some(constraints));
+    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
     // Create initial population
     let init_pop = DMatrix::from_vec(5, 2, vec![
@@ -70,7 +75,7 @@ fn test_swarm_initialization() {
 fn test_swarm_update() {
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
-    let opt_prob = OptProb::new(obj_f, Some(constraints));
+    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
     let init_pop = DMatrix::from_vec(5, 2, vec![
         0.5, 0.5,
@@ -140,14 +145,14 @@ fn test_mspo() {
 
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
-    let opt_prob = OptProb::new(obj_f, Some(constraints));
+    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     
     let mut mspo = MSPO::new(mspo_conf, init_pop, opt_prob);
-    let initial_fitness = mspo.best_fitness;
+    let initial_fitness = mspo.st.best_f;
     
     for _ in 0..20 {
         mspo.step();
     }
 
-    assert!(mspo.best_fitness > initial_fitness);
+    assert!(mspo.st.best_f > initial_fitness);
 }
