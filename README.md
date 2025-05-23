@@ -185,3 +185,6 @@ Example configs are provided in [tests/jsons/](tests/jsons). More information on
 
 This project is licensed under the [MIT License](LICENSE).
 
+## TODO
+
+- OMatrices and allocation.

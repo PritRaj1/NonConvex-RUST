@@ -1,6 +1,6 @@
 mod common;
 
-use nalgebra::{DVector, DMatrix};
+use nalgebra::DMatrix;
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
 use non_convex_opt::algorithms::cma_es::cma_es::CMAES;
 use non_convex_opt::utils::{
