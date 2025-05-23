@@ -128,5 +128,10 @@ pub struct State<T: FloatNumber> {
 pub trait OptimizationAlgorithm<T: FloatNumber>: Send + Sync {
     fn step(&mut self);
     fn state(&self) -> &State<T>;
+    
+    // Add a default implementation that returns None
+    fn get_simplex(&self) -> Option<&Vec<DVector<T>>> {
+        None
+    }
 }
 

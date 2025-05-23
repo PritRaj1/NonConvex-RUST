@@ -2,7 +2,7 @@ mod common;
 use common::fcns::{KBF, KBFConstraints};
 use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
 use non_convex_opt::NonConvexOpt;
-use non_convex_opt::OptAlg;
+use non_convex_opt::algorithms::nelder_mead::nm::NelderMead;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, NelderMeadConf};
 use nalgebra::{DVector, DMatrix};
 use plotters::prelude::*;
@@ -55,14 +55,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )?;
 
         // Get current simplex vertices and best point
-        let vertices = match &opt.alg {
-            OptAlg::NM(nm) => nm.simplex.clone(),
-            _ => panic!("Whoopsie daisy"),
-        };
-        let best_x = opt.get_best_individual();
+        let vertices = opt.alg.get_simplex().expect("Expected NelderMead algorithm");
 
         // Draw simplex vertices
-        for vertex in &vertices {
+        for vertex in vertices {
             chart.draw_series(std::iter::once(Circle::new(
                 (vertex[0], vertex[1]),
                 4,
@@ -84,7 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Draw current best point
         chart.draw_series(std::iter::once(Circle::new(
-            (best_x[0], best_x[1]),
+            (opt.get_best_individual()[0], opt.get_best_individual()[1]),
             6,
             RGBColor(255, 255, 0).filled(),
         )))?;

@@ -176,4 +176,8 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for NelderMead<T>{
     fn state(&self) -> &State<T> {
         &self.st
     }
+
+    fn get_simplex(&self) -> Option<&Vec<DVector<T>>> {
+        Some(&self.simplex)
+    }
 }
