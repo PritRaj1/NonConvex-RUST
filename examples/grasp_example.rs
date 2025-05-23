@@ -3,7 +3,7 @@ use common::fcns::{KBF, KBFConstraints};
 use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, GRASPConf};
-use nalgebra::{DVector, DMatrix};
+use nalgebra::DMatrix;
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
@@ -28,13 +28,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let obj_f = KBF;
     let constraints = KBFConstraints;
 
-    let init_x = DVector::from_vec(vec![
-        rand::random::<f64>() * 10.0,
-        rand::random::<f64>() * 10.0
-    ]);
     let mut opt = NonConvexOpt::new(
         config, 
-        DMatrix::from_columns(&[init_x.clone()]), 
+        DMatrix::from_row_slice(1, 2, 
+            &[rand::random::<f64>() * 10.0, 
+            rand::random::<f64>() * 10.0]),
         obj_f.clone(), 
         Some(constraints.clone())
     );
