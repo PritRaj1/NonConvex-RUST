@@ -23,16 +23,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             step_size: 0.1,
             perturbation_prob: 0.3,
         }),
-    };
+    };DMatrix::from_columns(&[init_x.clone()]), 
 
     let obj_f = KBF;
     let constraints = KBFConstraints;
 
     let mut opt = NonConvexOpt::new(
         config, 
-        DMatrix::from_row_slice(1, 2, 
-            &[rand::random::<f64>() * 10.0, 
-            rand::random::<f64>() * 10.0]),
+        DMatrix::from_vec(1, 2, vec![
+            rand::random::<f64>() * 10.0,
+            rand::random::<f64>() * 10.0
+        ]),
         obj_f.clone(), 
         Some(constraints.clone())
     );

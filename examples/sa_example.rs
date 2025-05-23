@@ -38,9 +38,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut opt = NonConvexOpt::new(
         config, 
-        DMatrix::from_row_slice(1, 2, 
-            &[rand::random::<f64>() * 10.0, 
-            rand::random::<f64>() * 10.0]),
+        DMatrix::from_vec(1, 2, vec![
+            rand::random::<f64>() * 10.0,
+            rand::random::<f64>() * 10.0
+        ]),
         obj_f.clone(), 
         Some(constraints.clone())
     );
