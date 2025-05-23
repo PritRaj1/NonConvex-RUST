@@ -187,4 +187,5 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## TODO
 
+- Fix algorithms
 - OMatrices and allocation.
