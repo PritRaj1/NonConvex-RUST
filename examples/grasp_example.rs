@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             step_size: 0.1,
             perturbation_prob: 0.3,
         }),
-    };DMatrix::from_columns(&[init_x.clone()]), 
+    };
 
     let obj_f = KBF;
     let constraints = KBFConstraints;

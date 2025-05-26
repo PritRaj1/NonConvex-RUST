@@ -41,10 +41,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let obj_f = KBF;
     let constraints = KBFConstraints;
 
-    let init_x = DVector::from_vec(vec![
-        rand::random::<f64>() * 10.0,
-        rand::random::<f64>() * 10.0
-    ]);
     let mut opt = NonConvexOpt::new(
         config, 
         DMatrix::from_vec(1, 2, vec![

@@ -3,7 +3,7 @@ use common::fcns::{MultiModalFunction, BoxConstraints};
 use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, SGAConf};
-use nalgebra::{DVector, DMatrix};
+use nalgebra::DMatrix;
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
