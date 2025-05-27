@@ -4,7 +4,7 @@ use common::img::{create_contour_data, setup_gif, find_closest_color, setup_char
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::Config;
 use serde_json;
-use nalgebra::{DMatrix, DVector};
+use nalgebra::DMatrix;
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
@@ -33,12 +33,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let obj_f = KBF;
     let constraints = KBFConstraints;
 
-    let init_x = DVector::from_vec(vec![
-        4.0,
-        9.0
-    ]);
-
-    let mut opt = NonConvexOpt::new(config, DMatrix::from_columns(&[init_x.clone()]), obj_f.clone(), Some(constraints.clone()));
+    let mut opt = NonConvexOpt::new(
+        config,
+        DMatrix::from_vec(1, 2, vec![
+            4.0,
+            9.0,
+        ]),
+        obj_f.clone(), 
+        Some(constraints.clone())
+    );
 
     let resolution = 100;
     let (z_values, min_val, max_val) = create_contour_data(&obj_f, resolution);

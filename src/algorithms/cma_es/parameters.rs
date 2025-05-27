@@ -14,7 +14,6 @@ pub struct Parameters<T: FloatNum> {
     pub cmu: T,
     pub damps: T,
     pub chi_n: T,
-    pub sigma: T,
 }
 
 impl<T: FloatNum> Parameters<T> {
@@ -32,7 +31,7 @@ impl<T: FloatNum> Parameters<T> {
         let damps = Self::compute_damping(mueff, n_f, cs);
         let chi_n = Self::compute_chi_n(n_f);
 
-        Self { weights, mu, lambda, mueff, cc, cs, c1, cmu, damps, chi_n, sigma: T::one() }
+        Self { weights, mu, lambda, mueff, cc, cs, c1, cmu, damps, chi_n }
     }
 
     fn compute_weights(mu: usize, lambda: usize) -> DVector<T> {

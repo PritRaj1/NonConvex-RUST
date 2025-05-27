@@ -200,7 +200,8 @@ This project is licensed under the [MIT License](LICENSE).
 | MSPO | [√] |
 | SA | [x] |
 | DE | [√] |
-| CMAES | [x] |
+| CMAES | [√] |
 
+- Benchmarks
 - OMatrices and allocation.
 - Upload as crate.

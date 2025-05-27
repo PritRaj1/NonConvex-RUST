@@ -66,6 +66,7 @@ impl<T: FloatNum> CMAES<T> {
             &samples,
             &init_x,
             &DMatrix::identity(n, n),
+            &DVector::from_element(n, T::one()),
             &opt_prob,
             T::from_f64(conf.initial_sigma).unwrap()
         );
@@ -139,7 +140,8 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for CMAES<T> {
         let results = evaluate_samples(
             &samples, 
             &self.mean, 
-            &self.b_mat, 
+            &self.b_mat,
+            &self.d_vec,
             &self.opt_prob, 
             self.sigma
         );

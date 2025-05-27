@@ -5,15 +5,17 @@ use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 pub fn evaluate_samples<T: FloatNum>(
     samples: &[DVector<T>],
     mean: &DVector<T>,
-    _C: &DMatrix<T>,
+    b_mat: &DMatrix<T>,
+    d_vec: &DVector<T>,
     opt_prob: &OptProb<T>,
     sigma: T,
 ) -> Vec<(DVector<T>, T, bool)> {
     samples.par_iter()
         .map(|x| {
+            let y = b_mat * &d_vec.component_mul(x);
             let mut sample = mean.clone();
             for i in 0..sample.len() {
-                sample[i] = sample[i] + sigma * x[i];
+                sample[i] = sample[i] + sigma * y[i];
             }
             
             let fitness = opt_prob.evaluate(&sample);
