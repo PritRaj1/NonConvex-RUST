@@ -143,9 +143,9 @@ where
             st: State{
                 best_x: best_individual,
                 best_f: best_fitness,
-                pop: population[best_idx].clone(),
-                fitness: DVector::from(fitness[best_idx].clone()),
-                constraints: DVector::from(constraints[best_idx].clone()),
+                pop: population[0].clone(),
+                fitness: DVector::from(fitness[0].clone()),
+                constraints: DVector::from(constraints[0].clone()),
                 iter: 1
             }
         }
@@ -333,9 +333,9 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for PT<T>{
 
         self.st.best_x = self.best_individual.clone();
         self.st.best_f = best_fitness.clone();
-        self.st.pop = DMatrix::from_columns(&self.population.iter().map(|x| x.column(0)).collect::<Vec<_>>());
-        self.st.fitness = DVector::from(self.fitness[best_idx].clone());
-        self.st.constraints = DVector::from(self.constraints[best_idx].clone());
+        self.st.pop = self.population[0].clone();
+        self.st.fitness = self.fitness[0].clone();
+        self.st.constraints = self.constraints[0].clone();
 
         self.st.iter += 1;
 

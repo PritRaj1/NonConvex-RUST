@@ -190,7 +190,7 @@ This project is licensed under the [MIT License](LICENSE).
 | Algorithm | Status |
 |-----------|---------------|
 | CGA | [√] |
-| PT | [x] |
+| PT | [√] |
 | Tabu | [√] |
 | GRASP | [√] |
 | Adam | [√] |
