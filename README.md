@@ -185,23 +185,22 @@ Example configs are provided in [tests/jsons/](tests/jsons). More information on
 
 This project is licensed under the [MIT License](LICENSE).
 
-## Working
+## TODO
 
 | Algorithm | Status |
 |-----------|---------------|
-| CGA | ❌ |
-| PT | ❌ |
-| Tabu | ❌ |
-| GRASP | ❌ |
-| Adam | ❌ |
-| SGA | ❌ |
-| Nelder-Mead | ❌ |
-| LBFGS | ❌ |
-| MSPO | ❌ |
-| SA | ❌ |
-| DE | ❌ |
-| CMAES | ❌ |
-
-## TODO
+| CGA | [√] |
+| PT | [x] |
+| Tabu | [√] |
+| GRASP | [√] |
+| Adam | [√] |
+| SGA | [√] |
+| Nelder-Mead | [√] |
+| LBFGS | [x] |
+| MSPO | [√] |
+| SA | [x] |
+| DE | [√] |
+| CMAES | [x] |
 
 - OMatrices and allocation.
+- Upload as crate.
