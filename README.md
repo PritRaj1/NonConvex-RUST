@@ -1,7 +1,7 @@
 # NonConvex-RUST
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Continuous non-convex optimizers implemented in RUST for constrained and unconstrained maximization problems. These algorithms were implemented for educational purposes, but they may be useful and have been open-sourced.
+Continuous non-convex optimizers implemented in RUST for constrained and unconstrained maximization problems. These algorithms were implemented as a side project for me to learn rust, but they may be useful and have been open-sourced.
 
 Sources/links to more information in the respective algorithm .md files.
 
@@ -196,9 +196,9 @@ This project is licensed under the [MIT License](LICENSE).
 | Adam | [√] |
 | SGA | [√] |
 | Nelder-Mead | [√] |
-| LBFGS | [x] |
+| LBFGS | [√] |
 | MSPO | [√] |
-| SA | [x] |
+| SA | [√] |
 | DE | [√] |
 | CMAES | [√] |
 

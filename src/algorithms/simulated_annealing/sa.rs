@@ -121,8 +121,15 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for SimulatedAnnealing<T>{
             self.x = self.st.best_x.clone(); // Reset to best known solution
         }
         
-        self.st.pop.set_row(0, &self.x.transpose());
-        self.st.fitness.set_row(0, &DVector::from_element(1, self.fitness).transpose());
+        if self.fitness > self.st.best_f {
+            self.st.best_f = self.fitness;
+            self.st.best_x = self.x.clone();
+        }
+
+        self.st.pop.set_column(0, &self.x);
+        self.st.fitness[0] = self.fitness;
+        self.st.constraints[0] = self.constraints;
+
         self.st.iter += 1;
     }
 

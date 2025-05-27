@@ -245,13 +245,17 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for LBFGS<T> {
             self.step_without_bounds(&g); // L-BFGS
         }
 
-
         let fitness = self.opt_prob.evaluate(&self.x);
         let constraints = self.opt_prob.is_feasible(&self.x);
 
-        self.st.pop.set_row(0, &self.x.transpose());
-        self.st.fitness = DVector::from(vec![fitness]);
-        self.st.constraints = DVector::from(vec![constraints]);
+        if fitness > self.st.best_f {
+            self.st.best_f = fitness;
+            self.st.best_x = self.x.clone();
+        }
+
+        self.st.pop.set_column(0, &self.x);
+        self.st.fitness[0] = fitness;
+        self.st.constraints[0] = constraints;
 
         self.st.iter += 1;
     }
