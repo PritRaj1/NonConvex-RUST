@@ -39,7 +39,7 @@ static CONFIG_JSON: &str = r#"
                     "mutation_rate": 0.1,
                     "b": 5.0
                 }
-            },
+            }
         }
     }
 }"#;
