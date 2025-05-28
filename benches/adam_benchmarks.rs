@@ -1,8 +1,9 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use nalgebra::DMatrix;
+use rand::random;
+
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, AdamConf};
-use rand::random;
 
 mod common;
 use common::fcns::{RosenbrockFunction, RosenbrockConstraints};
@@ -30,9 +31,9 @@ fn bench_adam_unconstrained(c: &mut Criterion) {
                 config.clone(),
                 black_box(init_pop),
                 RosenbrockFunction,
-                None::<Box<dyn BooleanConstraintFunction<f64>>>,
+                None::<RosenbrockConstraints>,
             );
-            opt.run()
+            let _st = opt.run();
         })
     });
 }
@@ -62,7 +63,7 @@ fn bench_adam_constrained(c: &mut Criterion) {
                 RosenbrockFunction,
                 Some(RosenbrockConstraints)
             );
-            opt.run()
+            let _st = opt.run();
         })
     });
 }

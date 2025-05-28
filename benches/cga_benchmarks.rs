@@ -1,10 +1,11 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use nalgebra::DMatrix;
-use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::Config;
 use rand::random;
 use serde_json;
 use std::sync::LazyLock;
+
+use non_convex_opt::NonConvexOpt;
+use non_convex_opt::utils::config::Config;
 
 mod common;
 use common::fcns::{KBF, KBFConstraints};
@@ -52,7 +53,7 @@ fn bench_cga_unconstrained(c: &mut Criterion) {
                 KBF,
                 None::<KBFConstraints>,
             );
-            opt.run()
+            let _st = opt.run();
         })
     });
 }
@@ -68,7 +69,7 @@ fn bench_cga_constrained(c: &mut Criterion) {
                 KBF,
                 Some(KBFConstraints)
             );
-            opt.run()
+            let _st = opt.run();
         })
     });
 }

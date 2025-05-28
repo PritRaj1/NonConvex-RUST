@@ -1,8 +1,9 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use rand::random;
 use nalgebra::DMatrix;
+
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, SGAConf};
-use rand::random;
 
 mod common;
 use common::fcns::{RosenbrockFunction, RosenbrockConstraints};
@@ -28,9 +29,9 @@ fn bench_sga_unconstrained(c: &mut Criterion) {
                 config.clone(),
                 black_box(init_pop),
                 RosenbrockFunction,
-                None::<Box<dyn BooleanConstraintFunction<f64>>>
+                None::<RosenbrockConstraints>
             );
-            opt.run()
+            let _st = opt.run();
         })
     });
 }

@@ -202,6 +202,5 @@ This project is licensed under the [MIT License](LICENSE).
 | DE | [√] |
 | CMAES | [√] |
 
-- Benchmarks
 - OMatrices and allocation.
 - Upload as crate.

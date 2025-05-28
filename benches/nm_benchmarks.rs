@@ -1,7 +1,8 @@
 mod common;
 use common::fcns::{KBF, KBFConstraints};
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use nalgebra::{DVector, DMatrix};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, NelderMeadConf};
 
@@ -34,7 +35,7 @@ fn bench_nm_unconstrained(c: &mut Criterion) {
                 KBF,
                 None::<KBFConstraints>,
             );
-            opt.run()
+            let _st = opt.run();
         })
     });
 }
@@ -68,7 +69,7 @@ fn bench_nm_constrained(c: &mut Criterion) {
                 KBF,
                 Some(KBFConstraints),
             );
-            opt.run()
+            let _st = opt.run();
         })
     });
 }

@@ -1,8 +1,9 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use nalgebra::DMatrix;
+use rand::random;
+
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, GRASPConf};
-use rand::random;
 
 mod common;
 use common::fcns::{KBF, KBFConstraints};
@@ -33,7 +34,7 @@ fn bench_grasp_unconstrained(c: &mut Criterion) {
                 KBF,
                 None::<KBFConstraints>
             );
-            opt.run()
+            let _st = opt.run();
         })
     });
 }
@@ -64,7 +65,7 @@ fn bench_grasp_constrained(c: &mut Criterion) {
                 KBF,
                 Some(KBFConstraints)
             );
-            opt.run()
+            let _st = opt.run();
         })
     });
 }
