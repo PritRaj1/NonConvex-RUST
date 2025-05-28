@@ -33,7 +33,13 @@ static CONFIG_JSON: &str = r#"
                 "Tournament": {
                     "tournament_size": 50
                 }
-            }
+            },
+            "mutation": {
+                "NonUniform": {
+                    "mutation_rate": 0.1,
+                    "b": 5.0
+                }
+            },
         }
     }
 }"#;
