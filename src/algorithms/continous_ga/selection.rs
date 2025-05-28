@@ -86,11 +86,18 @@ impl<T: FloatNum> SelectionOperator<T> for Tournament {
                 }
             }
 
-            let best_index = *tournament_indices.iter()
-                .max_by(|&&a, &&b| fitness[a].partial_cmp(&fitness[b]).unwrap())
-                .unwrap();
+            // Find the best individual from the tournament
+            let mut best_idx = tournament_indices[0];
+            let mut best_fitness = fitness[best_idx];
+            
+            for &idx in &tournament_indices[1..] {
+                if fitness[idx] > best_fitness {
+                    best_idx = idx;
+                    best_fitness = fitness[idx];
+                }
+            }
 
-            selected.set_row(i, &population.row(best_index));
+            selected.set_row(i, &population.row(best_idx));
         }
 
         selected
