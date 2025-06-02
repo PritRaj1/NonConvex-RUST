@@ -130,7 +130,6 @@ impl<T: FloatNum> SelectionOperator<T> for Residual {
         let scale = T::from_f64(self.num_parents as f64).unwrap();
         let mut expected_values = vec![T::zero(); fitness.len()];
         let mut residual_probabilities = vec![T::zero(); fitness.len()];
-        let mut guaranteed_count = 0;
         let mut remaining_indices = Vec::new();
 
         // Calculate expected values and residuals
@@ -141,7 +140,6 @@ impl<T: FloatNum> SelectionOperator<T> for Residual {
                 expected_values[j] = int_part;
                 residual_probabilities[j] = expected - int_part;
                 
-                guaranteed_count += int_part.to_usize().unwrap_or(0);
                 if residual_probabilities[j] > T::zero() {
                     remaining_indices.push(j);
                 }
