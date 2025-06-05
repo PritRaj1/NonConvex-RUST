@@ -1,10 +1,21 @@
-use nalgebra::DVector;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    OVector, 
+    Dim,
+    U1,
+    Dyn,
+};
+
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 use crate::utils::config::CMAESConf;
 
 #[derive(Clone)]
-pub struct Parameters<T: FloatNum> {
-    pub weights: DVector<T>,
+pub struct Parameters<T: FloatNum> 
+where 
+    DefaultAllocator: Allocator<Dyn> 
+{
+    pub weights: OVector<T, Dyn>,
     pub mu: usize,
     pub lambda: usize,
     pub mueff: T,
@@ -16,8 +27,13 @@ pub struct Parameters<T: FloatNum> {
     pub chi_n: T,
 }
 
-impl<T: FloatNum> Parameters<T> {
-    pub fn new(conf: &CMAESConf, init_x: &DVector<T>) -> Self {
+impl<T: FloatNum> Parameters<T> 
+{
+    pub fn new<D: Dim>(conf: &CMAESConf, init_x: &OVector<T, D>) -> Self 
+    where
+    DefaultAllocator: Allocator<Dyn> 
+                     + Allocator<D>
+    {
         let n = init_x.len();
         let lambda = conf.population_size;
         let mu = conf.num_parents;
@@ -34,8 +50,11 @@ impl<T: FloatNum> Parameters<T> {
         Self { weights, mu, lambda, mueff, cc, cs, c1, cmu, damps, chi_n }
     }
 
-    fn compute_weights(mu: usize, lambda: usize) -> DVector<T> {
-        let mut weights = DVector::zeros(mu);
+    fn compute_weights(mu: usize, lambda: usize) -> OVector<T, Dyn> 
+    where 
+        DefaultAllocator: Allocator<Dyn>
+    {
+        let mut weights: OVector<T, Dyn> = OVector::from_element_generic(Dyn::from_usize(mu), U1, T::one());
         for i in 0..mu {
             weights[i] = T::ln(T::from_f64((lambda as f64 + 1.0) / 2.0).unwrap()) - 
                         T::ln(T::from_f64((i + 1) as f64).unwrap());

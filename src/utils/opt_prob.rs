@@ -1,5 +1,12 @@
-use nalgebra::{Scalar, DVector, DMatrix};
 use num_traits::{Float, FromPrimitive, NumCast, One, Zero};
+use nalgebra::{
+    Scalar,
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OVector, 
+    OMatrix
+};
 use simba::scalar::{
     ClosedAdd, ClosedAddAssign, ClosedDiv, 
     ClosedDivAssign, ClosedMul, ClosedMulAssign, 
@@ -35,68 +42,73 @@ pub trait FloatNumber:
 impl FloatNumber for f64 {}
 impl FloatNumber for f32 {}
 
-pub trait CloneBox<T: FloatNumber> {
-    fn clone_box(&self) -> Box<dyn ObjectiveFunction<T>>;
+pub trait CloneBox<T: FloatNumber, D: Dim> {
+    fn clone_box(&self) -> Box<dyn ObjectiveFunction<T, D>>;
 }
 
-pub trait CloneBoxConstraint<T: FloatNumber> {
-    fn clone_box_constraint(&self) -> Box<dyn BooleanConstraintFunction<T>>;
+pub trait CloneBoxConstraint<T: FloatNumber, D: Dim> {
+    fn clone_box_constraint(&self) -> Box<dyn BooleanConstraintFunction<T, D>>;
 }
 
-impl<T: FloatNumber, F: ObjectiveFunction<T> + Clone + 'static> CloneBox<T> for F {
-    fn clone_box(&self) -> Box<dyn ObjectiveFunction<T>> {
+impl<T: FloatNumber, D: Dim, F: ObjectiveFunction<T, D> + Clone + 'static> CloneBox<T, D> for F 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn clone_box(&self) -> Box<dyn ObjectiveFunction<T, D>> {
         Box::new(self.clone())
     }
 }
 
-impl<T: FloatNumber, F: BooleanConstraintFunction<T> + Clone + 'static> CloneBoxConstraint<T> for F {
-    fn clone_box_constraint(&self) -> Box<dyn BooleanConstraintFunction<T>> {
+impl<T: FloatNumber, D: Dim, F: BooleanConstraintFunction<T, D> + Clone + 'static> CloneBoxConstraint<T, D> for F 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn clone_box_constraint(&self) -> Box<dyn BooleanConstraintFunction<T, D>> {
         Box::new(self.clone())
     }
 }
 
-pub trait ObjectiveFunction<T: FloatNumber>: CloneBox<T> + Send + Sync {
-    fn f(&self, x: &DVector<T>) -> T;
-    
-    fn gradient(&self, _x: &DVector<T>) -> Option<DVector<T>> {
+pub trait ObjectiveFunction<T: FloatNumber, D: Dim>: CloneBox<T, D> + Send + Sync
+where
+    DefaultAllocator: Allocator<D>,
+{
+    fn f(&self, x: &OVector<T, D>) -> T;
+
+    fn gradient(&self, _x: &OVector<T, D>) -> Option<OVector<T, D>> {
         None
     }
 
-    fn x_lower_bound(&self, _x: &DVector<T>) -> Option<DVector<T>> {
+    fn x_lower_bound(&self, _x: &OVector<T, D>) -> Option<OVector<T, D>> {
         None
     }
 
-    fn x_upper_bound(&self, _x: &DVector<T>) -> Option<DVector<T>> {
+    fn x_upper_bound(&self, _x: &OVector<T, D>) -> Option<OVector<T, D>> {
         None
     }
 }
 
-pub trait BooleanConstraintFunction<T: FloatNumber>: CloneBoxConstraint<T> + Send + Sync {
-    fn g(&self, x: &DVector<T>) -> bool;
+pub trait BooleanConstraintFunction<T: FloatNumber, D: Dim>: CloneBoxConstraint<T, D> + Send + Sync
+where
+    DefaultAllocator: Allocator<D>,
+{
+    fn g(&self, x: &OVector<T, D>) -> bool;
 }
 
-impl<T: FloatNumber> Clone for Box<dyn ObjectiveFunction<T>> {
-    fn clone(&self) -> Self {
-        self.clone_box()
-    }
+pub struct OptProb<T: FloatNumber, D: Dim>
+where
+    DefaultAllocator: Allocator<D>,
+{
+    pub objective: Box<dyn ObjectiveFunction<T, D>>,
+    pub constraints: Option<Box<dyn BooleanConstraintFunction<T, D>>>,
 }
 
-impl<T: FloatNumber> Clone for Box<dyn BooleanConstraintFunction<T>> {
-    fn clone(&self) -> Self {
-        self.clone_box_constraint()
-    }
-}
-
-#[derive(Clone)]
-pub struct OptProb<T: FloatNumber> {
-    pub objective: Box<dyn ObjectiveFunction<T>>,
-    pub constraints: Option<Box<dyn BooleanConstraintFunction<T>>>,
-}
-
-impl<T: FloatNumber> OptProb<T> {
+impl<T: FloatNumber, D: Dim> OptProb<T, D>
+where
+    DefaultAllocator: Allocator<D>,
+{
     pub fn new(
-        objective: Box<dyn ObjectiveFunction<T>>,
-        constraints: Option<Box<dyn BooleanConstraintFunction<T>>>,
+        objective: Box<dyn ObjectiveFunction<T, D>>,
+        constraints: Option<Box<dyn BooleanConstraintFunction<T, D>>>,
     ) -> Self {
         Self {
             objective,
@@ -104,34 +116,53 @@ impl<T: FloatNumber> OptProb<T> {
         }
     }
 
-    pub fn is_feasible(&self, x: &DVector<T>) -> bool {
+    pub fn is_feasible(&self, x: &OVector<T, D>) -> bool {
         match &self.constraints {
             Some(constraints) => constraints.g(x),
             None => true,
         }
     }
 
-    pub fn evaluate(&self, x: &DVector<T>) -> T {
+    pub fn evaluate(&self, x: &OVector<T, D>) -> T {
         self.objective.f(x)
     }
 }
 
-pub struct State<T: FloatNumber> {
-    pub best_x: DVector<T>,
-    pub best_f: T,
-    pub pop: DMatrix<T>,
-    pub fitness: DVector<T>,
-    pub constraints: DVector<bool>,
-    pub iter: usize,
-}
-
-pub trait OptimizationAlgorithm<T: FloatNumber>: Send + Sync {
-    fn step(&mut self);
-    fn state(&self) -> &State<T>;
-    
-    // Add a default implementation that returns None
-    fn get_simplex(&self) -> Option<&Vec<DVector<T>>> {
-        None
+impl<T: FloatNumber, D: Dim> Clone for OptProb<T, D>
+where
+    DefaultAllocator: Allocator<D>,
+{
+    fn clone(&self) -> Self {
+        Self {
+            objective: self.objective.clone_box(), 
+            constraints: self.constraints.as_ref().map(|c| c.clone_box_constraint()),
+        }
     }
 }
 
+pub struct State<T: FloatNumber, N: Dim, D: Dim>
+where
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N> 
+                    + Allocator<N, D> 
+{
+    pub best_x: OVector<T, D>,
+    pub best_f: T,
+    pub pop: OMatrix<T, N, D>,
+    pub fitness: OVector<T, N>,
+    pub constraints: OVector<bool, N>,
+    pub iter: usize,
+}
+
+pub trait OptimizationAlgorithm<T: FloatNumber, N: Dim, D: Dim>
+where
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N> 
+                    + Allocator<N, D> 
+{
+    fn step(&mut self);
+    fn state(&self) -> &State<T, N, D>;
+    fn get_simplex(&self) -> Option<&Vec<OVector<T, D>>> {
+        None
+    }
+}

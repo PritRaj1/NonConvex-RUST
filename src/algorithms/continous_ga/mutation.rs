@@ -1,10 +1,19 @@
-use rand_distr::{Normal, Distribution};
-use nalgebra::DVector;
 use rand::Rng;
+use rand_distr::{Normal, Distribution};
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OVector,
+};
+
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
-pub trait MutationOperator<T: FloatNum> {
-    fn mutate(&self, individual: &DVector<T>, bounds: (T, T), generation: usize) -> DVector<T>;
+pub trait MutationOperator<T: FloatNum, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn mutate(&self, individual: &OVector<T, D>, bounds: (T, T), generation: usize) -> OVector<T, D>;
 }
 
 pub struct Gaussian {
@@ -18,8 +27,11 @@ impl Gaussian {
     }
 }
 
-impl<T: FloatNum> MutationOperator<T> for Gaussian {
-    fn mutate(&self, individual: &DVector<T>, bounds: (T, T), _generation: usize) -> DVector<T> {
+impl<T: FloatNum, D: Dim> MutationOperator<T, D> for Gaussian 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn mutate(&self, individual: &OVector<T, D>, bounds: (T, T), _generation: usize) -> OVector<T, D> {
         let mut rng = rand::rng();
         let normal = Normal::new(0.0, self.sigma).unwrap();
         let mut mutated = individual.clone();
@@ -44,8 +56,11 @@ impl Uniform {
     }
 }
 
-impl<T: FloatNum> MutationOperator<T> for Uniform {
-    fn mutate(&self, individual: &DVector<T>, bounds: (T, T), _generation: usize) -> DVector<T> {
+impl<T: FloatNum, D: Dim> MutationOperator<T, D> for Uniform 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn mutate(&self, individual: &OVector<T, D>, bounds: (T, T), _generation: usize) -> OVector<T, D> {
         let mut rng = rand::rng();
         let mut mutated = individual.clone();
 
@@ -72,8 +87,11 @@ impl NonUniform {
     }
 }
 
-impl<T: FloatNum> MutationOperator<T> for NonUniform {
-    fn mutate(&self, individual: &DVector<T>, bounds: (T, T), generation: usize) -> DVector<T> {
+impl<T: FloatNum, D: Dim> MutationOperator<T, D> for NonUniform 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn mutate(&self, individual: &OVector<T, D>, bounds: (T, T), generation: usize) -> OVector<T, D> {
         let mut rng = rand::rng();
         let mut mutated = individual.clone();
         let r = T::from_f64(rng.random::<f64>() * generation as f64 / self.max_generations as f64).unwrap();
@@ -114,8 +132,11 @@ impl Polynomial {
     }
 }
 
-impl<T: FloatNum> MutationOperator<T> for Polynomial {
-    fn mutate(&self, individual: &DVector<T>, bounds: (T, T), _generation: usize) -> DVector<T> {
+impl<T: FloatNum, D: Dim> MutationOperator<T, D> for Polynomial 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn mutate(&self, individual: &OVector<T, D>, bounds: (T, T), _generation: usize) -> OVector<T, D> {
         let mut rng = rand::rng();
         let mut mutated = individual.clone();
 

@@ -1,4 +1,11 @@
-use nalgebra::{DVector, DMatrix};
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+};
 
 use crate::utils::config::AdamConf;
 use crate::utils::opt_prob::{
@@ -8,38 +15,53 @@ use crate::utils::opt_prob::{
     State
 };
 
-pub struct Adam<T: FloatNum + Send + Sync> {
+pub struct Adam<T: FloatNum + Send + Sync, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     pub conf: AdamConf,
-    pub st: State<T>,
-    pub opt_prob: OptProb<T>,
-    m: DVector<T>,  // First moment estimate
-    v: DVector<T>,  // Second moment estimate
+    pub st: State<T, U1, D>,
+    pub opt_prob: OptProb<T, D>,
+    m: OVector<T, D>,  // First moment estimate
+    v: OVector<T, D>,  // Second moment estimate
 }
 
-impl<T: FloatNum> Adam<T> {
-    pub fn new(conf: AdamConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>) -> Self {
-        let init_x = init_pop.row(0).transpose();
+impl<T: FloatNum, D: Dim> Adam<T, D> 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
+    pub fn new(conf: AdamConf, init_pop: OMatrix<T, U1, D>, opt_prob: OptProb<T, D>) -> Self {
+        let init_x: OVector<T, D> = init_pop.row(0).transpose().into_owned();
         let best_f = opt_prob.evaluate(&init_x);
-        let dim = init_x.len();
-        
+        let n = init_x.len();
+
         Self {
             conf,
             st: State {
                 best_x: init_x.clone(),
                 best_f,
-                pop: DMatrix::from_columns(&[init_x.clone()]),
-                fitness: vec![best_f].into(),
-                constraints: vec![opt_prob.is_feasible(&init_x)].into(),
+                pop: init_pop,
+                fitness: OVector::<T, U1>::from_vec(vec![best_f]),
+                constraints: OVector::<bool, U1>::from_vec(vec![opt_prob.is_feasible(&init_x.clone())]),
                 iter: 1
             },
             opt_prob,
-            m: DVector::zeros(dim),
-            v: DVector::zeros(dim),
+            m: OVector::zeros_generic(D::from_usize(n), U1),
+            v: OVector::zeros_generic(D::from_usize(n), U1),
         }
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for Adam<T> {
+impl<T: FloatNum, D: Dim> OptimizationAlgorithm<T, U1, D> for Adam<T, D> 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     fn step(&mut self) {
         let grad = self.opt_prob.objective.gradient(&self.st.best_x)
             .expect("ADAM requires gradient information");
@@ -80,14 +102,14 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for Adam<T> {
             self.st.best_x = self.st.best_x.clone();
         }
 
-        self.st.pop.set_column(0, &self.st.best_x);
+        self.st.pop.row_mut(0).copy_from(&self.st.best_x.transpose());
         self.st.fitness[0] = fitness;
         self.st.constraints[0] = self.opt_prob.is_feasible(&self.st.best_x);
 
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, U1, D> {
         &self.st
     }
 } 

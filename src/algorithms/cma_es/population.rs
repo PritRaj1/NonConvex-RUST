@@ -1,23 +1,37 @@
-use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1
+};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 
-pub fn evaluate_samples<T: FloatNum>(
-    samples: &[DVector<T>],
-    mean: &DVector<T>,
-    b_mat: &DMatrix<T>,
-    d_vec: &DVector<T>,
-    opt_prob: &OptProb<T>,
+pub fn evaluate_samples<T, D>(
+    samples: &[OVector<T, D>], // use slice
+    mean: &OVector<T, D>,
+    b_mat: &OMatrix<T, D, D>,
+    d_vec: &OVector<T, D>,
+    opt_prob: &OptProb<T, D>,
     sigma: T,
-) -> Vec<(DVector<T>, T, bool)> {
-    samples.par_iter()
+) -> Vec<(OVector<T, D>, T, bool)>
+where
+    T: FloatNum,
+    D: Dim,
+    DefaultAllocator: Allocator<D> + Allocator<D, D>,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, D, D>: Send + Sync,
+{
+    samples
+        .par_iter()
         .map(|x| {
             let y = b_mat * &d_vec.component_mul(x);
             let mut sample = mean.clone();
             for i in 0..sample.len() {
-                sample[i] = sample[i] + sigma * y[i];
+                sample[i] += sigma * y[i];
             }
-            
             let fitness = opt_prob.evaluate(&sample);
             let constraint = opt_prob.is_feasible(&sample);
             (sample, fitness, constraint)
@@ -25,24 +39,33 @@ pub fn evaluate_samples<T: FloatNum>(
         .collect()
 }
 
-pub fn update_arrays<T: FloatNum>(
-    population: &mut DMatrix<T>,
-    fitness: &mut DVector<T>,
-    constraints: &mut DVector<bool>,
-    results: &[(DVector<T>, T, bool)]
-) {
+pub fn update_arrays<T: FloatNum, N: Dim, D: Dim>(
+    population: &mut OMatrix<T, N, D>,
+    fitness: &mut OVector<T, N>,
+    constraints: &mut OVector<bool, N>,
+    results: &[(OVector<T, D>, T, bool)]
+) 
+where 
+    DefaultAllocator: Allocator<N, D> 
+                     + Allocator<N>
+                     + Allocator<D>
+                     + Allocator<U1, D>
+{
     for (i, (x, f, c)) in results.iter().enumerate() {
-        population.set_row(i, &x.transpose());
+        population.row_mut(i).copy_from(&x.transpose());
         fitness[i] = *f;
         constraints[i] = *c;
     }
 }
 
-pub fn sort<T: FloatNum>(
-    fitness: &DVector<T>,
-    constraints: &DVector<bool>,
+pub fn sort<T: FloatNum, N: Dim>(
+    fitness: &OVector<T, N>,
+    constraints: &OVector<bool, N>,
     lambda: usize
-) -> Vec<usize> {
+) -> Vec<usize> 
+where 
+    DefaultAllocator: Allocator<N> 
+{
     let mut indices: Vec<usize> = (0..lambda).collect();
     indices.sort_by(|&i, &j| {
         let feasible_i = constraints[i];

@@ -1,25 +1,40 @@
-use nalgebra::{DVector, DMatrix};
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+    Dyn
+};
+
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
-pub fn compute_y<T: FloatNum>(mean: &DVector<T>, old_mean: &DVector<T>, sigma: T) -> DVector<T> {
-    let mut y = DVector::zeros(mean.len());
+pub fn compute_y<T: FloatNum, D: Dim>(mean: &OVector<T, D>, old_mean: &OVector<T, D>, sigma: T) -> OVector<T, D> 
+where 
+    DefaultAllocator: Allocator<D>,
+{
+    let mut y = OVector::from_element_generic(D::from_usize(mean.len()), U1, T::zero());
     for i in 0..mean.len() {
         y[i] = (mean[i] - old_mean[i]) / sigma;
     }
     y
 }
 
-pub fn update_paths<T: FloatNum>(
-    ps: &mut DVector<T>,
-    b_mat: &DMatrix<T>,
-    d_vec: &DVector<T>,
+pub fn update_paths<T: FloatNum, D: Dim>(
+    ps: &mut OVector<T, D>,
+    b_mat: &OMatrix<T, D, D>,
+    d_vec: &OVector<T, D>,
     cs: T,
     mueff: T,
     generation: usize,
     chi_n: T,
-    y: &DVector<T>,
+    y: &OVector<T, D>,
     n: usize
-) -> bool {
+) -> bool 
+where 
+    DefaultAllocator: Allocator<D> + Allocator<D, D>,
+{
     let b_mat = &*b_mat;
     let d_inv = d_vec.map(|d| T::one()/d);
     let b_trans_y = b_mat.transpose() * y;
@@ -28,7 +43,7 @@ pub fn update_paths<T: FloatNum>(
     let cs_factor = T::sqrt(cs * (T::from_f64(2.0).unwrap() - cs) * mueff);
     
     // Update ps 
-    let mut ps_new = DVector::zeros(n);
+    let mut ps_new = OVector::zeros_generic(D::from_usize(n), U1);
     for i in 0..n {
         ps_new[i] = (T::one() - cs) * ps[i] + cs_factor * bdinvy[i];
     }
@@ -41,26 +56,32 @@ pub fn update_paths<T: FloatNum>(
     ps_norm / (T::sqrt(T::one() - decay_pow) * chi_n) < T::from_f64(1.4).unwrap()
 }
 
-pub fn update_covariance<T: FloatNum>(
-    c_mat: &mut DMatrix<T>,
-    b_mat: &mut DMatrix<T>,
-    d_vec: &mut DVector<T>,
-    pc: &mut DVector<T>,
-    y: &DVector<T>,
+pub fn update_covariance<T: FloatNum, N: Dim, D: Dim>(
+    c_mat: &mut OMatrix<T, D, D>,
+    b_mat: &mut OMatrix<T, D, D>,
+    d_vec: &mut OVector<T, D>,
+    pc: &mut OVector<T, D>,
+    y: &OVector<T, D>,
     hsig: bool,
     indices: &[usize],
-    old_mean: &DVector<T>,
+    old_mean: &OVector<T, D>,
     c1: T,
     cmu: T,
     cc: T,
     mueff: T,
-    population: &DMatrix<T>,
-    weights: &DVector<T>,
+    population: &OMatrix<T, N, D>,
+    weights: &OVector<T, Dyn>,
     sigma: T,
     mu: usize,
     n: usize,
-) {
-    let mut c_mat_new = DMatrix::zeros(n, n);
+) 
+where 
+    DefaultAllocator: Allocator<D, D> 
+                    + Allocator<D> 
+                    + Allocator<N, D> 
+                    + Allocator<U1, D>,
+{
+    let mut c_mat_new: OMatrix<T, D, D> = OMatrix::zeros_generic(D::from_usize(n), D::from_usize(n));
     let factor = T::one() - c1 - cmu;
     
     // Base update
@@ -101,7 +122,7 @@ pub fn update_covariance<T: FloatNum>(
         }
         let w = weights[k];
         
-        let mut y_k = DVector::zeros(n);
+        let mut y_k: OVector<T, D> = OVector::zeros_generic(D::from_usize(n), U1);
         for i in 0..n {
             if i < population.ncols() {
                 y_k[i] = (population[(idx, i)] - old_mean[i]) / sigma;
@@ -123,7 +144,7 @@ pub fn update_covariance<T: FloatNum>(
     *c_mat = c_mat_new;
 
     // Symmetric power iteration with improvements
-    let mut eigenvectors: Vec<DVector<T>> = Vec::with_capacity(n);
+    let mut eigenvectors: Vec<OVector<T, D>> = Vec::with_capacity(n);    
     let mut c_deflated = c_mat.clone();
 
     /* Could parallelize this with Rayon - power iteration is used because covariance is
@@ -131,9 +152,9 @@ pub fn update_covariance<T: FloatNum>(
     */
     for i in 0..n {
         // Initialize random vector
-        let mut v = DVector::from_fn(n, |_, _| {
-            T::from_f64(rand::random::<f64>()).unwrap() * T::from_f64(2.0).unwrap() - T::one()
-        });
+        let mut v: OVector<T, D> = OVector::from_fn_generic(D::from_usize(n), U1, |_, _| {
+        T::from_f64(rand::random::<f64>()).unwrap() * T::from_f64(2.0).unwrap() - T::one()
+    });
         
         // Orthogonalize against previous eigenvectors - this prevents repetition of eigenvectors
         for prev_v in &eigenvectors {
@@ -185,7 +206,7 @@ pub fn update_covariance<T: FloatNum>(
     }
 
     // Restore C = BDB^T 
-    let d_mat = DMatrix::from_diagonal(&d_vec.map(|x| x * x));
+    let d_mat: OMatrix<T, D, D> = OMatrix::from_diagonal(&d_vec.map(|x| x * x));
     let temp = &*b_mat * &d_mat;
     *c_mat = &temp * &b_mat.transpose();
     

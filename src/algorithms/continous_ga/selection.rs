@@ -1,14 +1,28 @@
-use nalgebra::{DVector, DMatrix};
 use rand::Rng;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+    Dyn,
+};
+
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
-pub trait SelectionOperator<T: FloatNum> {
+pub trait SelectionOperator<T: FloatNum, N: Dim, D: Dim> 
+where 
+    DefaultAllocator: Allocator<N>
+                    + Allocator<N, D>
+                    + Allocator<Dyn, D>
+{
     fn select(
         &self, 
-        population: &DMatrix<T>, 
-        fitness: &DVector<T>, 
-        constraints: &DVector<bool>
-    ) -> DMatrix<T>;
+        population: &OMatrix<T, N, D>, 
+        fitness: &OVector<T, N>, 
+        constraints: &OVector<bool, N>
+    ) -> OMatrix<T, Dyn, D>;
 }
 
 pub struct RouletteWheel { 
@@ -22,22 +36,27 @@ impl RouletteWheel {
     }
 }
 
-impl<T: FloatNum> SelectionOperator<T> for RouletteWheel {
-    fn select(&self, population: &DMatrix<T>, fitness: &DVector<T>, constraints: &DVector<bool>) -> DMatrix<T> {
+impl<T: FloatNum, N: Dim, D: Dim> SelectionOperator<T, N, D> for RouletteWheel 
+where 
+    DefaultAllocator: Allocator<N>
+                    + Allocator<N, D>
+                    + Allocator<Dyn, D>  
+{
+    fn select(&self, population: &OMatrix<T, N, D>, fitness: &OVector<T, N>, constraints: &OVector<bool, N>) -> OMatrix<T, Dyn, D> {
         // Normalized selection probabilities only for valid individuals
         let sum = fitness.iter()
             .zip(constraints.iter())
             .filter(|(_, &valid)| valid)
             .fold(T::zero(), |acc, (&x, _)| acc + x);
 
-        let mut llhoods = DVector::<T>::zeros(fitness.len());
+        let mut llhoods: OVector<T, N> = OVector::zeros_generic(N::from_usize(fitness.len()), U1);
         for (j, (&fit, &valid)) in fitness.iter().zip(constraints.iter()).enumerate() {
             if valid {
                 llhoods[j] = fit / sum;
             }
         }
         
-        let mut selected = DMatrix::<T>::zeros(self.num_parents, population.ncols());
+        let mut selected = OMatrix::<T, Dyn, D>::zeros_generic(Dyn::from_usize(self.num_parents), D::from_usize(population.ncols()));
         let mut rng = rand::rng();
 
         for i in 0..self.num_parents {
@@ -70,9 +89,14 @@ impl Tournament {
     }
 }
 
-impl<T: FloatNum> SelectionOperator<T> for Tournament {
-    fn select(&self, population: &DMatrix<T>, fitness: &DVector<T>, constraints: &DVector<bool>) -> DMatrix<T> {
-        let mut selected = DMatrix::<T>::zeros(self.num_parents, population.ncols());
+impl<T: FloatNum, N: Dim, D: Dim> SelectionOperator<T, N, D> for Tournament 
+where 
+    DefaultAllocator: Allocator<N>
+                    + Allocator<N, D>
+                    + Allocator<Dyn, D>  
+{
+    fn select(&self, population: &OMatrix<T, N, D>, fitness: &OVector<T, N>, constraints: &OVector<bool, N>) -> OMatrix<T, Dyn, D> {
+        let mut selected = OMatrix::<T, Dyn, D>::zeros_generic(Dyn::from_usize(self.num_parents), D::from_usize(population.ncols()));
         let mut rng = rand::rng(); 
 
         for i in 0..self.num_parents {
@@ -115,9 +139,14 @@ impl Residual {
     }
 }
 
-impl<T: FloatNum> SelectionOperator<T> for Residual {
-    fn select(&self, population: &DMatrix<T>, fitness: &DVector<T>, constraints: &DVector<bool>) -> DMatrix<T> {
-        let mut selected = DMatrix::<T>::zeros(self.num_parents, population.ncols());
+impl<T: FloatNum, N: Dim, D: Dim> SelectionOperator<T, N, D> for Residual 
+where 
+    DefaultAllocator: Allocator<N>
+                    + Allocator<N, D>
+                    + Allocator<Dyn, D>  
+{
+    fn select(&self, population: &OMatrix<T, N, D>, fitness: &OVector<T, N>, constraints: &OVector<bool, N>) -> OMatrix<T, Dyn, D> {
+        let mut selected = OMatrix::<T, Dyn, D>::zeros_generic(Dyn::from_usize(self.num_parents), D::from_usize(population.ncols()));
         let mut rng = rand::rng();
 
         // Calculate expected values

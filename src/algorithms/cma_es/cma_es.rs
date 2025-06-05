@@ -1,6 +1,14 @@
-use nalgebra::{DVector, DMatrix};
-use rand_distr::{Normal, Distribution};
 use rand;
+use rand_distr::{Normal, Distribution};
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+    Dyn,
+};
 
 use crate::utils::config::CMAESConf;
 use crate::utils::opt_prob::{
@@ -16,20 +24,26 @@ use crate::algorithms::cma_es::{
     evolution::{update_paths, update_covariance, compute_y},
 };
 
-pub struct CMAES<T: FloatNum + Send + Sync> {
+pub struct CMAES<T: FloatNum + Send + Sync, N: Dim, D: Dim>
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<N, D>
+                     + Allocator<N>
+                     + Allocator<D, D>
+{
     pub conf: CMAESConf,
-    pub opt_prob: OptProb<T>,
-    pub st: State<T>,
+    pub opt_prob: OptProb<T, D>,
+    pub st: State<T, N, D>,
     
     // Strategy parameters
-    pub mean: DVector<T>,
-    pub pc: DVector<T>,          // Evolution path for c_mat
-    pub ps: DVector<T>,          // Evolution path for sigma
-    pub c_mat: DMatrix<T>,       // Covariance matrix
-    pub b_mat: DMatrix<T>,       // Eigenvectors of c_mat
-    pub d_vec: DVector<T>,       // Eigenvalues of c_mat
+    pub mean: OVector<T, D>,
+    pub pc: OVector<T, D>,          // Evolution path for c_mat
+    pub ps: OVector<T, D>,          // Evolution path for sigma
+    pub c_mat: OMatrix<T, D, D>,       // Covariance matrix
+    pub b_mat: OMatrix<T, D, D>,       // Eigenvectors of c_mat
+    pub d_vec: OVector<T, D>,       // Eigenvalues of c_mat
     pub sigma: T,                // Step size
-    pub weights: DVector<T>,     // Recombination weights
+    pub weights: OVector<T, Dyn>,     // Recombination weights
     
     // Derived values
     pub mu: usize,              // Number of parents < λ
@@ -43,9 +57,19 @@ pub struct CMAES<T: FloatNum + Send + Sync> {
     pub chi_n: T,               // Expected norm of N(0,I)
 }
 
-impl<T: FloatNum> CMAES<T> {
-    pub fn new(conf: CMAESConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>) -> Self {
-        let init_x = init_pop.row(0).transpose();
+impl<T: FloatNum, N: Dim, D: Dim> CMAES<T, N, D> 
+where 
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, D, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<D, D>
+                    + Allocator<U1, D>
+{
+    pub fn new(conf: CMAESConf, init_pop: OMatrix<T, U1, D>, opt_prob: OptProb<T, D>) -> Self {
+        let init_x: OVector<T, D> = init_pop.row(0).transpose().into_owned();
+
         let n = init_x.len();
         let params = Parameters::new(&conf, &init_x);
         
@@ -55,28 +79,31 @@ impl<T: FloatNum> CMAES<T> {
         let mut samples = Vec::with_capacity(params.lambda);
         
         for _ in 0..params.lambda {
-            let mut z = DVector::zeros(n);
+            let mut z = init_x.clone() * T::from_f64(0.0).unwrap();
             for j in 0..n {
                 z[j] = T::from_f64(normal.sample(&mut rng)).unwrap();
             }
             samples.push(z);
         }
 
+        let b_mat = OMatrix::<T, D, D>::identity_generic(D::from_usize(n), D::from_usize(n));
+        let d_vec: OVector<T, D> = OVector::from_element_generic(D::from_usize(n), U1, T::one());
+
         let results = evaluate_samples(
             &samples,
             &init_x,
-            &DMatrix::identity(n, n),
-            &DVector::from_element(n, T::one()),
+            &b_mat.clone(),                    
+            &d_vec.clone(),                    
             &opt_prob,
-            T::from_f64(conf.initial_sigma).unwrap()
+            T::from_f64(conf.initial_sigma).unwrap(),
         );
 
-        let mut population = DMatrix::zeros(params.lambda, n);
-        let mut fitness = DVector::zeros(params.lambda);
-        let mut constraints = DVector::from_element(params.lambda, false);
+        let mut population: OMatrix<T, N, D> = OMatrix::from_element_generic(N::from_usize(params.lambda), D::from_usize(n), T::zero());
+        let mut fitness: OVector<T, N> = OVector::from_element_generic(N::from_usize(params.lambda), U1, T::zero());
+        let mut constraints: OVector<bool, N> = OVector::from_element_generic(N::from_usize(params.lambda), U1, true);
 
         for (i, (x, f, c)) in results.iter().enumerate() {
-            population.set_row(i, &x.transpose());
+            population.row_mut(i).copy_from(&x.transpose());
             fitness[i] = *f;
             constraints[i] = *c;
         }
@@ -98,11 +125,11 @@ impl<T: FloatNum> CMAES<T> {
             opt_prob,
             st,
             mean: init_x,
-            pc: DVector::zeros(n),
-            ps: DVector::zeros(n),
-            c_mat: DMatrix::identity(n, n),
-            b_mat: DMatrix::identity(n, n),
-            d_vec: DVector::from_element(n, T::one()),
+            pc: OVector::zeros_generic(D::from_usize(n), U1),
+            ps: OVector::zeros_generic(D::from_usize(n), U1),
+            c_mat: OMatrix::<T, D, D>::identity_generic(D::from_usize(n), D::from_usize(n)),
+            b_mat: OMatrix::<T, D, D>::identity_generic(D::from_usize(n), D::from_usize(n)),
+            d_vec: OVector::from_element_generic(D::from_usize(n), U1, T::one()),
             sigma: T::from_f64(conf.initial_sigma).unwrap(),
             weights: params.weights,
             mu: params.mu,
@@ -117,21 +144,29 @@ impl<T: FloatNum> CMAES<T> {
         }
     }
 
-    fn generate_samples(&self, n: usize) -> Vec<DVector<T>> {
+    fn generate_samples(&self, n: usize) -> Vec<OVector<T, D>> {
         let normal = Normal::new(0.0, 1.0).unwrap();
         let mut rng = rand::rng();
         
         (0..self.lambda)
-            .map(|_| {
-                DVector::from_iterator(n, 
-                    (0..n).map(|_| T::from_f64(normal.sample(&mut rng)).unwrap())
-                )
-            })
-            .collect()
+        .map(|_| {
+            let iter = (0..n).map(|_| T::from_f64(normal.sample(&mut rng)).unwrap());
+            OVector::<T, D>::from_iterator_generic(D::from_usize(n), U1, iter)
+        })
+        .collect()
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for CMAES<T> {
+impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for CMAES<T, N, D> 
+where 
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, D, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<D, D>
+                    + Allocator<U1, D>
+{
     fn step(&mut self) {
         let n = self.mean.len();
         
@@ -152,7 +187,7 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for CMAES<T> {
         // Sort and update mean
         let indices = sort(&self.st.fitness, &self.st.constraints, self.lambda);
         let old_mean = self.mean.clone();
-        self.mean = DVector::zeros(n);
+        self.mean = OVector::zeros_generic(D::from_usize(n), U1);
         
         for i in 0..self.mu {
             let row = self.st.pop.row(indices[i]).transpose();
@@ -211,7 +246,7 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for CMAES<T> {
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, N, D> {
         &self.st
     }
 } 

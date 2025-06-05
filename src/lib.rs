@@ -1,8 +1,14 @@
-use nalgebra::{DVector, DMatrix};
-use crate::utils::config::{Config, AlgConf, OptConf};
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OVector, 
+    OMatrix
+};
 
 pub mod algorithms;
 pub mod utils;
+use crate::utils::config::{Config, AlgConf, OptConf};
 
 use crate::algorithms::{
     continous_ga::cga::CGA,
@@ -28,25 +34,35 @@ use crate::utils::opt_prob::{
     State
 };
 
-pub struct Result<T: FloatNum> {
-    pub best_x: DVector<T>,
+pub struct Result<T: FloatNum, N: Dim, D: Dim> 
+where
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N, D>
+                    + Allocator<N>
+{
+    pub best_x: OVector<T, D>,
     pub best_f: T,
-    pub final_pop: DMatrix<T>,
-    pub final_fitness: DVector<T>,
-    pub final_constraints: DVector<bool>,
+    pub final_pop: OMatrix<T, N, D>,
+    pub final_fitness: OVector<T, N>,
+    pub final_constraints: OVector<bool, N>,
     pub convergence_iter: usize,
 }
 
-pub struct NonConvexOpt<T: FloatNum> {
-    pub alg: Box<dyn OptimizationAlgorithm<T>>,
+pub struct NonConvexOpt<T: FloatNum, N: Dim, D: Dim> {
+    pub alg: Box<dyn OptimizationAlgorithm<T, N, D>>,
     pub conf: OptConf,
     pub converged: bool,
 }
 
-impl<T: FloatNum> NonConvexOpt<T> {
-    pub fn new<F: ObjectiveFunction<T> + 'static, G: BooleanConstraintFunction<T> + 'static>(
+impl<T: FloatNum, N: Dim, D: Dim> NonConvexOpt<T, N, D> 
+where 
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N, D> 
+                    + Allocator<N>
+{
+    pub fn new<F: ObjectiveFunction<T, D> + 'static, G: BooleanConstraintFunction<T, D> + 'static>(
         conf: Config, 
-        init_pop: DMatrix<T>, 
+        init_pop: OMatrix<T, N, D>, 
         obj_f: F, 
         constr_f: Option<G>,
     ) -> Self {
@@ -58,11 +74,11 @@ impl<T: FloatNum> NonConvexOpt<T> {
             }
         );
 
-        let alg: Box<dyn OptimizationAlgorithm<T>> = match conf.alg_conf {
+        let alg: Box<dyn OptimizationAlgorithm<T, N, D>> = match conf.alg_conf {
             AlgConf::CGA(cga_conf) => Box::new(CGA::new(cga_conf, init_pop, opt_prob, conf.opt_conf.max_iter)),
             AlgConf::PT(pt_conf) => Box::new(PT::new(pt_conf, init_pop, opt_prob, conf.opt_conf.max_iter)),
             AlgConf::TS(ts_conf) => Box::new(TabuSearch::new(ts_conf, init_pop, opt_prob)),
-            AlgConf::Adam(adam_conf) => Box::new(Adam::new(adam_conf, init_pop, opt_prob)),
+            AlgConf::Adam(adam_conf) => Box::new(Adam::new(adam_conf, init_pop.row(0), opt_prob)),
             AlgConf::GRASP(grasp_conf) => Box::new(GRASP::new(grasp_conf, init_pop, opt_prob)),
             AlgConf::SGA(sga_conf) => Box::new(SGAscent::new(sga_conf, init_pop, opt_prob)),
             AlgConf::NM(nm_conf) => Box::new(NelderMead::new(nm_conf, init_pop, opt_prob)),
@@ -101,18 +117,18 @@ impl<T: FloatNum> NonConvexOpt<T> {
         );
     }
 
-    pub fn run(&mut self) -> &State<T> {
+    pub fn run(&mut self) -> &State<T, N, D> {
         while !self.converged && self.alg.state().iter < self.conf.max_iter {
             self.step();
         }
         self.alg.state()
     }
 
-    pub fn get_best_individual(&self) -> DVector<T> {
+    pub fn get_best_individual(&self) -> OVector<T, D> {
         self.alg.state().best_x.clone()
     }
 
-    pub fn get_population(&self) -> DMatrix<T> {
+    pub fn get_population(&self) -> OMatrix<T, N, D> {
         self.alg.state().pop.clone()
     }
 }

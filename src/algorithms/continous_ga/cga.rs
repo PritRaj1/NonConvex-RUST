@@ -1,5 +1,14 @@
-use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    DVector,
+    U1,
+    Dyn,
+};
 
 use crate::utils::config::{CGAConf, CrossoverConf, SelectionConf, MutationConf};
 use crate::utils::opt_prob::{
@@ -16,24 +25,36 @@ use crate::algorithms::continous_ga::{
 };
 
 
-pub struct CGA<T: FloatNum> 
+pub struct CGA<T: FloatNum, N: Dim, D: Dim> 
 where 
-    T: Send + Sync 
+    T: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N, D>
+                    + Allocator<N>
 {
     pub conf: CGAConf,
-    pub st: State<T>,
-    pub opt_prob: OptProb<T>,
-    pub selector: Box<dyn SelectionOperator<T> + Send + Sync>,
-    pub crossover: Box<dyn CrossoverOperator<T> + Send + Sync>,
-    pub mutation: Box<dyn MutationOperator<T> + Send + Sync>,
+    pub st: State<T, N, D>,
+    pub opt_prob: OptProb<T, D>,
+    pub selector: Box<dyn SelectionOperator<T, N, D> + Send + Sync>,
+    pub crossover: Box<dyn CrossoverOperator<T, N, D> + Send + Sync>,
+    pub mutation: Box<dyn MutationOperator<T, D> + Send + Sync>,
 }
 
-impl<T: FloatNum> CGA<T> 
+impl<T: FloatNum, N: Dim, D: Dim> CGA<T, N, D> 
 where 
-    T: Send + Sync 
+    T: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OVector<bool, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<U1, D>
 {
-    pub fn new(conf: CGAConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>, max_iter: usize) -> Self {
-        let selector: Box<dyn SelectionOperator<T> + Send + Sync> = match &conf.selection {
+    pub fn new(conf: CGAConf, init_pop: OMatrix<T, N, D>, opt_prob: OptProb<T, D>, max_iter: usize) -> Self {
+        let selector: Box<dyn SelectionOperator<T, N, D> + Send + Sync> = match &conf.selection {
             SelectionConf::RouletteWheel(_) => Box::new(RouletteWheel::new(
                 conf.common.population_size, 
                 conf.common.num_parents
@@ -49,7 +70,7 @@ where
             )),
         };
 
-        let crossover: Box<dyn CrossoverOperator<T> + Send + Sync> = match &conf.crossover {
+        let crossover: Box<dyn CrossoverOperator<T, N, D> + Send + Sync> = match &conf.crossover {
             CrossoverConf::Random(random) => Box::new(Random::new(
                 random.crossover_prob, 
                 conf.common.population_size
@@ -60,7 +81,7 @@ where
             )),
         };
 
-        let mutation: Box<dyn MutationOperator<T> + Send + Sync> = match &conf.mutation {
+        let mutation: Box<dyn MutationOperator<T, D> + Send + Sync> = match &conf.mutation {
             MutationConf::Gaussian(gaussian) => Box::new(Gaussian::new(
                 gaussian.mutation_rate, 
                 gaussian.sigma
@@ -90,9 +111,9 @@ where
             })
             .unzip();
 
-        let fitness = DVector::from_vec(fitness);
-        let constraints = DVector::from_vec(constraints);
-
+        let fitness = OVector::<T, N>::from_vec_generic(N::from_usize(init_pop.nrows()), U1, fitness);
+        let constraints =  OVector::<bool, N>::from_vec_generic(N::from_usize(init_pop.nrows()), U1, constraints);
+        
         // Find best individual
         let mut best_idx = 0;
         let mut best_fitness = fitness[0];
@@ -122,17 +143,31 @@ where
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for CGA<T> {
+impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for CGA<T, N, D> 
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OVector<bool, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<U1, D>
+                    + Allocator<D>
+                    + Allocator<Dyn>
+{
     fn step(&mut self) {
         let selected = self.selector.select(&self.st.pop, &self.st.fitness, &self.st.constraints);
         let mut offspring = self.crossover.crossover(&selected);
 
         // Apply mutation
+        let fallback_vec_lower = OVector::<T, D>::from_element_generic(D::from_usize(offspring.ncols()), U1, T::from_f64(-10.0).unwrap());
+        let fallback_vec_upper = OVector::<T, D>::from_element_generic(D::from_usize(offspring.ncols()), U1, T::from_f64(10.0).unwrap());
+
         let bounds = (
-            self.opt_prob.objective.x_lower_bound(&offspring.column(0).into())
-                .unwrap_or_else(|| DVector::from_element(offspring.ncols(), T::from_f64(-10.0).unwrap()))[0],
-            self.opt_prob.objective.x_upper_bound(&offspring.column(0).into())
-                .unwrap_or_else(|| DVector::from_element(offspring.ncols(), T::from_f64(10.0).unwrap()))[0]
+            self.opt_prob.objective.x_lower_bound(&offspring.row(0).transpose())
+                .unwrap_or_else(|| fallback_vec_lower)[0],
+            self.opt_prob.objective.x_upper_bound(&offspring.row(0).transpose())
+                .unwrap_or_else(|| fallback_vec_upper)[0],
         );
 
         for i in 0..offspring.nrows() {
@@ -151,8 +186,8 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for CGA<T> {
             })
             .unzip();
 
-        let mut new_fitness = DVector::from_vec(new_fitness);
-        let mut new_constraints = DVector::from_vec(new_constraints);
+        let mut new_fitness = OVector::<T, N>::from_vec_generic(N::from_usize(offspring.nrows()), U1, new_fitness);
+        let mut new_constraints = OVector::<bool, N>::from_vec_generic(N::from_usize(offspring.nrows()), U1, new_constraints);
 
         // Elitism: Keep the best individual from previous generation
         let mut best_old_idx = 0;
@@ -194,7 +229,7 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for CGA<T> {
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, N, D> {
         &self.st
     }
 }
