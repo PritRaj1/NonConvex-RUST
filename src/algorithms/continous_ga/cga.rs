@@ -5,7 +5,6 @@ use nalgebra::{
     Dim, 
     OMatrix, 
     OVector,
-    DVector,
     U1,
     Dyn,
 };

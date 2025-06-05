@@ -1,6 +1,13 @@
-use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
 use std::collections::VecDeque;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+};
 
 use crate::utils::alg_conf::de_conf::{DEConf, DEStrategy, MutationType};
 use crate::utils::opt_prob::{
@@ -19,22 +26,35 @@ use crate::algorithms::differential_evolution::mutation::{
     Rand2Bin,
 };
 
-pub struct DE<T: FloatNum + Send + Sync> {
+pub struct DE<T: FloatNum, N: Dim, D: Dim> 
+where 
+    T: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N>
+                    + Allocator<N, D>
+{
     pub conf: DEConf,
-    pub st: State<T>,
-    pub opt_prob: OptProb<T>,
-    pub archive: Vec<DVector<T>>,
+    pub st: State<T, N, D>,
+    pub opt_prob: OptProb<T, D>,
+    pub archive: Vec<OVector<T, D>>,
     pub archive_fitness: Vec<T>,
     success_history: VecDeque<bool>,
     current_f: f64,
     current_cr: f64,
 }
 
-impl<T: FloatNum + Send + Sync> DE<T> {
-    pub fn new(conf: DEConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>) -> Self {
+impl<T: FloatNum, N: Dim, D: Dim> DE<T, N, D> 
+where 
+    T: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N>
+                    + Allocator<N, D>
+{
+    pub fn new(conf: DEConf, init_pop: OMatrix<T, N, D>, opt_prob: OptProb<T, D>) -> Self {
         let population_size = init_pop.nrows();
-        let mut fitness = DVector::zeros(population_size);
-        let mut constraints = DVector::from_element(population_size, true);
+        let mut fitness = OVector::<T, N>::zeros_generic(N::from_usize(population_size), U1);
+        let mut constraints = OVector::<bool, N>::from_element_generic(N::from_usize(population_size), U1, true);
         
         let evaluations: Vec<(T, bool)> = (0..population_size)
             .into_par_iter()
@@ -91,13 +111,13 @@ impl<T: FloatNum + Send + Sync> DE<T> {
         }
     }
     
-    fn generate_trial_vector(&self, target_idx: usize) -> (DVector<T>, T, bool) {
+    fn generate_trial_vector(&self, target_idx: usize) -> (OVector<T, D>, T, bool) {
         let strategy = match &self.conf.mutation_type {
             MutationType::Standard(standard) => &standard.strategy,
             MutationType::Adaptive(adaptive) => &adaptive.strategy,
         };
 
-        let strategy: &dyn MutationStrategy<T> = match strategy {
+        let strategy: &dyn MutationStrategy<T, N, D> = match strategy {
             DEStrategy::Rand1Bin => &Rand1Bin,
             DEStrategy::Best1Bin => &Best1Bin,
             DEStrategy::RandToBest1Bin => &RandToBest1Bin,
@@ -129,7 +149,7 @@ impl<T: FloatNum + Send + Sync> DE<T> {
         }
     }
 
-    fn update_archive(&mut self, x: DVector<T>, fitness: T) {
+    fn update_archive(&mut self, x: OVector<T, D>, fitness: T) {
         if self.archive.len() < self.conf.common.archive_size {
             self.archive.push(x);
             self.archive_fitness.push(fitness);
@@ -170,7 +190,18 @@ impl<T: FloatNum + Send + Sync> DE<T> {
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for DE<T>{
+impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for DE<T, N, D>
+where
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OVector<bool, N>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N>
+                    + Allocator<N, D>
+                    + Allocator<U1, D>
+{
     fn step(&mut self) {
         let pop_size = self.st.pop.nrows();
         
@@ -241,7 +272,7 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for DE<T>{
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, N, D> {
         &self.st
     }
 } 

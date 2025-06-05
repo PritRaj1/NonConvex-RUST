@@ -1,6 +1,13 @@
-use nalgebra::{DVector, DMatrix};
 use rand::Rng;
 use rayon::prelude::*;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+};
 
 use crate::utils::config::GRASPConf;
 use crate::utils::opt_prob::{
@@ -10,20 +17,27 @@ use crate::utils::opt_prob::{
     State
 };
 
-pub struct GRASP<T: FloatNum> 
+pub struct GRASP<T: FloatNum, D: Dim> 
 where 
-    T: Send + Sync 
+    DefaultAllocator: Allocator<D>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
 {
     pub conf: GRASPConf,
-    pub st: State<T>,
-    pub opt_prob: OptProb<T>,
+    pub st: State<T, U1, D>,
+    pub opt_prob: OptProb<T, D>,
 }
 
-impl<T: FloatNum> GRASP<T> 
+impl<T: FloatNum, D: Dim> GRASP<T, D> 
 where 
-    T: Send + Sync 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, U1, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
 {
-    pub fn new(conf: GRASPConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>) -> Self {
+    pub fn new(conf: GRASPConf, init_pop: OMatrix<T, U1, D>, opt_prob: OptProb<T, D>) -> Self {
         let init_x = init_pop.row(0).transpose();
         let best_f = opt_prob.evaluate(&init_x);
         
@@ -33,9 +47,9 @@ where
 
                 best_x: init_x.clone(),
                 best_f: best_f,
-                pop: DMatrix::from_columns(&[init_x.clone()]),
-                fitness: vec![best_f].into(),
-                constraints: vec![opt_prob.is_feasible(&init_x)].into(),
+                pop: init_pop,
+                fitness: OVector::<T, U1>::from_vec(vec![best_f]),
+                constraints: OVector::<bool, U1>::from_vec(vec![opt_prob.is_feasible(&init_x.clone())]),
                 iter: 1
             },
             opt_prob,
@@ -43,12 +57,12 @@ where
     }
 
     // Greedy randomized construction phase
-    pub fn construct_solution(&self) -> DVector<T> {
-        let candidates: Vec<DVector<T>> = (0..self.conf.num_candidates)
+    pub fn construct_solution(&self) -> OVector<T, D> {
+        let candidates: Vec<OVector<T, D>> = (0..self.conf.num_candidates)
             .into_par_iter()
             .map(|_| {
                 let mut rng = rand::rng(); // Create new RNG for each thread
-                let mut candidate = DVector::zeros(self.st.best_x.len());
+                let mut candidate = OVector::<T, D>::zeros_generic(D::from_usize(self.st.best_x.len()), U1);
                 for i in 0..self.st.best_x.len() {
                     // Get bounds if they exist
                     let lb = self.opt_prob.objective.x_lower_bound(&candidate)
@@ -81,7 +95,7 @@ where
     }
 
     // Local search phase
-    pub fn local_search(&self, solution: &DVector<T>) -> DVector<T> {
+    pub fn local_search(&self, solution: &OVector<T, D>) -> OVector<T, D> {
         let mut current = solution.clone();
         let mut current_fitness = self.opt_prob.evaluate(&current);
         let mut improved = true;
@@ -90,7 +104,7 @@ where
             improved = false;
             
             // Generate and evaluate neighborhood in parallel
-            let neighbors: Vec<DVector<T>> = (0..self.conf.num_neighbors)
+            let neighbors: Vec<OVector<T, D>> = (0..self.conf.num_neighbors)
                 .into_par_iter()
                 .map(|_| {
                     let mut rng = rand::rng();
@@ -130,7 +144,15 @@ where
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for GRASP<T>{
+impl<T: FloatNum, D: Dim> OptimizationAlgorithm<T, U1, D> for GRASP<T, D>
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, U1, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
+{
     fn step(&mut self) {
         let solution = self.construct_solution();
         let improved_solution = self.local_search(&solution);
@@ -141,14 +163,14 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for GRASP<T>{
             self.st.best_x = improved_solution.clone();
         }
         
-        self.st.pop = DMatrix::from_columns(&[improved_solution.clone()]);
+        self.st.pop.row_mut(0).copy_from(&improved_solution.transpose());
         self.st.fitness[0] = fitness;
         self.st.constraints[0] = self.opt_prob.is_feasible(&improved_solution);
 
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, U1, D> {
         &self.st
     }
 } 

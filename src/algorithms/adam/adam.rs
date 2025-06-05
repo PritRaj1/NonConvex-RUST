@@ -15,7 +15,7 @@ use crate::utils::opt_prob::{
     State
 };
 
-pub struct Adam<T: FloatNum + Send + Sync, D: Dim> 
+pub struct Adam<T: FloatNum, D: Dim> 
 where 
     DefaultAllocator: Allocator<D> 
                      + Allocator<U1, D>

@@ -1,16 +1,28 @@
-use nalgebra::{DVector, DMatrix};
 use rand::Rng;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+};
+
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
-pub trait MutationStrategy<T: FloatNum> {
+pub trait MutationStrategy<T: FloatNum, N: Dim, D: Dim> 
+where 
+    DefaultAllocator: Allocator<N, D>
+                     + Allocator<D>
+{
     fn generate_trial(
         &self,
-        population: &DMatrix<T>,
-        best_x: Option<&DVector<T>>,
+        population: &OMatrix<T, N, D>,
+        best_x: Option<&OVector<T, D>>,
         target_idx: usize,
         f: T,
         cr: T,
-    ) -> DVector<T>;
+    ) -> OVector<T, D>;
 }
 
 pub struct Rand1Bin;
@@ -31,7 +43,10 @@ fn get_random_indices(count: usize, exclude: usize, pop_size: usize) -> Vec<usiz
     indices
 }
 
-fn crossover<T: FloatNum>(donor: DVector<T>, target: DVector<T>, cr: T) -> DVector<T> {
+fn crossover<T: FloatNum, D: Dim>(donor: OVector<T, D>, target: OVector<T, D>, cr: T) -> OVector<T, D> 
+where 
+    DefaultAllocator: Allocator<D>
+{
     let mut rng = rand::rng();
     let dim = donor.len();
     let mut trial = target.clone();
@@ -45,15 +60,20 @@ fn crossover<T: FloatNum>(donor: DVector<T>, target: DVector<T>, cr: T) -> DVect
     trial
 }
 
-impl<T: FloatNum> MutationStrategy<T> for Rand1Bin {
+impl<T: FloatNum, N: Dim, D: Dim> MutationStrategy<T, N, D> for Rand1Bin 
+where 
+    DefaultAllocator: Allocator<N, D>
+                    + Allocator<D>
+
+{
     fn generate_trial(
         &self,
-        population: &DMatrix<T>,
-        _best_x: Option<&DVector<T>>,
+        population: &OMatrix<T, N, D>,
+        _best_x: Option<&OVector<T, D>>,
         target_idx: usize,
         f: T,
         cr: T,
-    ) -> DVector<T> {
+    ) -> OVector<T, D> {
         let indices = get_random_indices(3, target_idx, population.nrows());
         let x_r1 = population.row(indices[0]).transpose();
         let x_r2 = population.row(indices[1]).transpose();
@@ -64,15 +84,19 @@ impl<T: FloatNum> MutationStrategy<T> for Rand1Bin {
     }
 }
 
-impl<T: FloatNum> MutationStrategy<T> for Best1Bin {
+impl<T: FloatNum, N: Dim, D: Dim> MutationStrategy<T, N, D> for Best1Bin 
+where 
+    DefaultAllocator: Allocator<N, D>
+                    + Allocator<D>
+{
     fn generate_trial(
         &self,
-        population: &DMatrix<T>,
-        best_x: Option<&DVector<T>>,
+        population: &OMatrix<T, N, D>,
+        best_x: Option<&OVector<T, D>>,
         target_idx: usize,
         f: T,
         cr: T,
-    ) -> DVector<T> {
+    ) -> OVector<T, D> {
         let best_x = best_x.expect("Best1Bin requires best_x");
         let indices = get_random_indices(2, target_idx, population.nrows());
         let x_r1 = population.row(indices[0]).transpose();
@@ -83,15 +107,19 @@ impl<T: FloatNum> MutationStrategy<T> for Best1Bin {
     }
 }
 
-impl<T: FloatNum> MutationStrategy<T> for RandToBest1Bin {
+impl<T: FloatNum, N: Dim, D: Dim> MutationStrategy<T, N, D> for RandToBest1Bin 
+where 
+    DefaultAllocator: Allocator<N, D>
+                    + Allocator<D>
+{
     fn generate_trial(
         &self,
-        population: &DMatrix<T>,
-        best_x: Option<&DVector<T>>,
+        population: &OMatrix<T, N, D>,
+        best_x: Option<&OVector<T, D>>,
         target_idx: usize,
         f: T,
         cr: T,
-    ) -> DVector<T> {
+    ) -> OVector<T, D> {
         let best_x = best_x.expect("RandToBest1Bin requires best_x");
         let indices = get_random_indices(2, target_idx, population.nrows());
         let x_r1 = population.row(indices[0]).transpose();
@@ -103,15 +131,19 @@ impl<T: FloatNum> MutationStrategy<T> for RandToBest1Bin {
     }
 }
 
-impl<T: FloatNum> MutationStrategy<T> for Best2Bin {
+impl<T: FloatNum, N: Dim, D: Dim> MutationStrategy<T, N, D> for Best2Bin 
+where 
+    DefaultAllocator: Allocator<N, D>
+                    + Allocator<D>
+{
     fn generate_trial(
         &self,
-        population: &DMatrix<T>,
-        best_x: Option<&DVector<T>>,
+        population: &OMatrix<T, N, D>,
+        best_x: Option<&OVector<T, D>>,
         target_idx: usize,
         f: T,
         cr: T,
-    ) -> DVector<T> {
+    ) -> OVector<T, D> {
         let best_x = best_x.expect("Best2Bin requires best_x");
         let indices = get_random_indices(4, target_idx, population.nrows());
         let x_r1 = population.row(indices[0]).transpose();
@@ -124,15 +156,19 @@ impl<T: FloatNum> MutationStrategy<T> for Best2Bin {
     }
 }
 
-impl<T: FloatNum> MutationStrategy<T> for Rand2Bin {
+impl<T: FloatNum, N: Dim, D: Dim> MutationStrategy<T, N, D> for Rand2Bin 
+where 
+    DefaultAllocator: Allocator<N, D>
+                    + Allocator<D>
+{
     fn generate_trial(
         &self,
-        population: &DMatrix<T>,
-        _best_x: Option<&DVector<T>>,
+        population: &OMatrix<T, N, D>,
+        _best_x: Option<&OVector<T, D>>,
         target_idx: usize,
         f: T,
         cr: T,
-    ) -> DVector<T> {
+    ) -> OVector<T, D> {
         let indices = get_random_indices(5, target_idx, population.nrows());
         let x_r1 = population.row(indices[0]).transpose();
         let x_r2 = population.row(indices[1]).transpose();
