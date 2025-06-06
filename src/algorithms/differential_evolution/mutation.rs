@@ -5,7 +5,6 @@ use nalgebra::{
     Dim, 
     OMatrix, 
     OVector,
-    U1,
 };
 
 use crate::utils::opt_prob::FloatNumber as FloatNum;

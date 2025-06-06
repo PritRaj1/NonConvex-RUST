@@ -1,4 +1,11 @@
-use nalgebra::DVector;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OVector,
+    U1,
+};
+
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 use crate::utils::config::{
     BacktrackingConf,
@@ -8,14 +15,19 @@ use crate::utils::config::{
     GoldenSectionConf,
 };
 
-pub trait LineSearch<T: FloatNum> {
+pub trait LineSearch<T: FloatNum, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     fn search(
         &self,
-        x: &DVector<T>,
-        p: &DVector<T>,
+        x: &OVector<T, D>,
+        p: &OVector<T, D>,
         f: T,
-        g: &DVector<T>,
-        opt_prob: &OptProb<T>,
+        g: &OVector<T, D>,
+        opt_prob: &OptProb<T, D>,
     ) -> T;
 }
 
@@ -29,14 +41,19 @@ impl BacktrackingLineSearch {
     }
 }
 
-impl<T: FloatNum> LineSearch<T> for BacktrackingLineSearch {
+impl<T: FloatNum, D: Dim> LineSearch<T, D> for BacktrackingLineSearch 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     fn search(
         &self,
-        x: &DVector<T>,
-        p: &DVector<T>,
+        x: &OVector<T, D>,
+        p: &OVector<T, D>,
         f: T,
-        g: &DVector<T>,
-        opt_prob: &OptProb<T>,
+        g: &OVector<T, D>,
+        opt_prob: &OptProb<T, D>,
     ) -> T {
         let mut alpha = T::one();
         let mut x_new = x + p * alpha;
@@ -61,14 +78,19 @@ impl StrongWolfeLineSearch {
     }
 }
 
-impl<T: FloatNum> LineSearch<T> for StrongWolfeLineSearch {
+impl<T: FloatNum, D: Dim> LineSearch<T, D> for StrongWolfeLineSearch 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     fn search(
         &self,
-        x: &DVector<T>,
-        p: &DVector<T>,
+        x: &OVector<T, D>,
+        p: &OVector<T, D>,
         f: T,
-        g: &DVector<T>,
-        opt_prob: &OptProb<T>,
+        g: &OVector<T, D>,
+        opt_prob: &OptProb<T, D>,
     ) -> T {
         let c1 = T::from_f64(self.conf.c1).unwrap();
         let c2 = T::from_f64(self.conf.c2).unwrap();
@@ -112,14 +134,19 @@ impl HagerZhangLineSearch {
     }
 }
 
-impl<T: FloatNum> LineSearch<T> for HagerZhangLineSearch {
+impl<T: FloatNum, D: Dim> LineSearch<T, D> for HagerZhangLineSearch 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     fn search(
         &self,
-        x: &DVector<T>,
-        p: &DVector<T>,
+        x: &OVector<T, D>,
+        p: &OVector<T, D>,
         f: T,
-        g: &DVector<T>,
-        opt_prob: &OptProb<T>,
+        g: &OVector<T, D>,
+        opt_prob: &OptProb<T, D>,
     ) -> T {
         let c1 = T::from_f64(self.conf.c1).unwrap();
         let c2 = T::from_f64(self.conf.c2).unwrap();
@@ -162,14 +189,19 @@ impl MoreThuenteLineSearch {
     }
 }
 
-impl<T: FloatNum> LineSearch<T> for MoreThuenteLineSearch {
+impl<T: FloatNum, D: Dim> LineSearch<T, D> for MoreThuenteLineSearch 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     fn search(
         &self,
-        x: &DVector<T>,
-        p: &DVector<T>,
+        x: &OVector<T, D>,
+        p: &OVector<T, D>,
         f: T,
-        g: &DVector<T>,
-        opt_prob: &OptProb<T>,
+        g: &OVector<T, D>,
+        opt_prob: &OptProb<T, D>,
     ) -> T {
         let ftol = T::from_f64(self.conf.ftol).unwrap();
         let gtol = T::from_f64(self.conf.gtol).unwrap();
@@ -210,12 +242,17 @@ impl GoldenSectionLineSearch {
     }
 
     // Helper function to bracket the maximum
-    fn bracket_maximum<T: FloatNum>(
+    fn bracket_maximum<T: FloatNum, D: Dim>(
         &self,
-        x: &DVector<T>,
-        p: &DVector<T>,
-        opt_prob: &OptProb<T>,
-    ) -> (T, T, T) {
+        x: &OVector<T, D>,
+        p: &OVector<T, D>,
+        opt_prob: &OptProb<T, D>,
+    ) -> (T, T, T) 
+    where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+    {
         let golden_ratio: T = T::from_f64((5.0_f64).sqrt() * 0.5 + 0.5).unwrap();
         let bracket_factor = T::from_f64(self.conf.bracket_factor).unwrap();
         
@@ -250,14 +287,19 @@ impl GoldenSectionLineSearch {
     }
 }
 
-impl<T: FloatNum> LineSearch<T> for GoldenSectionLineSearch {
+impl<T: FloatNum, D: Dim> LineSearch<T, D> for GoldenSectionLineSearch 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     fn search(
         &self,
-        x: &DVector<T>,
-        p: &DVector<T>,
+        x: &OVector<T, D>,
+        p: &OVector<T, D>,
         _f: T,
-        _g: &DVector<T>,
-        opt_prob: &OptProb<T>,
+        _g: &OVector<T, D>,
+        opt_prob: &OptProb<T, D>,
     ) -> T {
         let resphi = T::from_f64((3.0_f64 - (5.0_f64).sqrt()) / 2.0).unwrap();
         let tol = T::from_f64(self.conf.tol).unwrap();

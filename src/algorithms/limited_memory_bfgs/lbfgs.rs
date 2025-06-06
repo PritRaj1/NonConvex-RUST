@@ -1,4 +1,11 @@
-use nalgebra::{DVector, DMatrix};
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+};
 
 use crate::utils::config::{LBFGSConf, LineSearchConf};
 use crate::utils::opt_prob::{
@@ -17,32 +24,35 @@ use crate::algorithms::limited_memory_bfgs::linesearch::{
     GoldenSectionLineSearch
 };
 
-
-pub struct LBFGS<T: FloatNum> 
+pub struct LBFGS<T: FloatNum, D: Dim> 
 where 
-    T: Send + Sync 
+    DefaultAllocator: Allocator<D>
+                     + Allocator<U1, D>
+                     + Allocator<U1>
 {
     pub conf: LBFGSConf,
-    pub opt_prob: OptProb<T>,
-    pub x: DVector<T>,
-    pub st: State<T>,
-    pub linesearch: Box<dyn LineSearch<T> + Send + Sync>,
-    s: Vec<DVector<T>>,
-    y: Vec<DVector<T>>,
+    pub opt_prob: OptProb<T, D>,
+    pub x: OVector<T, D>,
+    pub st: State<T, U1, D>,
+    pub linesearch: Box<dyn LineSearch<T, D> + Send + Sync>,
+    s: Vec<OVector<T, D>>,
+    y: Vec<OVector<T, D>>,
     has_bounds: bool,
-    lower_bounds: Option<DVector<T>>,
-    upper_bounds: Option<DVector<T>>,
+    lower_bounds: Option<OVector<T, D>>,
+    upper_bounds: Option<OVector<T, D>>,
 }
 
-impl<T: FloatNum> LBFGS<T> 
+impl<T: FloatNum, D: Dim> LBFGS<T, D> 
 where 
-    T: Send + Sync 
+    DefaultAllocator: Allocator<D>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
 {
-    pub fn new(conf: LBFGSConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>) -> Self {
+    pub fn new(conf: LBFGSConf, init_pop: OMatrix<T, U1, D>, opt_prob: OptProb<T, D>) -> Self {
         let init_x = init_pop.row(0).transpose();
         let best_f = opt_prob.evaluate(&init_x);
 
-        let linesearch: Box<dyn LineSearch<T> + Send + Sync> = match &conf.line_search {
+        let linesearch: Box<dyn LineSearch<T, D> + Send + Sync> = match &conf.line_search {
             LineSearchConf::Backtracking(backtracking_conf) => Box::new(BacktrackingLineSearch::new(backtracking_conf)),
             LineSearchConf::StrongWolfe(strong_wolfe_conf) => Box::new(StrongWolfeLineSearch::new(strong_wolfe_conf)),
             LineSearchConf::HagerZhang(hager_zhang_conf) => Box::new(HagerZhangLineSearch::new(hager_zhang_conf)),
@@ -62,9 +72,9 @@ where
             st: State {
                 best_x: init_x.clone(),
                 best_f: best_f,
-                pop: DMatrix::from_columns(&[init_x.clone()]),
-                fitness: vec![best_f].into(),
-                constraints: vec![opt_prob.is_feasible(&init_x)].into(),
+                pop: init_pop,
+                fitness: OVector::<T, U1>::from_vec(vec![best_f]),
+                constraints: OVector::<bool, U1>::from_vec(vec![opt_prob.is_feasible(&init_x.clone())]),
                 iter: 1
             },
             linesearch,
@@ -76,7 +86,7 @@ where
         }
     }
 
-    fn project_onto_bounds(&self, x: &mut DVector<T>) {
+    fn project_onto_bounds(&self, x: &mut OVector<T, D>) {
         if let Some(ref lb) = self.lower_bounds {
             for i in 0..x.len() {
                 x[i] = x[i].max(lb[i]);
@@ -89,7 +99,7 @@ where
         }
     }
 
-    fn compute_cauchy_point(&self, g: &DVector<T>) -> DVector<T> {
+    fn compute_cauchy_point(&self, g: &OVector<T, D>) -> OVector<T, D> {
         let mut t = T::one();
         let mut x_cp = self.x.clone();
         
@@ -110,7 +120,7 @@ where
         x_cp
     }
 
-    fn step_with_bounds(&mut self, g: &DVector<T>) {
+    fn step_with_bounds(&mut self, g: &OVector<T, D>) {
         let x_cp = self.compute_cauchy_point(g);
         let mut p = x_cp - &self.st.best_x;
         
@@ -128,7 +138,7 @@ where
         self.x = x_new;
     }
 
-    fn step_without_bounds(&mut self, g: &DVector<T>) {
+    fn step_without_bounds(&mut self, g: &OVector<T, D>) {
         let p = self.compute_search_direction(g);
         
         let alpha = self.linesearch.search(&self.st.best_x, &p, self.st.best_f, g, &self.opt_prob);
@@ -140,8 +150,8 @@ where
         self.x = x_new;
     }
 
-    fn compute_reduced_gradient(&self, g: &DVector<T>) -> DVector<T> {
-        let mut r = DVector::zeros(self.st.best_x.len());
+    fn compute_reduced_gradient(&self, g: &OVector<T, D>) -> OVector<T, D> {
+        let mut r = OVector::<T, D>::zeros_generic(D::from_usize(self.st.best_x.len()), U1);
         for i in 0..self.st.best_x.len() {
             if !self.is_at_bound(i) {
                 r[i] = g[i];
@@ -151,7 +161,7 @@ where
     }
 
     // Two-loop recursion to approximate the inverse Hessian
-    fn two_loop_recursion(&self, r: &DVector<T>) -> DVector<T> {
+    fn two_loop_recursion(&self, r: &OVector<T, D>) -> OVector<T, D> {
         let m = self.conf.common.memory_size;
         let mut q = r.clone();
         let mut alpha = vec![T::zero(); m];
@@ -171,7 +181,7 @@ where
         z
     }
 
-    fn update_search_direction(&self, p: &mut DVector<T>, z: &DVector<T>) {
+    fn update_search_direction(&self, p: &mut OVector<T, D>, z: &OVector<T, D>) {
         for i in 0..self.st.best_x.len() {
             if !self.is_at_bound(i) {
                 p[i] = z[i];
@@ -179,7 +189,7 @@ where
         }
     }
 
-    fn compute_search_direction(&self, g: &DVector<T>) -> DVector<T> {
+    fn compute_search_direction(&self, g: &OVector<T, D>) -> OVector<T, D> {
         let m = self.conf.common.memory_size;
         let mut q = g.clone();
         let mut alpha = vec![T::zero(); m];
@@ -208,7 +218,7 @@ where
         p
     }
 
-    fn update_s_y_vectors(&mut self, x_new: &DVector<T>, g: &DVector<T>) {
+    fn update_s_y_vectors(&mut self, x_new: &OVector<T, D>, g: &OVector<T, D>) {
         let s_new = x_new - &self.st.best_x;
         let y_new = self.opt_prob.objective.gradient(x_new).unwrap() - g;
 
@@ -220,7 +230,7 @@ where
         self.y.push(y_new);
     }
 
-    fn update_best_solution(&mut self, x_new: &DVector<T>) {
+    fn update_best_solution(&mut self, x_new: &OVector<T, D>) {
         let f_new = self.opt_prob.evaluate(x_new);
         if f_new > self.st.best_f {
             self.st.best_f = f_new;
@@ -235,7 +245,12 @@ where
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for LBFGS<T> {
+impl<T: FloatNum, D: Dim> OptimizationAlgorithm<T, U1, D> for LBFGS<T, D> 
+where 
+    DefaultAllocator: Allocator<D>
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     fn step(&mut self) {
         let g = self.opt_prob.objective.gradient(&self.x).unwrap();
         
@@ -253,14 +268,14 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for LBFGS<T> {
             self.st.best_x = self.x.clone();
         }
 
-        self.st.pop.set_column(0, &self.x);
+        self.st.pop.row_mut(0).copy_from(&self.x.transpose());
         self.st.fitness[0] = fitness;
         self.st.constraints[0] = constraints;
 
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, U1, D> {
         &self.st
     }
 }

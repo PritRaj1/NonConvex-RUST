@@ -1,15 +1,27 @@
-use nalgebra::{DVector, DMatrix};
-use rayon::prelude::*;
 use rand::Rng;
+use rayon::prelude::*;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+    Dyn,
+};
 
 use crate::utils::config::{MSPOConf};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 
 use crate::algorithms::multi_swarm::particle::Particle;
 
-pub struct Swarm<T: FloatNum> {
-    pub particles: Vec<Particle<T>>,
-    pub global_best_position: DVector<T>,
+pub struct Swarm<T: FloatNum, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<U1, D>
+{
+    pub particles: Vec<Particle<T, D>>,   
+    pub global_best_position: OVector<T, D>,
     pub global_best_fitness: T,
     pub w: T,
     pub c1: T,
@@ -18,7 +30,15 @@ pub struct Swarm<T: FloatNum> {
     pub x_max: f64,
 }
 
-impl<T: FloatNum> Swarm<T> {
+impl<T: FloatNum, D: Dim> Swarm<T, D> 
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, Dyn, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<U1, D>     
+                    + Allocator<Dyn, D>
+{
     pub fn new(
         num_particles: usize,
         dim: usize,
@@ -26,14 +46,14 @@ impl<T: FloatNum> Swarm<T> {
         c1: T,
         c2: T,
         bounds: (T, T),
-        opt_prob: &OptProb<T>,
-        init_pop: DMatrix<T>,
+        opt_prob: &OptProb<T, D>,
+        init_pop: OMatrix<T, Dyn, D>,
     ) -> Self {
         let particles: Vec<_> = (0..num_particles)
             .into_par_iter()
             .map(|i| {
                 let mut rng = rand::rng();
-                let mut position;
+                let mut position = OVector::<T, D>::zeros_generic(D::from_usize(dim), U1);
                 let fitness;
                 
                 if i < init_pop.nrows() {
@@ -43,13 +63,11 @@ impl<T: FloatNum> Swarm<T> {
                 } else {
                     // Generate random position if needed
                     loop {
-                        position = DVector::from_iterator(
-                            dim,
-                            (0..dim).map(|_| {
-                                let r = T::from_f64(rng.random::<f64>()).unwrap();
-                                bounds.0 + (bounds.1 - bounds.0) * r
-                            })
-                        );
+                        let values = (0..dim).map(|_| {
+                            let r = T::from_f64(rng.random::<f64>()).unwrap();
+                            bounds.0 + (bounds.1 - bounds.0) * r
+                        });
+                        let position: OVector<T, D> = OVector::from_iterator_generic(D::from_usize(dim), U1, values);
                         
                         if opt_prob.is_feasible(&position) {
                             fitness = opt_prob.evaluate(&position);
@@ -58,20 +76,19 @@ impl<T: FloatNum> Swarm<T> {
                     }
                 }
                 
-                let velocity = DVector::from_iterator(
-                    dim,
-                    (0..dim).map(|_| {
-                        let r = T::from_f64(rng.random::<f64>()).unwrap();
-                        (bounds.1 - bounds.0) * (r - T::from_f64(0.5).unwrap()) * T::from_f64(0.1).unwrap()
-                    })
-                );
+                let values = (0..dim).map(|_| {
+                    let r = T::from_f64(rng.random::<f64>()).unwrap();
+                    (bounds.1 - bounds.0) * (r - T::from_f64(0.5).unwrap()) * T::from_f64(0.1).unwrap()
+                });
+
+                let velocity: OVector<T, D> = OVector::from_iterator_generic(D::from_usize(dim), U1, values);
 
                 Particle::new(position, velocity, fitness)
             })
             .collect();
 
         let mut best_fitness = T::neg_infinity();
-        let mut best_position = DVector::zeros(dim);
+        let mut best_position = OVector::<T, D>::zeros_generic(D::from_usize(dim), U1);
 
         for particle in &particles {
             if particle.best_fitness > best_fitness {
@@ -94,7 +111,7 @@ impl<T: FloatNum> Swarm<T> {
 
     pub fn update(
         &mut self,
-        opt_prob: &OptProb<T>,
+        opt_prob: &OptProb<T, D>,
     ) {
         let bounds = (
             T::from_f64(self.x_min).unwrap(),
@@ -125,17 +142,26 @@ impl<T: FloatNum> Swarm<T> {
     }
 } 
 
-pub fn initialize_swarms<T: FloatNum>(
+pub fn initialize_swarms<T: FloatNum, N: Dim, D: Dim>(
     conf: &MSPOConf,
     dim: usize,
-    init_pop: &DMatrix<T>,
-    opt_prob: &OptProb<T>
-) -> Vec<Swarm<T>> {
+    init_pop: &OMatrix<T, N, D>,
+    opt_prob: &OptProb<T, D>
+) -> Vec<Swarm<T, D>> 
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N, D>
+                    + Allocator<U1, D>
+                    + Allocator<D, D>
+{
     let particles_per_swarm = conf.swarm_size;
     let pop_per_swarm = init_pop.nrows() / conf.num_swarms;
 
     // Find several promising regions 
-    let mut promising_centers: Vec<DVector<T>> = Vec::new();
+    let mut promising_centers: Vec<OVector<T, D>> = Vec::new();
     let mut sorted_indices: Vec<usize> = (0..init_pop.nrows()).collect();
     sorted_indices.sort_by(|&i, &j| {
         let fi = opt_prob.evaluate(&init_pop.row(i).transpose());
@@ -163,7 +189,7 @@ pub fn initialize_swarms<T: FloatNum>(
                 promising_centers[i].clone()
             } else {
                 // Random center for remaining swarms
-                DVector::from_iterator(dim, (0..dim).map(|_| {
+                OVector::<T, D>::from_iterator_generic(D::from_usize(dim), U1, (0..dim).map(|_| {
                     T::from_f64(conf.x_min + rand::random::<f64>() * (conf.x_max - conf.x_min)).unwrap()
                 }))
             };
@@ -171,7 +197,7 @@ pub fn initialize_swarms<T: FloatNum>(
             // Initialize particles around the center
             let radius = T::from_f64(0.2 * (conf.x_max - conf.x_min)).unwrap(); // Local search radius
             let start_idx = i * pop_per_swarm;
-            let mut swarm_pop = init_pop.rows(start_idx, particles_per_swarm).into_owned();
+            let mut swarm_pop: OMatrix<T, Dyn, D> = init_pop.rows(start_idx, particles_per_swarm).into_owned();
             
             // Adjust some particles to be near the center
             for j in 0..particles_per_swarm/2 {

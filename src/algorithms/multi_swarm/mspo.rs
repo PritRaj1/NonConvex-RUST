@@ -1,5 +1,12 @@
-use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+};
 
 use crate::utils::config::MSPOConf;
 use crate::algorithms::multi_swarm::swarm::{Swarm, initialize_swarms};
@@ -10,15 +17,31 @@ use crate::utils::opt_prob::{
     State
 };
 
-pub struct MSPO<T: FloatNum + Send + Sync> {
+pub struct MSPO<T: FloatNum, N: Dim, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<U1, D>
+{
     pub conf: MSPOConf,
-    pub st: State<T>,
-    pub swarms: Vec<Swarm<T>>,
-    pub opt_prob: OptProb<T>,
+    pub st: State<T, N, D>,
+    pub swarms: Vec<Swarm<T, D>>,
+    pub opt_prob: OptProb<T, D>,
 }
 
-impl<T: FloatNum + Send + Sync> MSPO<T> {
-    pub fn new(conf: MSPOConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>) -> Self {
+impl<T: FloatNum, N: Dim, D: Dim> MSPO<T, N, D> 
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<U1, D>
+                    + Allocator<D, D>
+{
+    pub fn new(conf: MSPOConf, init_pop: OMatrix<T, N, D>, opt_prob: OptProb<T, D>) -> Self {
         let dim = init_pop.ncols();
         let total_particles = init_pop.nrows();
         assert!(total_particles >= conf.num_swarms * conf.swarm_size, 
@@ -38,8 +61,8 @@ impl<T: FloatNum + Send + Sync> MSPO<T> {
             })
             .unzip();
 
-        let fitness = DVector::from_vec(fitness);
-        let constraints = DVector::from_vec(constraints);
+        let fitness = OVector::<T, N>::from_vec_generic(N::from_usize(init_pop.nrows()), U1, fitness);
+        let constraints =  OVector::<bool, N>::from_vec_generic(N::from_usize(init_pop.nrows()), U1, constraints);
 
         let st = State {
             best_x,
@@ -59,9 +82,9 @@ impl<T: FloatNum + Send + Sync> MSPO<T> {
     }
 
     fn find_best_solution(
-        population: &DMatrix<T>, 
-        opt_prob: &OptProb<T>
-    ) -> (DVector<T>, T) {
+        population: &OMatrix<T, N, D>, 
+        opt_prob: &OptProb<T, D>
+    ) -> (OVector<T, D>, T) {
         (0..population.nrows())
             .filter_map(|i| {
                 let x = population.row(i).transpose();
@@ -119,10 +142,10 @@ impl<T: FloatNum + Send + Sync> MSPO<T> {
         });
     }
 
-    pub fn get_population(&self) -> DMatrix<T> {
+    pub fn get_population(&self) -> OMatrix<T, N, D> {
         let total_particles = self.swarms.len() * self.conf.swarm_size;
         let dim = self.st.best_x.len();
-        let mut population = DMatrix::zeros(total_particles, dim);
+        let mut population = OMatrix::<T, N, D>::zeros_generic(N::from_usize(total_particles), D::from_usize(dim));
         
         for (swarm_idx, swarm) in self.swarms.iter().enumerate() {
             for (particle_idx, particle) in swarm.particles.iter().enumerate() {
@@ -135,7 +158,17 @@ impl<T: FloatNum + Send + Sync> MSPO<T> {
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for MSPO<T> {
+impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for MSPO<T, N, D> 
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<U1, D>
+                    + Allocator<D, D>
+{
     fn step(&mut self) {
         // Update each swarm independently
         let results: Vec<_> = self.swarms
@@ -172,12 +205,12 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for MSPO<T> {
             })
             .unzip();
 
-        self.st.fitness = DVector::from_vec(fitness);
-        self.st.constraints = DVector::from_vec(constraints);
+        self.st.fitness = OVector::<T, N>::from_vec_generic(N::from_usize(self.st.pop.nrows()), U1, fitness);
+        self.st.constraints = OVector::<bool, N>::from_vec_generic(N::from_usize(self.st.pop.nrows()), U1, constraints);
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, N, D> {
         &self.st
     }
 } 

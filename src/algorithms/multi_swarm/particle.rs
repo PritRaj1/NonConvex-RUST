@@ -1,16 +1,32 @@
-use nalgebra::DVector;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 use rand::Rng;
+use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OVector,
+    U1,
+};
 
-pub struct Particle<T: FloatNum> {
-    pub position: DVector<T>,
-    pub velocity: DVector<T>,
-    pub best_position: DVector<T>,
+pub struct Particle<T: FloatNum, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
+{
+    pub position: OVector<T, D>,
+    pub velocity: OVector<T, D>,
+    pub best_position: OVector<T, D>,
     pub best_fitness: T,
 }
 
-impl<T: FloatNum> Particle<T> {
-    pub fn new(position: DVector<T>, velocity: DVector<T>, fitness: T) -> Self {
+impl<T: FloatNum, D: Dim> Particle<T, D> 
+where 
+    DefaultAllocator: Allocator<D>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
+{
+    pub fn new(position: OVector<T, D>, velocity: OVector<T, D>, fitness: T) -> Self {
         Self {
             position: position.clone(),
             velocity,
@@ -21,11 +37,11 @@ impl<T: FloatNum> Particle<T> {
 
     pub fn update_velocity_and_position(
         &mut self,
-        global_best: &DVector<T>,
+        global_best: &OVector<T, D>,
         w: T,
         c1: T,
         c2: T,
-        opt_prob: &OptProb<T>,
+        opt_prob: &OptProb<T, D>,
         bounds: (T, T),
     ) {
         let mut rng = rand::rng();
@@ -53,7 +69,7 @@ impl<T: FloatNum> Particle<T> {
             })
             .collect();
 
-        let final_position = DVector::from_vec(new_positions);
+        let final_position = OVector::<T, D>::from_vec_generic(D::from_usize(new_positions.len()), U1, new_positions);
         self.position = final_position;
         
         // Only update best position if new position is better AND feasible
