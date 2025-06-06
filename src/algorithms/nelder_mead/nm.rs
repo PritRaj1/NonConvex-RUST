@@ -1,5 +1,12 @@
-use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+};
 
 use crate::utils::config::NelderMeadConf;
 use crate::utils::opt_prob::{
@@ -9,44 +16,61 @@ use crate::utils::opt_prob::{
     State
 };
 
-pub struct NelderMead<T: FloatNum> {
+pub struct NelderMead<T: FloatNum, N: Dim, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N, D>
+                    + Allocator<N>
+{
     pub conf: NelderMeadConf,
-    pub st: State<T>,
-    pub opt_prob: OptProb<T>,
-    pub simplex: Vec<DVector<T>>,
+    pub st: State<T, N, D>,
+    pub opt_prob: OptProb<T, D>,
+    pub simplex: Vec<OVector<T, D>>,
 }
 
-impl<T: FloatNum> NelderMead<T> 
+impl<T: FloatNum, N: Dim, D: Dim> NelderMead<T, N, D> 
 where 
-    T: Send + Sync 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<D, U1>
 {
-    pub fn new(conf: NelderMeadConf, init_x: DMatrix<T>, opt_prob: OptProb<T>) -> Self {
-        let n = init_x.nrows();
+    pub fn new(conf: NelderMeadConf, init_x: OMatrix<T, N, D>, opt_prob: OptProb<T, D>) -> Self {
+        let n: usize = init_x.nrows();
         assert_eq!(init_x.ncols(), n + 1, "Initial simplex must have n+1 vertices");
         
-        let mut simplex = Vec::with_capacity(n + 1);
-        let mut fitness_values = Vec::with_capacity(n + 1);
-        
-        for j in 0..init_x.ncols() {
-            let vertex = init_x.column(j).into_owned();
-            simplex.push(vertex.clone());
-            fitness_values.push(opt_prob.evaluate(&vertex));
-        }
-        
+        let simplex: Vec<_> = (0..(n+1))
+            .map(|j| init_x.row(j).transpose())
+            .collect();
+
+        let fitness_values = OVector::<T, N>::from_iterator_generic(
+            N::from_usize(n + 1), 
+            U1,                 
+            simplex.iter().map(|vertex| opt_prob.evaluate(vertex))
+        );
+            
         let best_idx = fitness_values.iter()
             .enumerate()
             .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
             .map(|(idx, _)| idx)
             .unwrap();
+
+        let pop = OMatrix::<T, N, D>::from_iterator_generic(
+            N::from_usize(n + 1),                       
+            D::from_usize(n),   
+            simplex.iter().flat_map(|v| v.iter().cloned())
+        );
             
         Self {
             conf,
             st: State {
                 best_x: simplex[best_idx].clone(),
                 best_f: fitness_values[best_idx],
-                pop: DMatrix::from_columns(&simplex),
-                fitness: DVector::from_vec(fitness_values),
-                constraints: DVector::from_vec(vec![true; simplex.len()]),
+                pop,
+                fitness: fitness_values,
+                constraints: OVector::<bool, N>::from_element_generic(N::from_usize(n + 1), U1, true),
                 iter: 1
             },
             opt_prob,
@@ -54,8 +78,8 @@ where
         }
     }
 
-    pub fn centroid(&self, worst_idx: usize) -> DVector<T> {
-        let mut centroid = DVector::zeros(self.st.best_x.len());
+    pub fn centroid(&self, worst_idx: usize) -> OVector<T, D> {
+        let mut centroid = OVector::<T, D>::zeros_generic(D::from_usize(self.st.best_x.len()), U1);
         for (i, vertex) in self.simplex.iter().enumerate() {
             if i != worst_idx {
                 centroid += vertex;
@@ -71,7 +95,7 @@ where
         indices
     }
 
-    fn try_reflection_expansion(&mut self, worst_idx: usize, best_idx: usize, centroid: &DVector<T>) -> bool {
+    fn try_reflection_expansion(&mut self, worst_idx: usize, best_idx: usize, centroid: &OVector<T, D>) -> bool {
         // Reflect worst point across centroid
         let reflected = centroid + (centroid - &self.simplex[worst_idx]) * T::from_f64(self.conf.alpha).unwrap();
         let reflected_fitness = self.evaluate_point(&reflected);
@@ -96,7 +120,7 @@ where
         false
     }
 
-    fn try_contraction(&mut self, worst_idx: usize, _best_idx: usize, centroid: &DVector<T>) -> bool {
+    fn try_contraction(&mut self, worst_idx: usize, _best_idx: usize, centroid: &OVector<T, D>) -> bool {
         let contracted = centroid + (&self.simplex[worst_idx] - centroid) * T::from_f64(self.conf.rho).unwrap();
         let contracted_fitness = self.evaluate_point(&contracted);
         
@@ -126,7 +150,7 @@ where
     }
 
     // Negativ inf when infeasible
-    fn evaluate_point(&self, point: &DVector<T>) -> T {
+    fn evaluate_point(&self, point: &OVector<T, D>) -> T {
         if self.opt_prob.is_feasible(point) {
             self.opt_prob.evaluate(point)
         } else {
@@ -134,7 +158,7 @@ where
         }
     }
 
-    fn update_vertex(&mut self, idx: usize, vertex: DVector<T>, fitness: T) {
+    fn update_vertex(&mut self, idx: usize, vertex: OVector<T, D>, fitness: T) {
         self.simplex[idx] = vertex;
         self.st.fitness[idx] = fitness;
     }
@@ -152,11 +176,23 @@ where
             self.st.best_x = self.simplex[best_idx].clone();
         }
 
-        self.st.pop = DMatrix::from_columns(&self.simplex);
+        self.st.pop = OMatrix::<T, N, D>::from_iterator_generic(
+            N::from_usize(self.simplex.len()),                       
+            D::from_usize(self.st.best_x.len()),   
+            self.simplex.iter().flat_map(|v| v.iter().cloned())
+        );
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for NelderMead<T>{
+impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for NelderMead<T, N, D>
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<D, U1>
+{
     fn step(&mut self) {
         // Sort vertices by fitness
         let indices = self.get_sorted_indices();
@@ -173,11 +209,11 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for NelderMead<T>{
         self.update_best_solution();
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, N, D> {
         &self.st
     }
 
-    fn get_simplex(&self) -> Option<&Vec<DVector<T>>> {
+    fn get_simplex(&self) -> Option<&Vec<OVector<T, D>>> {
         Some(&self.simplex)
     }
 }

@@ -1,26 +1,42 @@
 use rand::Rng;
-use nalgebra::{DVector, DMatrix};
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 use rand_distr::StandardNormal;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OVector,
+    OMatrix,
+    U1
+};
+
+use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+
 pub enum MoveType {
     RandomDrift,
     MALA,
 }
 
-pub struct MetropolisHastings<T: FloatNum> {
+pub struct MetropolisHastings<T: FloatNum, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D>             
+{
     pub k: T,
     pub move_type: MoveType,
-    pub prob: OptProb<T>,
+    pub prob: OptProb<T, D>,
     pub alpha: T,
     pub omega: T,
     pub mala_step_size: T,
 }
 
-impl<T: FloatNum> MetropolisHastings<T> {
-    pub fn new(prob: OptProb<T>, mala_step_size: T, alpha: T, omega: T) -> Self {
+impl<T: FloatNum, D: Dim> MetropolisHastings<T, D> 
+where 
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<D, D>
+{
+    pub fn new(prob: OptProb<T, D>, mala_step_size: T, alpha: T, omega: T, generic_x: OVector<T, D>) -> Self {
         let k = T::from_f64(1.38064852e-23).unwrap(); // Boltzmann constant
 
-        let move_type = if prob.objective.gradient(&DVector::zeros(1)).is_some() {
+        let move_type = if prob.objective.gradient(&generic_x).is_some() {
             MoveType::MALA
         } else {
             MoveType::RandomDrift
@@ -29,7 +45,7 @@ impl<T: FloatNum> MetropolisHastings<T> {
         MetropolisHastings { k, move_type, prob, mala_step_size, alpha, omega }
     }
 
-    pub fn local_move(&self, x_old: &DVector<T>, step_size: &DMatrix<T>, t: T) -> DVector<T> {
+    pub fn local_move(&self, x_old: &OVector<T, D>, step_size: &OMatrix<T, D, D>, t: T) -> OVector<T, D> {
         match self.move_type {
             MoveType::MALA => {
                 let grad = self.prob.objective.gradient(x_old).expect("Gradient should be available for MALA");
@@ -39,27 +55,33 @@ impl<T: FloatNum> MetropolisHastings<T> {
         }
     }
 
-    fn local_move_random_drift(&self, x_old: &DVector<T>, step_size: &DMatrix<T>) -> DVector<T> {
+    fn local_move_random_drift(&self, x_old: &OVector<T, D>, step_size: &OMatrix<T, D, D>) -> OVector<T, D> {
         let mut rng = rand::rng();
         let mut x_new = x_old.clone();
-        let random_vec = DVector::from_fn(x_old.len(), |_, _| T::from_f64(rng.random::<f64>()).unwrap());
+        let random_vec= OVector::<T, D>::from_fn_generic(
+            D::from_usize(x_old.len()),
+            U1,       
+            |_, _| T::from_f64(rng.random::<f64>()).unwrap()
+        );
         x_new += random_vec.component_mul(&step_size.diagonal());
         x_new
     }
 
-    fn local_move_mala(&self, x_old: &DVector<T>, grad: &DVector<T>, t: T) -> DVector<T> {
+    fn local_move_mala(&self, x_old: &OVector<T, D>, grad: &OVector<T, D>, t: T) -> OVector<T, D> {
         let mut rng = rand::rng();
         let step = self.mala_step_size / t;
         let drift = grad * step;
     
-        let noise = DVector::from_fn(x_old.len(), |_, _| {
-            T::from_f64(rng.sample::<f64, _>(StandardNormal)).unwrap()
-        }) * (step * T::from_f64(2.0).unwrap()).sqrt();
+        let noise = OVector::<T, D>::from_fn_generic(
+            D::from_usize(x_old.len()),
+            U1,
+            |_, _| T::from_f64(rng.sample::<f64, _>(StandardNormal)).unwrap(),
+        ) * (step * T::from_f64(2.0).unwrap()).sqrt();
     
         x_old + drift + noise
     }
 
-    fn project(&self, x: &DVector<T>) -> DVector<T> {
+    fn project(&self, x: &OVector<T, D>) -> OVector<T, D> {
         if let (Some(x_ub), Some(x_lb)) = (&self.prob.objective.x_upper_bound(x), &self.prob.objective.x_lower_bound(x)) {
             x.component_mul(&(x_ub.clone() - x_lb.clone())) + x_lb.clone()
         } else {
@@ -69,8 +91,8 @@ impl<T: FloatNum> MetropolisHastings<T> {
 
     pub fn accept_reject(
         &self, 
-        x_old: &DVector<T>,
-        x_new: &DVector<T>,
+        x_old: &OVector<T, D>,
+        x_new: &OVector<T, D>,
         constraints_new: bool,
         t: T,
         t_swap: T, 
@@ -117,8 +139,12 @@ impl<T: FloatNum> MetropolisHastings<T> {
         u < r
     }
 
-    pub fn update_step_size(&self, step_size: &DMatrix<T>, x_old: &DVector<T>, x_new: &DVector<T>) -> DMatrix<T> {
-        let r = DVector::from_fn(x_old.len(), |i, _| (x_new[i] - x_old[i]).abs());
+    pub fn update_step_size(&self, step_size: &OMatrix<T, D, D>, x_old: &OVector<T, D>, x_new: &OVector<T, D>) -> OMatrix<T, D, D> {
+        let r = OVector::<T, D>::from_fn_generic(
+            D::from_usize(x_old.len()),
+            U1,
+            |i, _| (x_new[i] - x_old[i]).abs(),
+        );
         let mut step_size_new = step_size.clone();
         for i in 0..x_old.len() {
             step_size_new[(i, i)] = (T::one() - self.alpha) * step_size[(i, i)] + self.alpha * self.omega * r[i];

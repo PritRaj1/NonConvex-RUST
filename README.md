@@ -93,7 +93,7 @@ The following GIFs are based on the [2D unconstrained maximization problems](./e
 |  |  |
 |-----------|---------------|
 | [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) - Population-based natural selection | <img src="./examples/gifs/cga_kbf.gif" width="300" alt="CGA Example"> |
-| <img src="./examples/gifs/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Monte Carlo sampling |
+| <img src="./examples/gifs/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Metropolis-Hastings |
 | [Multi-Swarm Particle Optimization (MSPO)](./src/multi_swarm/MSPO.md) - Multi-swarm particle optimization | <img src="./examples/gifs/mspo_kbf.gif" width="300" alt="MSPO Example"> |
 | <img src="./examples/gifs/de_kbf.gif" width="300" alt="DE Example"> | [Differential Evolution (DE)](./src/differential_evolution/DE.md) - Differential evolution |
 | [Covariance Matrix Adaptation Evolution Strategy (CMA-ES)](./src/cma_es/CMA_ES.md) - I love this algorithm! | <img src="./examples/gifs/cmaes_kbf.gif" width="300" alt="CMAES Example"> |

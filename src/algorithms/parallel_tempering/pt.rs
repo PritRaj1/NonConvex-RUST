@@ -1,6 +1,14 @@
-use nalgebra::{DVector, DMatrix};
-use rayon::prelude::*;
 use rand::Rng;
+use rayon::prelude::*;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+    DMatrix,
+};
 
 use crate::utils::config::{PTConf, SwapConf};
 use crate::utils::opt_prob::{
@@ -15,26 +23,45 @@ use crate::algorithms::parallel_tempering::{
     metropolis_hastings::MetropolisHastings,
 };
 
-pub struct PT<T: FloatNum> {
+pub struct PT<T: FloatNum, N: Dim, D: Dim> 
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    OMatrix<T, D, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<D, D>
+{
     pub conf: PTConf,
-    pub metropolis_hastings: MetropolisHastings<T>,
+    pub metropolis_hastings: MetropolisHastings<T, D>,
     pub swap_check: SwapCheck,
     pub p_schedule: Vec<T>,
-    pub population: Vec<DMatrix<T>>, // For each replica
-    pub fitness: Vec<DVector<T>>,
-    pub constraints: Vec<DVector<bool>>,
-    pub opt_prob: OptProb<T>,
-    pub best_individual: DVector<T>,
+    pub population: Vec<OMatrix<T, N, D>>, // For each replica
+    pub fitness: Vec<OVector<T, N>>,
+    pub constraints: Vec<OVector<bool, N>>,
+    pub opt_prob: OptProb<T, D>,
+    pub best_individual: OVector<T, D>,
     pub best_fitness: T,
-    pub step_sizes: Vec<Vec<DMatrix<T>>>,
-    pub st: State<T>, // Store a copy of best population and fitness values
+    pub step_sizes: Vec<Vec<OMatrix<T, D, D>>>,
+    pub st: State<T, N, D>, // Store a copy of final replica's population and fitness values
 }
 
-impl<T: FloatNum> PT<T> 
+impl<T: FloatNum, N: Dim, D: Dim> PT<T, N, D> 
 where 
-    T: Send + Sync 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OVector<bool, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    OMatrix<T, D, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<D, D>
 {
-    pub fn new(conf: PTConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>, max_iter: usize) -> Self {
+    pub fn new(conf: PTConf, init_pop: OMatrix<T, N, D>, opt_prob: OptProb<T, D>, max_iter: usize) -> Self {
 
         let swap_check = match &conf.swap_conf {
             SwapConf::Periodic(p) => SwapCheck::Periodic(Periodic::new(p.swap_frequency, max_iter)),
@@ -42,11 +69,12 @@ where
             SwapConf::Always(_) => SwapCheck::Always(Always::new()),
         };
 
-        let metropolis_hastings = MetropolisHastings::new(
+        let metropolis_hastings = MetropolisHastings::<T, D>::new(
             opt_prob.clone(), 
             T::from_f64(conf.common.mala_step_size).unwrap(),
             T::from_f64(conf.common.alpha).unwrap(), 
-            T::from_f64(conf.common.omega).unwrap()
+            T::from_f64(conf.common.omega).unwrap(),
+            init_pop.row(0).transpose(),
         );
 
         // Power law schedule for cyclic annealing
@@ -64,10 +92,10 @@ where
             .collect();
 
         // Initialize populations in parallel
-        let init_results: Vec<(DMatrix<T>, DVector<T>, DVector<bool>)> = (0..conf.common.num_replicas)
+        let init_results: Vec<(OMatrix<T, N, D>, OVector<T, N>, OVector<bool, N>)> = (0..conf.common.num_replicas)
             .into_par_iter()
             .map(|_| {
-                let mut pop = DMatrix::zeros(init_pop.nrows(), init_pop.ncols());
+                let mut pop = OMatrix::<T, N, D>::zeros_generic(N::from_usize(init_pop.nrows()), D::from_usize(init_pop.ncols()));
                 for i in 0..init_pop.nrows() {
                     pop.set_row(i, &init_pop.row(i));
                 }
@@ -90,8 +118,8 @@ where
 
                 (
                     pop,
-                    DVector::from_vec(fit),
-                    DVector::from_vec(constr)
+                    OVector::<T, N>::from_vec_generic(N::from_usize(init_pop.nrows()), U1, fit),
+                    OVector::<bool, N>::from_vec_generic(N::from_usize(init_pop.nrows()), U1, constr)
                 )
             })
             .collect();
@@ -120,10 +148,10 @@ where
         }
 
         let best_individual = population[best_idx].row(0).transpose().into_owned();
-        let step_sizes: Vec<Vec<DMatrix<T>>> = (0..conf.common.num_replicas)
+        let step_sizes: Vec<Vec<OMatrix<T, D, D>>> = (0..conf.common.num_replicas)
             .map(|_| {
                 (0..population[0].nrows())
-                    .map(|_| DMatrix::identity(population[0].ncols(), population[0].ncols()))
+                    .map(|_| OMatrix::<T, D, D>::identity_generic(D::from_usize(population[0].ncols()), D::from_usize(population[0].ncols())))
                     .collect()
             })
             .collect();
@@ -144,8 +172,8 @@ where
                 best_x: best_individual,
                 best_f: best_fitness,
                 pop: population[0].clone(),
-                fitness: DVector::from(fitness[0].clone()),
-                constraints: DVector::from(constraints[0].clone()),
+                fitness: fitness[0].clone(),
+                constraints: constraints[0].clone(),
                 iter: 1
             }
         }
@@ -216,7 +244,7 @@ where
                 if swap_bool[(i, j)] {
                     for k in 0..m {
                         // Swap population rows
-                        let temp_row = self.population[i].row(k).clone_owned();
+                        let temp_row = self.population[i].row(k).clone();
                         new_population[i].set_row(k, &self.population[j].row(k));
                         new_population[j].set_row(k, &temp_row);
 
@@ -240,7 +268,20 @@ where
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for PT<T>{         
+impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for PT<T, N, D>
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OVector<bool, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    OMatrix<T, D, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<N, D>
+                    + Allocator<N>
+                    + Allocator<D, D>
+                    + Allocator<U1, D>
+{         
     fn step(&mut self) {
         let temperatures: Vec<T> = (0..self.conf.common.num_replicas)
             .map(|k| {
@@ -250,7 +291,7 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for PT<T>{
             .collect();
         
         // Local move
-        let updates: Vec<Vec<Option<(DVector<T>, T, bool, DMatrix<T>)>>> = (0..self.conf.common.num_replicas)
+        let updates: Vec<Vec<Option<(OVector<T, D>, T, bool, OMatrix<T, D, D>)>>> = (0..self.conf.common.num_replicas)
             .into_par_iter()
             .map(|i| {
                 (0..self.population[i].nrows())
@@ -297,7 +338,7 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for PT<T>{
         for (i, replica) in updates.iter().enumerate() {
             for (j, update) in replica.iter().enumerate() {
                 if let Some((x_new, fitness_new, constr_new, step_size_new)) = update {
-                    self.population[i].set_row(j, &x_new.transpose());
+                    self.population[i].row_mut(j).copy_from(&x_new.transpose());
                     self.fitness[i][j] = *fitness_new;
                     self.constraints[i][j] = *constr_new;
                     self.step_sizes[i][j] = step_size_new.clone();
@@ -341,7 +382,7 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for PT<T>{
 
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, N, D> {
         &self.st
     }
 }
