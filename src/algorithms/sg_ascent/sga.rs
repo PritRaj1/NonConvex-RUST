@@ -1,5 +1,12 @@
-use nalgebra::{DVector, DMatrix};
 use rand_distr::{Normal, Distribution};
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+};
 
 use crate::utils::config::SGAConf;
 use crate::utils::opt_prob::{
@@ -9,21 +16,29 @@ use crate::utils::opt_prob::{
     State
 };
 
-pub struct SGAscent<T: FloatNum> {
+pub struct SGAscent<T: FloatNum, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     pub conf: SGAConf,
-    pub opt_prob: OptProb<T>,
-    pub x: DVector<T>,
-    pub st: State<T>,
-    velocity: DVector<T>,
+    pub opt_prob: OptProb<T, D>,
+    pub x: OVector<T, D>,
+    pub st: State<T, U1, D>,
+    velocity: OVector<T, D>,
     noise_dist: Normal<f64>,
 }
 
-impl<T: FloatNum> SGAscent<T> 
+impl<T: FloatNum, D: Dim> SGAscent<T, D> 
 where 
-    T: Send + Sync 
+    T: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
 {
-    pub fn new(conf: SGAConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>) -> Self {
-        let init_x = init_pop.row(0).transpose();
+    pub fn new(conf: SGAConf, init_pop: OMatrix<T, U1, D>, opt_prob: OptProb<T, D>) -> Self {
+        let init_x: OVector<T, D> = init_pop.row(0).transpose().into_owned();
         let best_f = opt_prob.evaluate(&init_x);
         let noise_dist = Normal::new(0.0, conf.learning_rate).unwrap();
         let n = init_x.len();
@@ -35,25 +50,31 @@ where
             x: init_x.clone(),
             st: State {
                 best_x: init_x.clone(),
-                best_f: best_f,
-                pop: DMatrix::from_columns(&[init_x.clone()]),
-                fitness: vec![best_f].into(),
-                constraints: vec![opt_prob.is_feasible(&init_x)].into(),
+                best_f,
+                pop: init_pop,
+                fitness: OVector::<T, U1>::from_vec(vec![best_f]),
+                constraints: OVector::<bool, U1>::from_vec(vec![opt_prob.is_feasible(&init_x.clone())]),
                 iter: 1
             },
-            velocity: DVector::zeros(n),
+            velocity: OVector::zeros_generic(D::from_usize(n), U1),
             noise_dist,
         }
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for SGAscent<T> {
+impl<T: FloatNum, D: Dim> OptimizationAlgorithm<T, U1, D> for SGAscent<T, D> 
+where 
+    DefaultAllocator: Allocator<D> 
+                     + Allocator<U1, D>
+                     + Allocator<U1>
+{
     fn step(&mut self) {
         let gradient = self.opt_prob.objective.gradient(&self.x).unwrap();
         
         let mut rng = rand::rng();
-        let noise = DVector::from_iterator(
-            self.x.len(),
+        let noise = OVector::<T, D>::from_iterator_generic(
+            D::from_usize(self.x.len()),
+            U1,
             (0..self.x.len()).map(|_| T::from_f64(self.noise_dist.sample(&mut rng)).unwrap())
         );
         
@@ -73,13 +94,13 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for SGAscent<T> {
             }
         }
 
-        self.st.pop.set_row(0, &self.x.transpose());
-        self.st.fitness = DVector::from(vec![self.opt_prob.evaluate(&self.x)]);
-        self.st.constraints = DVector::from(vec![self.opt_prob.is_feasible(&self.x)]);
+        self.st.pop.row_mut(0).copy_from(&self.x.transpose());
+        self.st.fitness[0] = self.opt_prob.evaluate(&self.x);
+        self.st.constraints[0] = self.opt_prob.is_feasible(&self.x);
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, U1, D> {
         &self.st
     }
 } 

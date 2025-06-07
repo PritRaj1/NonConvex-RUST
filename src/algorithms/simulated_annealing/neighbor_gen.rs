@@ -1,23 +1,38 @@
-use nalgebra::DVector;
 use rand::Rng;
 use rand_distr::{Normal, StandardNormal};
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 use rayon::prelude::*;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OVector,
+    U1
+};
+
+use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 
 pub enum MoveType {
     RandomDrift,
     MALA,
 }
 
-pub struct GaussianGenerator<T: FloatNum> {
+pub struct GaussianGenerator<T: FloatNum, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D>   
+{
     pub move_type: MoveType,
-    pub prob: OptProb<T>,
+    pub prob: OptProb<T, D>,
     pub mala_step_size: T,
 }
 
-impl<T: FloatNum> GaussianGenerator<T> {
-    pub fn new(prob: OptProb<T>, mala_step_size: T) -> Self {
-        let move_type = if prob.objective.gradient(&DVector::zeros(1)).is_some() {
+impl<T: FloatNum, D: Dim> GaussianGenerator<T, D> 
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>   
+{
+    pub fn new(prob: OptProb<T, D>, generic_x: OVector<T, D>, mala_step_size: T) -> Self {
+        let move_type = if prob.objective.gradient(&generic_x).is_some() {
             MoveType::MALA
         } else {
             MoveType::RandomDrift
@@ -26,14 +41,14 @@ impl<T: FloatNum> GaussianGenerator<T> {
         Self { move_type, prob, mala_step_size }
     }
 
-    pub fn generate(&self, current: &DVector<T>, step_size: f64, bounds: (T, T), temperature: T) -> DVector<T> {
+    pub fn generate(&self, current: &OVector<T, D>, step_size: f64, bounds: (T, T), temperature: T) -> OVector<T, D> {
         match self.move_type {
             MoveType::RandomDrift => self.random_drift(current, step_size, bounds),
             MoveType::MALA => self.mala_move(current, temperature, bounds),
         }
     }
 
-    fn random_drift(&self, current: &DVector<T>, step_size: f64, bounds: (T, T)) -> DVector<T> {
+    fn random_drift(&self, current: &OVector<T, D>, step_size: f64, bounds: (T, T)) -> OVector<T, D> {
         let mut neighbor = current.clone();
         
         neighbor.as_mut_slice()
@@ -50,14 +65,14 @@ impl<T: FloatNum> GaussianGenerator<T> {
         neighbor
     }
 
-    fn mala_move(&self, current: &DVector<T>, temperature: T, bounds: (T, T)) -> DVector<T> {
+    fn mala_move(&self, current: &OVector<T, D>, temperature: T, bounds: (T, T)) -> OVector<T, D> {
         let mut rng = rand::rng();
         let step = self.mala_step_size * temperature;
         
         let grad = self.prob.objective.gradient(current).unwrap();
         let drift = grad * step;
         
-        let noise = DVector::from_fn(current.len(), |_, _| {
+        let noise = OVector::<T, D>::from_fn_generic(D::from_usize(current.len()), U1, |_, _| {
             T::from_f64(rng.sample::<f64, _>(StandardNormal)).unwrap()
         }) * (step * T::from_f64(2.0).unwrap()).sqrt();
         

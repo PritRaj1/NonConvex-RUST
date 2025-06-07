@@ -1,8 +1,17 @@
-use nalgebra::DVector;
+use rayon::prelude::*;
 use std::collections::VecDeque;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OMatrix, 
+    OVector,
+    U1,
+};
+
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 use crate::utils::config::{TabuConf, ListType};
-use rayon::prelude::*;
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TabuType {
@@ -29,13 +38,23 @@ impl From<&TabuConf> for TabuType {
     }
 }
 
-pub struct TabuList<T: FloatNum> {
-    items: VecDeque<DVector<T>>,
+pub struct TabuList<T: FloatNum, D: Dim> 
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+{
+    items: VecDeque<OVector<T, D>>,
     max_size: usize,
     tabu_type: TabuType,
 }
 
-impl<T: FloatNum> TabuList<T> {
+impl<T: FloatNum, D: Dim> TabuList<T, D> 
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+{
     pub fn new(max_size: usize, tabu_type: TabuType) -> Self {
         Self {
             items: VecDeque::with_capacity(max_size),
@@ -44,14 +63,14 @@ impl<T: FloatNum> TabuList<T> {
         }
     }
 
-    pub fn is_tabu(&self, x: &DVector<T>, threshold: T) -> bool {
+    pub fn is_tabu(&self, x: &OVector<T, D>, threshold: T) -> bool {
         self.items.par_iter().any(|tabu_x| {
             let diff = x - tabu_x;
             diff.dot(&diff).sqrt() < threshold
         })
     }
 
-    pub fn update(&mut self, x: DVector<T>, iterations_since_improvement: usize) {
+    pub fn update(&mut self, x: OVector<T, D>, iterations_since_improvement: usize) {
         match self.tabu_type {
             TabuType::Reactive { min_size, max_size, increase_factor, decrease_factor } => {
                 let new_size = if iterations_since_improvement > 10 {

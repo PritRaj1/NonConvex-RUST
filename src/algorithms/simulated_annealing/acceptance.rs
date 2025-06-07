@@ -1,33 +1,51 @@
 use rand::Rng;
-use nalgebra::DVector;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OVector,
+    OMatrix,
+    U1
+};
+
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+
 
 pub enum AcceptanceType {
     Metropolis,
     MALA,
 }
 
-pub trait AcceptanceCriterion<T: FloatNum> {
+pub trait AcceptanceCriterion<T: FloatNum, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D>  
+{
     fn accept(
         &self, 
-        current_x: &DVector<T>,
+        current_x: &OVector<T, D>,
         current_fitness: T,
-        new_x: &DVector<T>,
+        new_x: &OVector<T, D>,
         new_fitness: T,
         temperature: T,
         step_size: T,
     ) -> bool;
 }
 
-pub struct MetropolisAcceptance<T: FloatNum> {
+pub struct MetropolisAcceptance<T: FloatNum, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D>  
+{
     pub acceptance_type: AcceptanceType,
-    pub prob: OptProb<T>,
+    pub prob: OptProb<T, D>,
     k: T,  // Boltzmann constant
 }
 
-impl<T: FloatNum> MetropolisAcceptance<T> {
-    pub fn new(prob: OptProb<T>) -> Self {
-        let acceptance_type = if prob.objective.gradient(&DVector::zeros(1)).is_some() {
+impl<T: FloatNum, D: Dim> MetropolisAcceptance<T,D> 
+where 
+    DefaultAllocator: Allocator<D>  
+{
+    pub fn new(prob: OptProb<T, D>, generic_x: OVector<T, D>) -> Self {
+        let acceptance_type = if prob.objective.gradient(&generic_x).is_some() {
             AcceptanceType::MALA
         } else {
             AcceptanceType::Metropolis
@@ -42,9 +60,9 @@ impl<T: FloatNum> MetropolisAcceptance<T> {
 
     pub fn accept(
         &self,
-        current_x: &DVector<T>,
+        current_x: &OVector<T, D>,
         current_fitness: T,
-        new_x: &DVector<T>,
+        new_x: &OVector<T, D>,
         new_fitness: T,
         temperature: T,
         step_size: T,

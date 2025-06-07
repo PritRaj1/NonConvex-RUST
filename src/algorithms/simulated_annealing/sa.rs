@@ -1,5 +1,12 @@
-use nalgebra::{DVector, DMatrix};
 use rayon::prelude::*;
+use nalgebra::{
+    allocator::Allocator, 
+    DefaultAllocator, 
+    Dim, 
+    OVector,
+    OMatrix,
+    U1
+};
 
 use crate::utils::alg_conf::sa_conf::SAConf;
 use crate::utils::opt_prob::{
@@ -15,29 +22,36 @@ use crate::algorithms::simulated_annealing::{
     acceptance::MetropolisAcceptance,
 };
 
-pub struct SimulatedAnnealing<T: FloatNum> {
+pub struct SimulatedAnnealing<T: FloatNum, D: Dim> 
+where 
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<U1, D>
+                    + Allocator<U1>
+{
     pub conf: SAConf,
-    pub opt_prob: OptProb<T>,
-    pub x: DVector<T>,
+    pub opt_prob: OptProb<T, D>,
+    pub x: OVector<T, D>,
     pub fitness: T,
     pub constraints: bool,
-    pub st: State<T>,
+    pub st: State<T, U1, D>,
     pub temperature: T,
     no_improve_count: usize,
-    neighbor_gen: GaussianGenerator<T>,
+    neighbor_gen: GaussianGenerator<T, D>,
     cooling_schedule: ExponentialCooling,
-    acceptance: MetropolisAcceptance<T>,
+    acceptance: MetropolisAcceptance<T, D>,
 }
 
-impl<T: FloatNum> SimulatedAnnealing<T> 
+impl<T: FloatNum, D: Dim> SimulatedAnnealing<T, D> 
 where 
-    T: Send + Sync 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<U1, D>
+                    + Allocator<U1>
 {
-    pub fn new(conf: SAConf, init_pop: DMatrix<T>, opt_prob: OptProb<T>) -> Self {
+    pub fn new(conf: SAConf, init_pop: OMatrix<T, U1, D>, opt_prob: OptProb<T, D>) -> Self {
         let init_x = init_pop.row(0).transpose();
         let best_f = opt_prob.evaluate(&init_x);
-        let opt_prob_clone = opt_prob.clone();
-        let opt_prob_clone2 = opt_prob.clone();
         
         Self {
             conf: conf.clone(),
@@ -48,21 +62,28 @@ where
             st: State{
                 best_x: init_x.clone(),
                 best_f: best_f,
-                pop: DMatrix::from_columns(&[init_x.clone()]),
-                fitness: vec![best_f].into(),
-                constraints: vec![opt_prob.is_feasible(&init_x)].into(),
+                pop: init_pop,
+                fitness: OVector::<T, U1>::from_vec(vec![best_f]),
+                constraints: OVector::<bool, U1>::from_vec(vec![opt_prob.is_feasible(&init_x.clone())]),
                 iter: 1
             },
             temperature: T::from_f64(conf.initial_temp).unwrap(),
             no_improve_count: 0,
-            neighbor_gen: GaussianGenerator::new(opt_prob_clone, T::from_f64(conf.step_size).unwrap()),
+            neighbor_gen: GaussianGenerator::new(opt_prob.clone(), init_x.clone(), T::from_f64(conf.step_size).unwrap()),
             cooling_schedule: ExponentialCooling,
-            acceptance: MetropolisAcceptance::new(opt_prob_clone2),
+              acceptance: MetropolisAcceptance::new(opt_prob, init_x),
         }
     }
 }
 
-impl<T: FloatNum> OptimizationAlgorithm<T> for SimulatedAnnealing<T>{
+impl<T: FloatNum, D: Dim> OptimizationAlgorithm<T, U1, D> for SimulatedAnnealing<T, D>
+where 
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> 
+                    + Allocator<U1, D>
+                    + Allocator<U1>
+{
     fn step(&mut self) {
         let min_step = self.conf.step_size * 0.01;
         let step_size = (self.conf.step_size * 
@@ -126,14 +147,14 @@ impl<T: FloatNum> OptimizationAlgorithm<T> for SimulatedAnnealing<T>{
             self.st.best_x = self.x.clone();
         }
 
-        self.st.pop.set_column(0, &self.x);
+        self.st.pop.row_mut(0).copy_from(&self.x.transpose());
         self.st.fitness[0] = self.fitness;
         self.st.constraints[0] = self.constraints;
 
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T> {
+    fn state(&self) -> &State<T, U1, D> {
         &self.st
     }
 } 
