@@ -4,7 +4,7 @@ use common::img::{create_contour_data, setup_gif, find_closest_color, setup_char
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::Config;
 use serde_json;
-use nalgebra::DMatrix;
+use nalgebra::SMatrix;
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut opt = NonConvexOpt::new(
         config,
-        DMatrix::from_vec(1, 2, vec![
+        SMatrix::<f64, 1, 2>::from_vec(vec![
             4.0,
             9.0,
         ]),

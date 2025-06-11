@@ -1,11 +1,11 @@
-use nalgebra::DVector;
+use nalgebra::{SVector, U2};
 use plotters::prelude::*;
 use plotters::coord::types::RangedCoordf64;
 use gif::{Encoder, Repeat};
 use std::fs::File;
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
 
-pub fn create_contour_data<F: ObjectiveFunction<f64>>(
+pub fn create_contour_data<F: ObjectiveFunction<f64, U2>>(
     obj_f: &F, 
     resolution: usize
 ) -> (Vec<Vec<f64>>, f64, f64) {
@@ -17,7 +17,7 @@ pub fn create_contour_data<F: ObjectiveFunction<f64>>(
         for j in 0..resolution {
             let x = 10.0 * i as f64 / (resolution - 1) as f64;
             let y = 10.0 * j as f64 / (resolution - 1) as f64;
-            let point = DVector::from_vec(vec![x, y]);
+            let point = SVector::<f64, 2>::from_vec(vec![x, y]);
             let val = obj_f.f(&point);
             z[i][j] = val;
             min_val = min_val.min(val);
@@ -58,7 +58,7 @@ pub fn find_closest_color(r: u8, g: u8, b: u8, palette: &[u8]) -> usize {
     best_idx
 }
 
-pub fn setup_chart<'a, F: BooleanConstraintFunction<f64>>(
+pub fn setup_chart<'a, F: BooleanConstraintFunction<f64, U2>>(
     frame: usize,
     algorithm_name: &'a str,
     resolution: usize,
@@ -98,7 +98,7 @@ pub fn setup_chart<'a, F: BooleanConstraintFunction<f64>>(
                 (255.0 * val) as u8,
             );
 
-            let point = DVector::from_vec(vec![x, y]);
+            let point = SVector::<f64, 2>::from_vec(vec![x, y]);
             if !constraints.g(&point) {
                 let stripe_width = 0.2;
                 let stripe_pos = ((x + y) / stripe_width).floor() as i32;

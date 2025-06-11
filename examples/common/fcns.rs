@@ -1,11 +1,14 @@
-use nalgebra::DVector;
+use nalgebra::{SVector, allocator::Allocator, DefaultAllocator, U2};
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
 
 #[derive(Clone)]
 pub struct KBF;
 
-impl ObjectiveFunction<f64> for KBF {
-    fn f(&self, x: &DVector<f64>) -> f64 {
+impl ObjectiveFunction<f64, U2> for KBF 
+where 
+    DefaultAllocator: Allocator<U2>
+{
+    fn f(&self, x: &SVector<f64, 2>) -> f64 {
         let sum_cos4: f64 = x.iter().map(|&xi| xi.cos().powi(4)).sum();
         let prod_cos2: f64 = x.iter().map(|&xi| xi.cos().powi(2)).product();
         let sum_ix2: f64 = x.iter().enumerate().map(|(i, &xi)| (i as f64 + 1.0) * xi * xi).sum();
@@ -17,8 +20,11 @@ impl ObjectiveFunction<f64> for KBF {
 #[derive(Debug, Clone)]
 pub struct KBFConstraints;
 
-impl BooleanConstraintFunction<f64> for KBFConstraints {
-    fn g(&self, x: &DVector<f64>) -> bool {
+impl BooleanConstraintFunction<f64, U2> for KBFConstraints 
+where
+    DefaultAllocator: Allocator<U2>
+{
+    fn g(&self, x: &SVector<f64, 2>) -> bool {
         let n = x.len();
         let product: f64 = x.iter().product();
         let sum: f64 = x.iter().sum();
@@ -32,16 +38,20 @@ impl BooleanConstraintFunction<f64> for KBFConstraints {
 #[derive(Clone)]
 pub struct MultiModalFunction;
 
-impl ObjectiveFunction<f64> for MultiModalFunction {
-    fn f(&self, x: &DVector<f64>) -> f64 {
+impl ObjectiveFunction<f64, U2> for MultiModalFunction 
+where
+    DefaultAllocator: Allocator<U2>
+{
+    fn f(&self, x: &SVector<f64, 2>) -> f64 {
         let gaussian1 = -0.5 * ((x[0] - 3.0).powi(2) + (x[1] - 3.0).powi(2));
         let gaussian2 = -0.3 * ((x[0] - 7.0).powi(2) + (x[1] - 7.0).powi(2));
         let gaussian3 = -0.2 * ((x[0] - 7.0).powi(2) + (x[1] - 3.0).powi(2));
         
         10.0 * gaussian1.exp() + 5.0 * gaussian2.exp() + 5.0 * gaussian3.exp()
     }
-    fn gradient(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
-        let mut grad = DVector::zeros(2);
+    fn gradient(&self, x: &SVector<f64, 2>) -> Option<SVector<f64, 2>> {
+        let n = x.len();
+        let mut grad = SVector::<f64, 2>::zeros();
         
         let exp1 = (-0.5 * ((x[0] - 3.0).powi(2) + (x[1] - 3.0).powi(2))).exp();
         grad[0] += 10.0 * exp1 * (-2.0 * 0.5 * (x[0] - 3.0));
@@ -62,8 +72,11 @@ impl ObjectiveFunction<f64> for MultiModalFunction {
 #[derive(Debug, Clone)]
 pub struct BoxConstraints;
 
-impl BooleanConstraintFunction<f64> for BoxConstraints {
-    fn g(&self, x: &DVector<f64>) -> bool {
+impl BooleanConstraintFunction<f64, U2> for BoxConstraints 
+where
+    DefaultAllocator: Allocator<U2>
+{
+    fn g(&self, x: &SVector<f64, 2>) -> bool {
         x.iter().all(|&xi| xi >= 0.0 && xi <= 10.0)
     }
 }

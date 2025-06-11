@@ -3,7 +3,7 @@ use common::fcns::{KBF, KBFConstraints};
 use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::Config;
-use nalgebra::DMatrix;
+use nalgebra::SMatrix;
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let constraints = KBFConstraints;
 
     // Initialize population with random points
-    let mut init_pop = DMatrix::zeros(100, 2);
+    let mut init_pop = SMatrix::<f64, 100, 2>::zeros();
     for i in 0..100 {
         for j in 0..2 {
             init_pop[(i, j)] = rand::random::<f64>() * 10.0;

@@ -3,7 +3,7 @@ use common::fcns::{MultiModalFunction, BoxConstraints};
 use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::Config;
-use nalgebra::DMatrix;
+use nalgebra::SMatrix;
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut opt = NonConvexOpt::new(
         config, 
-        DMatrix::from_row_slice(1, 2, &[4.0, 9.0]),
+        SMatrix::<f64, 1, 2>::from_vec(vec![4.0, 9.0]),
         obj_f.clone(), 
         Some(constraints.clone())
     );

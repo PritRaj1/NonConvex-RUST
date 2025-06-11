@@ -4,7 +4,7 @@ use common::img::{create_contour_data, setup_gif, find_closest_color, setup_char
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, AlgConf};
 use serde_json;
-use nalgebra::DMatrix;
+use nalgebra::SMatrix;
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
@@ -36,14 +36,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config: Config = serde_json::from_str(config_json).unwrap();
 
-    let mspo_conf = match &config.alg_conf {
-        AlgConf::MSPO(mspo_conf) => mspo_conf,
-        _ => panic!("Expected MSPOConf"),
-    };
-
-    let total_particles = mspo_conf.num_swarms * mspo_conf.swarm_size;
-    let mut init_pop = DMatrix::zeros(total_particles, 2);
-    for i in 0..total_particles {
+    let mut init_pop = SMatrix::<f64, 100, 2>::zeros();
+    for i in 0..100 {
         for j in 0..2 {
             let r1 = rand::random::<f64>();
             let r2 = rand::random::<f64>();

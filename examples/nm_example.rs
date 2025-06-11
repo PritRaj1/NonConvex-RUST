@@ -3,7 +3,7 @@ use common::fcns::{KBF, KBFConstraints};
 use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, NelderMeadConf};
-use nalgebra::{DVector, DMatrix};
+use nalgebra::{SVector, SMatrix};
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
@@ -28,10 +28,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let constraints = KBFConstraints;
 
     // Create initial simplex directly
-    let init_simplex = DMatrix::from_columns(&[
-        DVector::from_vec(vec![1.8, 1.0]),
-        DVector::from_vec(vec![0.5, 4.0]),
-        DVector::from_vec(vec![3.0, 3.0]),
+    let init_simplex = SMatrix::<f64, 3, 2>::from_columns(&[
+        SVector::<f64, 3>::from_vec(vec![1.8, 1.0, 0.0]),
+        SVector::<f64, 3>::from_vec(vec![0.5, 4.0, 0.0]),
     ]);
 
     let mut opt = NonConvexOpt::new(config, init_simplex, obj_f.clone(), Some(constraints.clone()));
