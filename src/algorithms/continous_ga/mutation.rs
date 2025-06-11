@@ -27,8 +27,11 @@ impl Gaussian {
     }
 }
 
-impl<T: FloatNum, D: Dim> MutationOperator<T, D> for Gaussian 
+impl<T, D> MutationOperator<T, D> for Gaussian 
 where 
+    T: FloatNum,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>
 {
     fn mutate(&self, individual: &OVector<T, D>, bounds: (T, T), _generation: usize) -> OVector<T, D> {
@@ -56,8 +59,11 @@ impl Uniform {
     }
 }
 
-impl<T: FloatNum, D: Dim> MutationOperator<T, D> for Uniform 
+impl<T, D> MutationOperator<T, D> for Uniform 
 where 
+    T: FloatNum,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>
 {
     fn mutate(&self, individual: &OVector<T, D>, bounds: (T, T), _generation: usize) -> OVector<T, D> {
@@ -87,8 +93,11 @@ impl NonUniform {
     }
 }
 
-impl<T: FloatNum, D: Dim> MutationOperator<T, D> for NonUniform 
+impl<T, D> MutationOperator<T, D> for NonUniform 
 where 
+    T: FloatNum,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>
 {
     fn mutate(&self, individual: &OVector<T, D>, bounds: (T, T), generation: usize) -> OVector<T, D> {
@@ -132,8 +141,11 @@ impl Polynomial {
     }
 }
 
-impl<T: FloatNum, D: Dim> MutationOperator<T, D> for Polynomial 
+impl<T, D> MutationOperator<T, D> for Polynomial 
 where 
+    T: FloatNum,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>
 {
     fn mutate(&self, individual: &OVector<T, D>, bounds: (T, T), _generation: usize) -> OVector<T, D> {

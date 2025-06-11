@@ -24,10 +24,14 @@ use crate::algorithms::continous_ga::{
 };
 
 
-pub struct CGA<T: FloatNum, N: Dim, D: Dim> 
+pub struct CGA<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync, 
     OVector<T, N>: Send + Sync,
+    OVector<bool, N>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D>
                     + Allocator<N, D>
@@ -41,9 +45,12 @@ where
     pub mutation: Box<dyn MutationOperator<T, D> + Send + Sync>,
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> CGA<T, N, D> 
+impl<T, N, D> CGA<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
     OVector<T, N>: Send + Sync,
     OVector<bool, N>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
@@ -142,10 +149,13 @@ where
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for CGA<T, N, D> 
+impl<T, N, D> OptimizationAlgorithm<T, N, D> for CGA<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    D: Dim,
+    N: Dim,
     OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
     OVector<bool, N>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<N, D>

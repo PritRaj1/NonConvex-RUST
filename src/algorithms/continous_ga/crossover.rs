@@ -11,10 +11,17 @@ use nalgebra::{
 
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
-pub trait CrossoverOperator<T: FloatNum, N: Dim, D: Dim> 
+pub trait CrossoverOperator<T, N, D> 
 where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, Dyn, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<Dyn, D>
                     + Allocator<N, D>
+                    + Allocator<N>
 {
     fn crossover(&self, parents: &OMatrix<T, Dyn, D>) -> OMatrix<T, N, D>;
 }
@@ -32,8 +39,16 @@ impl Random {
 
 impl<T: FloatNum, N: Dim, D: Dim> CrossoverOperator<T, N, D> for Random 
 where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, Dyn, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<Dyn, D>
                     + Allocator<N, D>
+                    + Allocator<N>
                     + Allocator<D>
                     + Allocator<U1, D>
 {
@@ -83,10 +98,18 @@ impl Heuristic {
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> CrossoverOperator<T, N, D> for Heuristic 
+impl<T, N, D> CrossoverOperator<T, N, D> for Heuristic 
 where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, Dyn, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<Dyn, D>
                     + Allocator<N, D>
+                    + Allocator<N>
                     + Allocator<D>
                     + Allocator<U1, D>
 {

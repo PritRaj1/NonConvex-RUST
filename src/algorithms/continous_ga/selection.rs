@@ -11,8 +11,14 @@ use nalgebra::{
 
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
-pub trait SelectionOperator<T: FloatNum, N: Dim, D: Dim> 
+pub trait SelectionOperator<T, N, D> 
 where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,    
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, Dyn, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<N>
                     + Allocator<N, D>
                     + Allocator<Dyn, D>
@@ -36,8 +42,14 @@ impl RouletteWheel {
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> SelectionOperator<T, N, D> for RouletteWheel 
+impl<T, N, D> SelectionOperator<T, N, D> for RouletteWheel 
 where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, Dyn, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<N>
                     + Allocator<N, D>
                     + Allocator<Dyn, D>  
@@ -89,11 +101,17 @@ impl Tournament {
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> SelectionOperator<T, N, D> for Tournament 
+impl<T, N, D> SelectionOperator<T, N, D> for Tournament 
 where 
-    DefaultAllocator: Allocator<N>
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, Dyn, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<Dyn, D>
                     + Allocator<N, D>
-                    + Allocator<Dyn, D>  
+                    + Allocator<N> 
 {
     fn select(&self, population: &OMatrix<T, N, D>, fitness: &OVector<T, N>, constraints: &OVector<bool, N>) -> OMatrix<T, Dyn, D> {
         let mut selected = OMatrix::<T, Dyn, D>::zeros_generic(Dyn::from_usize(self.num_parents), D::from_usize(population.ncols()));
@@ -139,11 +157,17 @@ impl Residual {
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> SelectionOperator<T, N, D> for Residual 
+impl<T, N, D> SelectionOperator<T, N, D> for Residual 
 where 
-    DefaultAllocator: Allocator<N>
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, Dyn, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<Dyn, D>
                     + Allocator<N, D>
-                    + Allocator<Dyn, D>  
+                    + Allocator<N>  
 {
     fn select(&self, population: &OMatrix<T, N, D>, fitness: &OVector<T, N>, constraints: &OVector<bool, N>) -> OMatrix<T, Dyn, D> {
         let mut selected = OMatrix::<T, Dyn, D>::zeros_generic(Dyn::from_usize(self.num_parents), D::from_usize(population.ncols()));

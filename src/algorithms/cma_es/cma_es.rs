@@ -24,8 +24,14 @@ use crate::algorithms::cma_es::{
     evolution::{update_paths, update_covariance, compute_y},
 };
 
-pub struct CMAES<T: FloatNum + Send + Sync, N: Dim, D: Dim>
+pub struct CMAES<T, N, D>
 where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, D, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
                      + Allocator<N, D>
                      + Allocator<N>
@@ -57,10 +63,14 @@ where
     pub chi_n: T,               // Expected norm of N(0,I)
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> CMAES<T, N, D> 
+impl<T, N, D> CMAES<T, N, D> 
 where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     OMatrix<T, D, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
                     + Allocator<N, D>
                     + Allocator<N>
@@ -157,9 +167,14 @@ where
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for CMAES<T, N, D> 
+impl<T, N, D> OptimizationAlgorithm<T, N, D> for CMAES<T, N, D> 
 where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     OMatrix<T, D, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
                     + Allocator<N, D>

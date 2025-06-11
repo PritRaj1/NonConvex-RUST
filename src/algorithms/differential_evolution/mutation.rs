@@ -9,10 +9,17 @@ use nalgebra::{
 
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
-pub trait MutationStrategy<T: FloatNum, N: Dim, D: Dim> 
+pub trait MutationStrategy<T, N, D> 
 where 
-    DefaultAllocator: Allocator<N, D>
-                     + Allocator<D>
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N>
+                    + Allocator<N, D>
 {
     fn generate_trial(
         &self,
@@ -42,8 +49,11 @@ fn get_random_indices(count: usize, exclude: usize, pop_size: usize) -> Vec<usiz
     indices
 }
 
-fn crossover<T: FloatNum, D: Dim>(donor: OVector<T, D>, target: OVector<T, D>, cr: T) -> OVector<T, D> 
+fn crossover<T, D>(donor: OVector<T, D>, target: OVector<T, D>, cr: T) -> OVector<T, D> 
 where 
+    T: FloatNum,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>
 {
     let mut rng = rand::rng();
@@ -59,11 +69,17 @@ where
     trial
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> MutationStrategy<T, N, D> for Rand1Bin 
+impl<T, N, D> MutationStrategy<T, N, D> for Rand1Bin 
 where 
-    DefaultAllocator: Allocator<N, D>
-                    + Allocator<D>
-
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N>
+                    + Allocator<N, D>
 {
     fn generate_trial(
         &self,
@@ -83,10 +99,17 @@ where
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> MutationStrategy<T, N, D> for Best1Bin 
+impl<T, N, D> MutationStrategy<T, N, D> for Best1Bin 
 where 
-    DefaultAllocator: Allocator<N, D>
-                    + Allocator<D>
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N>
+                    + Allocator<N, D>
 {
     fn generate_trial(
         &self,
@@ -106,10 +129,17 @@ where
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> MutationStrategy<T, N, D> for RandToBest1Bin 
+impl<T, N, D> MutationStrategy<T, N, D> for RandToBest1Bin 
 where 
-    DefaultAllocator: Allocator<N, D>
-                    + Allocator<D>
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N>
+                    + Allocator<N, D>
 {
     fn generate_trial(
         &self,
@@ -130,10 +160,17 @@ where
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> MutationStrategy<T, N, D> for Best2Bin 
+impl<T, N, D> MutationStrategy<T, N, D> for Best2Bin 
 where 
-    DefaultAllocator: Allocator<N, D>
-                    + Allocator<D>
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N>
+                    + Allocator<N, D>
 {
     fn generate_trial(
         &self,
@@ -155,10 +192,17 @@ where
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> MutationStrategy<T, N, D> for Rand2Bin 
+impl<T, N, D> MutationStrategy<T, N, D> for Rand2Bin 
 where 
-    DefaultAllocator: Allocator<N, D>
-                    + Allocator<D>
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
+    DefaultAllocator: Allocator<D>
+                    + Allocator<N>
+                    + Allocator<N, D>
 {
     fn generate_trial(
         &self,

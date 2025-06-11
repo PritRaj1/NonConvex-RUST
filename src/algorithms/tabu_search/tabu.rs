@@ -35,9 +35,10 @@ where
     iterations_since_improvement: usize,
 }
 
-impl<T: FloatNum, D: Dim> TabuSearch<T, D> 
+impl<T, D> TabuSearch<T, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
                      + Allocator<U1, D>
@@ -87,9 +88,10 @@ where
     }
 }
 
-impl<T: FloatNum, D: Dim> OptimizationAlgorithm<T, U1, D> for TabuSearch<T, D>
+impl<T, D> OptimizationAlgorithm<T, U1, D> for TabuSearch<T, D>
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     OMatrix<T, U1, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 

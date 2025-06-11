@@ -20,9 +20,9 @@ pub fn evaluate_samples<T, D>(
 where
     T: FloatNum,
     D: Dim,
-    DefaultAllocator: Allocator<D> + Allocator<D, D>,
     OVector<T, D>: Send + Sync,
     OMatrix<T, D, D>: Send + Sync,
+    DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
     samples
         .par_iter()
@@ -58,12 +58,15 @@ where
     }
 }
 
-pub fn sort<T: FloatNum, N: Dim>(
+pub fn sort<T, N>(
     fitness: &OVector<T, N>,
     constraints: &OVector<bool, N>,
     lambda: usize
 ) -> Vec<usize> 
 where 
+    T: FloatNum,
+    N: Dim,
+    OVector<T, N>: Send + Sync,
     DefaultAllocator: Allocator<N> 
 {
     let mut indices: Vec<usize> = (0..lambda).collect();

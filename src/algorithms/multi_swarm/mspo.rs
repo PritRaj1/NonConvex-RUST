@@ -17,8 +17,11 @@ use crate::utils::opt_prob::{
     State
 };
 
-pub struct MSPO<T: FloatNum, N: Dim, D: Dim> 
+pub struct MSPO<T, N, D> 
 where 
+    T: FloatNum,
+    D: Dim,
+    N: Dim,
     DefaultAllocator: Allocator<D> 
                     + Allocator<N, D>
                     + Allocator<N>
@@ -30,9 +33,11 @@ where
     pub opt_prob: OptProb<T, D>,
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> MSPO<T, N, D> 
+impl<T, N, D> MSPO<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    D: Dim,
+    N: Dim,
     OVector<T, D>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D>

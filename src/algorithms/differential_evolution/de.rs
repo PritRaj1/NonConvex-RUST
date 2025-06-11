@@ -26,9 +26,14 @@ use crate::algorithms::differential_evolution::mutation::{
     Rand2Bin,
 };
 
-pub struct DE<T: FloatNum, N: Dim, D: Dim> 
+pub struct DE<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D>
                     + Allocator<N>
                     + Allocator<N, D>
@@ -43,9 +48,14 @@ where
     current_cr: f64,
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> DE<T, N, D> 
+impl<T, N, D> DE<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OVector<T, N>: Send + Sync,
+    OVector<bool, N>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D>
                     + Allocator<N>
@@ -191,12 +201,14 @@ where
 }
 
 impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for DE<T, N, D>
-where
-    T: Send + Sync,
+where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
-    OMatrix<T, N, D>: Send + Sync,
     OVector<T, N>: Send + Sync,
     OVector<bool, N>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D>
                     + Allocator<N>
                     + Allocator<N, D>

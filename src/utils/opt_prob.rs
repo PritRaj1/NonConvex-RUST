@@ -36,6 +36,8 @@ pub trait FloatNumber:
     + std::marker::Send
     + std::marker::Sync
     + 'static
+    + Send // Send/sync for safe concurrency
+    + Sync
 {
 }
 
@@ -128,8 +130,10 @@ where
     }
 }
 
-impl<T: FloatNumber, D: Dim> Clone for OptProb<T, D>
+impl<T, D> Clone for OptProb<T, D>
 where
+    T: FloatNumber,
+    D: Dim,
     DefaultAllocator: Allocator<D>,
 {
     fn clone(&self) -> Self {
@@ -140,8 +144,11 @@ where
     }
 }
 
-pub struct State<T: FloatNumber, N: Dim, D: Dim>
+pub struct State<T, N, D>
 where
+    T: FloatNumber,
+    N: Dim,
+    D: Dim,
     DefaultAllocator: Allocator<D> 
                     + Allocator<N> 
                     + Allocator<N, D> 

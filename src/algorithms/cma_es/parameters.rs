@@ -11,8 +11,10 @@ use crate::utils::opt_prob::FloatNumber as FloatNum;
 use crate::utils::config::CMAESConf;
 
 #[derive(Clone)]
-pub struct Parameters<T: FloatNum> 
+pub struct Parameters<T> 
 where 
+    T: FloatNum,
+    OVector<T, Dyn>: Send + Sync,
     DefaultAllocator: Allocator<Dyn> 
 {
     pub weights: OVector<T, Dyn>,
@@ -31,6 +33,9 @@ impl<T: FloatNum> Parameters<T>
 {
     pub fn new<D: Dim>(conf: &CMAESConf, init_x: &OVector<T, D>) -> Self 
     where
+    T: Send + Sync,
+    OVector<T, D>: Send + Sync,
+    OVector<T, Dyn>: Send + Sync,
     DefaultAllocator: Allocator<Dyn> 
                      + Allocator<D>
     {

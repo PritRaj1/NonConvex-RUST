@@ -10,8 +10,11 @@ use nalgebra::{
 
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
-pub fn compute_y<T: FloatNum, D: Dim>(mean: &OVector<T, D>, old_mean: &OVector<T, D>, sigma: T) -> OVector<T, D> 
+pub fn compute_y<T, D>(mean: &OVector<T, D>, old_mean: &OVector<T, D>, sigma: T) -> OVector<T, D> 
 where 
+    T: FloatNum,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,
 {
     let mut y = OVector::from_element_generic(D::from_usize(mean.len()), U1, T::zero());
@@ -21,7 +24,7 @@ where
     y
 }
 
-pub fn update_paths<T: FloatNum, D: Dim>(
+pub fn update_paths<T, D>(
     ps: &mut OVector<T, D>,
     b_mat: &OMatrix<T, D, D>,
     d_vec: &OVector<T, D>,
@@ -33,6 +36,10 @@ pub fn update_paths<T: FloatNum, D: Dim>(
     n: usize
 ) -> bool 
 where 
+    T: FloatNum,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, D, D>: Send + Sync,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
     let b_mat = &*b_mat;
