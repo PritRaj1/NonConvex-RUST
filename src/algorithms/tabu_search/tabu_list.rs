@@ -3,10 +3,8 @@ use std::collections::VecDeque;
 use nalgebra::{
     allocator::Allocator, 
     DefaultAllocator, 
-    Dim, 
-    OMatrix, 
+    Dim,
     OVector,
-    U1,
 };
 
 use crate::utils::opt_prob::FloatNumber as FloatNum;

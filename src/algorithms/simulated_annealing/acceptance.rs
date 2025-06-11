@@ -4,8 +4,6 @@ use nalgebra::{
     DefaultAllocator, 
     Dim, 
     OVector,
-    OMatrix,
-    U1
 };
 
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
