@@ -3,8 +3,12 @@ mod common;
 use nalgebra::DMatrix;
 use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
-use non_convex_opt::algorithms::differential_evolution::de::DE;
-use non_convex_opt::utils::config::DEConf;
+
+use non_convex_opt::{
+    utils::config::DEConf,
+    algorithms::differential_evolution::de::DE
+};
+
 use non_convex_opt::utils::alg_conf::de_conf::{
     CommonConf, MutationType, StandardConf, AdaptiveConf, DEStrategy
 };

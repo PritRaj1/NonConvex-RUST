@@ -2,6 +2,7 @@ mod common;
 
 use nalgebra::{DVector, DMatrix};
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
+
 use non_convex_opt::algorithms::nelder_mead::nm::NelderMead;
 use non_convex_opt::utils::{
     config::NelderMeadConf,

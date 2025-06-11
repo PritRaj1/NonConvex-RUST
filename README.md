@@ -1,7 +1,7 @@
 # NonConvex-RUST
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Continuous non-convex optimizers implemented in RUST for constrained and unconstrained maximization problems. These algorithms were implemented as a side project for me to learn rust, but they may be useful and have been open-sourced.
+Continuous non-convex optimizers implemented in rust for constrained and unconstrained maximization problems. These algorithms were implemented as a side project, but they may be useful and have been open-sourced.
 
 Sources/links to more information in the respective algorithm .md files.
 
@@ -24,7 +24,7 @@ use nalgebra::{DVector, DMatrix}; // Works with dynamic
 use nalgebra::{SVector, SMatrix}; // Works with static
 ```
 
-The library works with both statically-sized and dynamically-size vectors. For dynamic examples, see [de_tests](./tests/de_tests.rs), [mspo_tests](./tests/mspo_tests.rs), [nm_tests](./tests/nm_tests.rs), [pt_tests](./tests/pt_tests.rs), or[solver_tests](./tests/solver_tests.rs). For static examples, see any other test.
+The library works with both statically-sized and dynamically-size vectors. For dynamic examples, see [de_tests](./tests/de_tests.rs), [mspo_tests](./tests/mspo_tests.rs), [nm_tests](./tests/nm_tests.rs), [pt_tests](./tests/pt_tests.rs), or [solver_tests](./tests/solver_tests.rs). For static examples, see any other test.
 
 ## Usage
 

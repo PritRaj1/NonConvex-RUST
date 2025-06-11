@@ -2,6 +2,7 @@ mod common;
 
 use nalgebra::{SMatrix, U1, U2};
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
+
 use non_convex_opt::algorithms::simulated_annealing::sa::SimulatedAnnealing;
 use non_convex_opt::utils::{
     config::SAConf,

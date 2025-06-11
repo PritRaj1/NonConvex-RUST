@@ -2,6 +2,7 @@ mod common;
 
 use nalgebra::{DVector, DMatrix};
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+
 use non_convex_opt::algorithms::parallel_tempering::{
     pt::PT,
     metropolis_hastings::MetropolisHastings,

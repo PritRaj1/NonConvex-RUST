@@ -1,8 +1,9 @@
 mod common;
 
 use nalgebra::DMatrix;
-use non_convex_opt::NonConvexOpt;
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+
+use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::{
     config::Config,
     opt_prob::ObjectiveFunction,

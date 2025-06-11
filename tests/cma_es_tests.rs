@@ -2,6 +2,7 @@ mod common;
 
 use nalgebra::{OMatrix, OVector, U20, U2, U1};
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
+
 use non_convex_opt::algorithms::cma_es::cma_es::CMAES;
 use non_convex_opt::utils::{
     config::CMAESConf,

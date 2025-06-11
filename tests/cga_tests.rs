@@ -2,10 +2,12 @@ mod common;
 
 use nalgebra::{OMatrix, OVector, U10, U5, U2, U1};
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+
 use non_convex_opt::utils::{
     config::{Config, AlgConf},
     opt_prob::{OptProb, OptimizationAlgorithm},
 };
+
 use non_convex_opt::algorithms::continous_ga::{
     selection::{SelectionOperator, RouletteWheel, Tournament, Residual},
     crossover::{CrossoverOperator, Random, Heuristic},

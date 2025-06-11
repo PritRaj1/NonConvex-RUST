@@ -1,8 +1,9 @@
 mod common;
 
 use nalgebra::{SMatrix, U1, U2};
-use non_convex_opt::algorithms::limited_memory_bfgs::lbfgs::LBFGS;
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
+
+use non_convex_opt::algorithms::limited_memory_bfgs::lbfgs::LBFGS;
 use non_convex_opt::utils::{
     opt_prob::{OptProb, OptimizationAlgorithm},
     alg_conf::lbfgs_conf::{

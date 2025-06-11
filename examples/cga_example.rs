@@ -1,13 +1,16 @@
 mod common;
-use common::fcns::{KBF, KBFConstraints};
-use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
-use non_convex_opt::NonConvexOpt;
-use non_convex_opt::utils::config::Config;
+
 use serde_json;
 use nalgebra::SMatrix;
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
+
+use common::fcns::{KBF, KBFConstraints};
+use common::img::{create_contour_data, setup_gif, find_closest_color, setup_chart, get_color_palette};
+
+use non_convex_opt::NonConvexOpt;
+use non_convex_opt::utils::config::Config;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     

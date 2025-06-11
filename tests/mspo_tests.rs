@@ -2,6 +2,7 @@ mod common;
 
 use nalgebra::{DVector, DMatrix};
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+
 use non_convex_opt::utils::{
     config::{Config, AlgConf},
     opt_prob::{OptProb, OptimizationAlgorithm},

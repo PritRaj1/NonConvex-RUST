@@ -1,8 +1,9 @@
 mod common;
 
 use nalgebra::{SMatrix, U1, U2};
-use non_convex_opt::algorithms::grasp::grasp::GRASP;
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
+
+use non_convex_opt::algorithms::grasp::grasp::GRASP;
 use non_convex_opt::utils::{
     config::GRASPConf,
     opt_prob::{OptProb, OptimizationAlgorithm, BooleanConstraintFunction}

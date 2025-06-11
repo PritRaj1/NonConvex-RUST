@@ -1,31 +1,39 @@
-use nalgebra::DVector;
+use nalgebra::{OVector, U1, Dim, allocator::Allocator, DefaultAllocator};
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
 
 #[derive(Clone)]
 pub struct KBF;
 
-impl ObjectiveFunction<f64> for KBF {
-    fn f(&self, x: &DVector<f64>) -> f64 {
+impl<D> ObjectiveFunction<f64, D> for KBF 
+where 
+    D: Dim,
+    DefaultAllocator: Allocator<D>
+{
+    fn f(&self, x: &OVector<f64, D>) -> f64 {
         let sum_cos4: f64 = x.iter().map(|&xi| xi.cos().powi(4)).sum();
         let prod_cos2: f64 = x.iter().map(|&xi| xi.cos().powi(2)).product();
         let sum_ix2: f64 = x.iter().enumerate().map(|(i, &xi)| (i as f64 + 1.0) * xi * xi).sum();
         (sum_cos4 - 2.0 * prod_cos2).abs() / sum_ix2.sqrt()
     }
 
-    fn x_lower_bound(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
-        Some(DVector::from_element(x.len(), 0.0))
+    fn x_lower_bound(&self, x: &OVector<f64, D>) -> Option<OVector<f64, D>> {
+        Some(OVector::<f64, D>::zeros_generic(D::from_usize(x.len()), U1))
     }
 
-    fn x_upper_bound(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
-        Some(DVector::from_element(x.len(), 10.0))
+    fn x_upper_bound(&self, x: &OVector<f64, D>) -> Option<OVector<f64, D>> {
+        Some(OVector::<f64, D>::from_element_generic(D::from_usize(x.len()), U1, 10.0))
     }
 }
 
 #[derive(Clone)]
 pub struct KBFConstraints;
 
-impl BooleanConstraintFunction<f64> for KBFConstraints {
-    fn g(&self, x: &DVector<f64>) -> bool {
+impl<D: Dim> BooleanConstraintFunction<f64, D> for KBFConstraints 
+where 
+    D: Dim,
+    DefaultAllocator: Allocator<D>
+{
+    fn g(&self, x: &OVector<f64, D>) -> bool {
         let n = x.len();
         let product: f64 = x.iter().product();
         let sum: f64 = x.iter().sum();
@@ -39,8 +47,12 @@ impl BooleanConstraintFunction<f64> for KBFConstraints {
 #[derive(Clone)]
 pub struct RosenbrockFunction;
 
-impl ObjectiveFunction<f64> for RosenbrockFunction {
-    fn f(&self, x: &DVector<f64>) -> f64 {
+impl<D: Dim> ObjectiveFunction<f64, D> for RosenbrockFunction 
+where 
+    D: Dim,
+    DefaultAllocator: Allocator<D>
+{
+    fn f(&self, x: &OVector<f64, D>) -> f64 {
         if x.len() < 2 {
             return f64::NEG_INFINITY;
         }
@@ -51,14 +63,14 @@ impl ObjectiveFunction<f64> for RosenbrockFunction {
         sum  
     }
 
-    fn gradient(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
+    fn gradient(&self, x: &OVector<f64, D>) -> Option<OVector<f64, D>> {
         
         // Catch empty vector
         if x.len() < 2 {
-            return Some(DVector::zeros(x.len()));
+            return Some(OVector::<f64, D>::zeros_generic(D::from_usize(x.len()), U1))
         }
 
-        let mut grad = DVector::zeros(x.len());
+        let mut grad = OVector::<f64, D>::zeros_generic(D::from_usize(x.len()), U1);
         grad[0] = -400.0 * x[0] * (x[1] - x[0].powi(2)) - 2.0 * (1.0 - x[0]);
         
         for i in 1..x.len()-1 {
@@ -76,8 +88,12 @@ impl ObjectiveFunction<f64> for RosenbrockFunction {
 #[derive(Debug, Clone)]
 pub struct RosenbrockConstraints;
 
-impl BooleanConstraintFunction<f64> for RosenbrockConstraints {
-    fn g(&self, x: &DVector<f64>) -> bool {
+impl<D> BooleanConstraintFunction<f64, D> for RosenbrockConstraints 
+where 
+    D: Dim,
+    DefaultAllocator: Allocator<D>
+{
+    fn g(&self, x: &OVector<f64, D>) -> bool {
         x.iter().all(|&xi| xi >= -5.0 && xi <= 5.0)
     }
 }
