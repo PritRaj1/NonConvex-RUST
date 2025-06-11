@@ -22,18 +22,23 @@ use crate::algorithms::simulated_annealing::{
     acceptance::MetropolisAcceptance,
 };
 
-pub struct SimulatedAnnealing<T: FloatNum, D: Dim> 
+pub struct SimulatedAnnealing<T, N, D> 
 where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
+    OVector<T, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
-                    + Allocator<U1, D>
-                    + Allocator<U1>
+                     + Allocator<N, D>
+                     + Allocator<N>
 {
     pub conf: SAConf,
     pub opt_prob: OptProb<T, D>,
     pub x: OVector<T, D>,
     pub fitness: T,
     pub constraints: bool,
-    pub st: State<T, U1, D>,
+    pub st: State<T, N, D>,
     pub temperature: T,
     no_improve_count: usize,
     neighbor_gen: GaussianGenerator<T, D>,
@@ -41,17 +46,22 @@ where
     acceptance: MetropolisAcceptance<T, D>,
 }
 
-impl<T: FloatNum, D: Dim> SimulatedAnnealing<T, D> 
+impl<T, N, D> SimulatedAnnealing<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
-                    + Allocator<U1, D>
-                    + Allocator<U1>
+                     + Allocator<N, D>
+                     + Allocator<U1, D>
+                     + Allocator<N>
 {
     pub fn new(conf: SAConf, init_pop: OMatrix<T, U1, D>, opt_prob: OptProb<T, D>) -> Self {
         let init_x = init_pop.row(0).transpose();
         let best_f = opt_prob.evaluate(&init_x);
+        let n = init_x.len();
         
         Self {
             conf: conf.clone(),
@@ -62,9 +72,9 @@ where
             st: State{
                 best_x: init_x.clone(),
                 best_f: best_f,
-                pop: init_pop,
-                fitness: OVector::<T, U1>::from_vec(vec![best_f]),
-                constraints: OVector::<bool, U1>::from_vec(vec![opt_prob.is_feasible(&init_x.clone())]),
+                pop: OMatrix::<T, N, D>::from_fn_generic(N::from_usize(1), D::from_usize(n), |_, j| init_x.clone()[j]),
+                fitness: OVector::<T, N>::from_element_generic(N::from_usize(1), U1, best_f),
+                constraints: OVector::<bool, N>::from_element_generic(N::from_usize(1), U1, opt_prob.is_feasible(&init_x.clone())),
                 iter: 1
             },
             temperature: T::from_f64(conf.initial_temp).unwrap(),
@@ -76,13 +86,17 @@ where
     }
 }
 
-impl<T: FloatNum, D: Dim> OptimizationAlgorithm<T, U1, D> for SimulatedAnnealing<T, D>
+impl<T, N, D> OptimizationAlgorithm<T, N, D> for SimulatedAnnealing<T, N, D>
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
+                    + Allocator<N>
+                    + Allocator<N, D>
                     + Allocator<U1, D>
-                    + Allocator<U1>
 {
     fn step(&mut self) {
         let min_step = self.conf.step_size * 0.01;
@@ -154,7 +168,7 @@ where
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T, U1, D> {
+    fn state(&self) -> &State<T, N, D> {
         &self.st
     }
 } 

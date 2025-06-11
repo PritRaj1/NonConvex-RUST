@@ -8,8 +8,10 @@ use nalgebra::{
     U1,
 };
 
-pub struct Particle<T: FloatNum, D: Dim> 
+pub struct Particle<T, D> 
 where 
+    T: FloatNum,
+    D: Dim,
     DefaultAllocator: Allocator<D>
                     + Allocator<U1, D>
                     + Allocator<U1>

@@ -15,11 +15,13 @@ use crate::utils::config::{
     GoldenSectionConf,
 };
 
-pub trait LineSearch<T: FloatNum, D: Dim> 
+pub trait LineSearch<T, D> 
 where 
+    T: FloatNum,
+    D: Dim,
     DefaultAllocator: Allocator<D> 
-                     + Allocator<U1, D>
-                     + Allocator<U1>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
 {
     fn search(
         &self,
@@ -41,11 +43,13 @@ impl BacktrackingLineSearch {
     }
 }
 
-impl<T: FloatNum, D: Dim> LineSearch<T, D> for BacktrackingLineSearch 
+impl<T, D> LineSearch<T, D> for BacktrackingLineSearch 
 where 
+    T: FloatNum, 
+    D: Dim,
     DefaultAllocator: Allocator<D> 
-                     + Allocator<U1, D>
-                     + Allocator<U1>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
 {
     fn search(
         &self,
@@ -78,11 +82,13 @@ impl StrongWolfeLineSearch {
     }
 }
 
-impl<T: FloatNum, D: Dim> LineSearch<T, D> for StrongWolfeLineSearch 
+impl<T, D> LineSearch<T, D> for StrongWolfeLineSearch 
 where 
+    T: FloatNum, 
+    D: Dim,
     DefaultAllocator: Allocator<D> 
-                     + Allocator<U1, D>
-                     + Allocator<U1>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
 {
     fn search(
         &self,
@@ -134,11 +140,13 @@ impl HagerZhangLineSearch {
     }
 }
 
-impl<T: FloatNum, D: Dim> LineSearch<T, D> for HagerZhangLineSearch 
+impl<T, D> LineSearch<T, D> for HagerZhangLineSearch 
 where 
+    T: FloatNum, 
+    D: Dim,
     DefaultAllocator: Allocator<D> 
-                     + Allocator<U1, D>
-                     + Allocator<U1>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
 {
     fn search(
         &self,
@@ -189,11 +197,13 @@ impl MoreThuenteLineSearch {
     }
 }
 
-impl<T: FloatNum, D: Dim> LineSearch<T, D> for MoreThuenteLineSearch 
+impl<T, D> LineSearch<T, D> for MoreThuenteLineSearch 
 where 
+    T: FloatNum, 
+    D: Dim,
     DefaultAllocator: Allocator<D> 
-                     + Allocator<U1, D>
-                     + Allocator<U1>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
 {
     fn search(
         &self,
@@ -250,8 +260,8 @@ impl GoldenSectionLineSearch {
     ) -> (T, T, T) 
     where 
     DefaultAllocator: Allocator<D> 
-                     + Allocator<U1, D>
-                     + Allocator<U1>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
     {
         let golden_ratio: T = T::from_f64((5.0_f64).sqrt() * 0.5 + 0.5).unwrap();
         let bracket_factor = T::from_f64(self.conf.bracket_factor).unwrap();
@@ -287,11 +297,13 @@ impl GoldenSectionLineSearch {
     }
 }
 
-impl<T: FloatNum, D: Dim> LineSearch<T, D> for GoldenSectionLineSearch 
+impl<T, D> LineSearch<T, D> for GoldenSectionLineSearch 
 where 
+    T: FloatNum, 
+    D: Dim,    
     DefaultAllocator: Allocator<D> 
-                     + Allocator<U1, D>
-                     + Allocator<U1>
+                    + Allocator<U1, D>
+                    + Allocator<U1>
 {
     fn search(
         &self,

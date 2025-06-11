@@ -163,9 +163,11 @@ where
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for MSPO<T, N, D> 
+impl<T, N, D> OptimizationAlgorithm<T, N, D> for MSPO<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D>

@@ -16,8 +16,11 @@ use crate::utils::opt_prob::{
     State
 };
 
-pub struct NelderMead<T: FloatNum, N: Dim, D: Dim> 
+pub struct NelderMead<T, N, D> 
 where 
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     DefaultAllocator: Allocator<D> 
                     + Allocator<N, D>
                     + Allocator<N>
@@ -28,9 +31,11 @@ where
     pub simplex: Vec<OVector<T, D>>,
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> NelderMead<T, N, D> 
+impl<T, N, D> NelderMead<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
                     + Allocator<N, D>
@@ -184,9 +189,11 @@ where
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for NelderMead<T, N, D>
+impl<T, N, D> OptimizationAlgorithm<T, N, D> for NelderMead<T, N, D>
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
                     + Allocator<N, D>

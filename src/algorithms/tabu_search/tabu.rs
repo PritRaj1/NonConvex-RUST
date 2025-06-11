@@ -19,36 +19,43 @@ use crate::utils::opt_prob::{
 
 use crate::algorithms::tabu_search::tabu_list::{TabuList, TabuType};
 
-pub struct TabuSearch<T: FloatNum, D: Dim> 
+pub struct TabuSearch<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
-                     + Allocator<U1, D>
-                     + Allocator<U1>
+                     + Allocator<N, D>
+                     + Allocator<N>
 {
     pub conf: TabuConf,
     pub opt_prob: OptProb<T, D>,
     pub x: OVector<T, D>,
-    pub st: State<T, U1, D>,
+    pub st: State<T, N, D>,
     tabu_list: TabuList<T, D>,
     iterations_since_improvement: usize,
 }
 
-impl<T, D> TabuSearch<T, D> 
+impl<T, N, D> TabuSearch<T, N, D> 
 where 
     T: FloatNum,
+    N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
+                     + Allocator<N, D>
                      + Allocator<U1, D>
-                     + Allocator<U1>
+                     + Allocator<N>
 {
     pub fn new(conf: TabuConf, init_pop: OMatrix<T, U1, D>, opt_prob: OptProb<T, D>) -> Self {
         let init_x = init_pop.row(0).transpose();
         let best_f = opt_prob.evaluate(&init_x);
         let tabu_type = TabuType::from(&conf);
-        
+        let n = init_x.len();
+
         Self {
             conf: conf.clone(),
             opt_prob: opt_prob.clone(),
@@ -56,10 +63,10 @@ where
             st: State{
                 best_x: init_x.clone().into(),
                 best_f,
-                pop: init_pop,
-                fitness: OVector::<T, U1>::from_vec( vec![opt_prob.evaluate(&init_x)]),
-                constraints: OVector::<bool, U1>::from_vec(vec![opt_prob.is_feasible(&init_x.clone())]),
-                iter: 1,
+                pop: OMatrix::<T, N, D>::from_fn_generic(N::from_usize(1), D::from_usize(n), |_, j| init_x.clone()[j]),
+                fitness: OVector::<T, N>::from_element_generic(N::from_usize(1), U1, best_f),
+                constraints: OVector::<bool, N>::from_element_generic(N::from_usize(1), U1, opt_prob.is_feasible(&init_x.clone())),
+                iter: 1
             },
             tabu_list: TabuList::new(conf.common.tabu_list_size, tabu_type),
             iterations_since_improvement: 0,
@@ -88,15 +95,19 @@ where
     }
 }
 
-impl<T, D> OptimizationAlgorithm<T, U1, D> for TabuSearch<T, D>
+impl<T, N, D> OptimizationAlgorithm<T, N, D> for TabuSearch<T, N, D>
 where 
     T: FloatNum,
+    N: Dim,
     D: Dim,
+    OVector<bool, N>: Send + Sync,
+    OVector<T, N>: Send + Sync,
     OVector<T, D>: Send + Sync,
-    OMatrix<T, U1, D>: Send + Sync,
+    OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
-                     + Allocator<U1, D>
-                     + Allocator<U1>
+                    + Allocator<N>
+                    + Allocator<N, D>
+                    + Allocator<U1, D>
 {
     fn step(&mut self) {
         let mut best_neighbor = self.x.clone();
@@ -143,7 +154,7 @@ where
         self.st.iter += 1;
     }
 
-    fn state(&self) -> &State<T, U1, D> {
+    fn state(&self) -> &State<T, N, D> {
         &self.st
     }
 } 

@@ -38,9 +38,10 @@ impl From<&TabuConf> for TabuType {
     }
 }
 
-pub struct TabuList<T: FloatNum, D: Dim> 
+pub struct TabuList<T, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
 {
@@ -49,9 +50,10 @@ where
     tabu_type: TabuType,
 }
 
-impl<T: FloatNum, D: Dim> TabuList<T, D> 
+impl<T, D> TabuList<T, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D> 
 {

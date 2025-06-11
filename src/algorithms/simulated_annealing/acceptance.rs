@@ -16,8 +16,10 @@ pub enum AcceptanceType {
     MALA,
 }
 
-pub trait AcceptanceCriterion<T: FloatNum, D: Dim> 
+pub trait AcceptanceCriterion<T, D> 
 where 
+    T: FloatNum,
+    D: Dim,
     DefaultAllocator: Allocator<D>  
 {
     fn accept(
@@ -31,8 +33,10 @@ where
     ) -> bool;
 }
 
-pub struct MetropolisAcceptance<T: FloatNum, D: Dim> 
+pub struct MetropolisAcceptance<T, D> 
 where 
+    T: FloatNum,
+    D: Dim,
     DefaultAllocator: Allocator<D>  
 {
     pub acceptance_type: AcceptanceType,
@@ -40,8 +44,10 @@ where
     k: T,  // Boltzmann constant
 }
 
-impl<T: FloatNum, D: Dim> MetropolisAcceptance<T,D> 
+impl<T, D> MetropolisAcceptance<T,D> 
 where 
+    T: FloatNum,
+    D: Dim,
     DefaultAllocator: Allocator<D>  
 {
     pub fn new(prob: OptProb<T, D>, generic_x: OVector<T, D>) -> Self {

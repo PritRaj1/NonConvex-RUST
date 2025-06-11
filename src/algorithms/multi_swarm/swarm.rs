@@ -15,8 +15,10 @@ use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 
 use crate::algorithms::multi_swarm::particle::Particle;
 
-pub struct Swarm<T: FloatNum, D: Dim> 
+pub struct Swarm<T, D> 
 where 
+    T: FloatNum,
+    D: Dim,
     DefaultAllocator: Allocator<D> 
                     + Allocator<U1, D>
 {
@@ -30,9 +32,10 @@ where
     pub x_max: f64,
 }
 
-impl<T: FloatNum, D: Dim> Swarm<T, D> 
+impl<T, D> Swarm<T, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     OMatrix<T, Dyn, D>: Send + Sync,
     DefaultAllocator: Allocator<D>
@@ -142,14 +145,16 @@ where
     }
 } 
 
-pub fn initialize_swarms<T: FloatNum, N: Dim, D: Dim>(
+pub fn initialize_swarms<T, N, D>(
     conf: &MSPOConf,
     dim: usize,
     init_pop: &OMatrix<T, N, D>,
     opt_prob: &OptProb<T, D>
 ) -> Vec<Swarm<T, D>> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D>

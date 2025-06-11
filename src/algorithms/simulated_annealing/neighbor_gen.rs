@@ -16,8 +16,10 @@ pub enum MoveType {
     MALA,
 }
 
-pub struct GaussianGenerator<T: FloatNum, D: Dim> 
+pub struct GaussianGenerator<T, D> 
 where 
+    T: FloatNum,
+    D: Dim,
     DefaultAllocator: Allocator<D>   
 {
     pub move_type: MoveType,
@@ -25,9 +27,10 @@ where
     pub mala_step_size: T,
 }
 
-impl<T: FloatNum, D: Dim> GaussianGenerator<T, D> 
+impl<T, D> GaussianGenerator<T, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>   
 {

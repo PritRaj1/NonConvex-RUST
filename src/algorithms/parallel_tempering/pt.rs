@@ -23,9 +23,11 @@ use crate::algorithms::parallel_tempering::{
     metropolis_hastings::MetropolisHastings,
 };
 
-pub struct PT<T: FloatNum, N: Dim, D: Dim> 
+pub struct PT<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
     OMatrix<T, D, D>: Send + Sync,
@@ -48,9 +50,11 @@ where
     pub st: State<T, N, D>, // Store a copy of final replica's population and fitness values
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> PT<T, N, D> 
+impl<T, N, D> PT<T, N, D> 
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     OVector<T, N>: Send + Sync,
     OVector<bool, N>: Send + Sync,
@@ -268,9 +272,11 @@ where
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for PT<T, N, D>
+impl<T, N, D> OptimizationAlgorithm<T, N, D> for PT<T, N, D>
 where 
-    T: Send + Sync,
+    T: FloatNum,
+    N: Dim,
+    D: Dim,
     OVector<T, D>: Send + Sync,
     OVector<T, N>: Send + Sync,
     OVector<bool, N>: Send + Sync,

@@ -16,8 +16,10 @@ pub enum MoveType {
     MALA,
 }
 
-pub struct MetropolisHastings<T: FloatNum, D: Dim> 
+pub struct MetropolisHastings<T, D> 
 where 
+    T: FloatNum,
+    D: Dim,
     DefaultAllocator: Allocator<D>             
 {
     pub k: T,
@@ -28,8 +30,10 @@ where
     pub mala_step_size: T,
 }
 
-impl<T: FloatNum, D: Dim> MetropolisHastings<T, D> 
-where 
+impl<T, D> MetropolisHastings<T, D> 
+where
+    T: FloatNum,
+    D: Dim,
     DefaultAllocator: Allocator<D> 
                     + Allocator<D, D>
 {
