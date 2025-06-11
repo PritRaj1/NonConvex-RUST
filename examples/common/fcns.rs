@@ -50,7 +50,6 @@ where
         10.0 * gaussian1.exp() + 5.0 * gaussian2.exp() + 5.0 * gaussian3.exp()
     }
     fn gradient(&self, x: &SVector<f64, 2>) -> Option<SVector<f64, 2>> {
-        let n = x.len();
         let mut grad = SVector::<f64, 2>::zeros();
         
         let exp1 = (-0.5 * ((x[0] - 3.0).powi(2) + (x[1] - 3.0).powi(2))).exp();
