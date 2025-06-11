@@ -1,4 +1,4 @@
-use nalgebra::DVector;
+use nalgebra::{OVector, Dim, U1, DefaultAllocator, allocator::Allocator};
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
 
 #[derive(Debug, Clone)]
@@ -7,8 +7,11 @@ pub struct RosenbrockObjective {
     pub b: f64,
 }
 
-impl ObjectiveFunction<f64> for RosenbrockObjective {
-    fn f(&self, x: &DVector<f64>) -> f64 {
+impl<D: Dim> ObjectiveFunction<f64, D> for RosenbrockObjective 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn f(&self, x: &OVector<f64, D>) -> f64 {
         let n = x.len();
         let mut sum = 0.0;
         for i in 0..n-1 {
@@ -22,8 +25,11 @@ impl ObjectiveFunction<f64> for RosenbrockObjective {
 #[derive(Debug, Clone)]
 pub struct RosenbrockConstraints {}
 
-impl BooleanConstraintFunction<f64> for RosenbrockConstraints {
-    fn g(&self, x: &DVector<f64>) -> bool {
+impl<D: Dim> BooleanConstraintFunction<f64, D> for RosenbrockConstraints 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn g(&self, x: &OVector<f64, D>) -> bool {
         x.iter().all(|&xi| xi >= 0.0 && xi <= 1.0)
     }
 }
@@ -34,8 +40,11 @@ pub struct QuadraticObjective {
     pub b: f64,
 }
 
-impl ObjectiveFunction<f64> for QuadraticObjective {
-    fn f(&self, x: &DVector<f64>) -> f64 {
+impl<D: Dim> ObjectiveFunction<f64, D> for QuadraticObjective 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn f(&self, x: &OVector<f64, D>) -> f64 {
         let n = x.len();
         let mut sum = 0.0;
         for i in 0..n {
@@ -44,29 +53,32 @@ impl ObjectiveFunction<f64> for QuadraticObjective {
         sum
     }
 
-    fn gradient(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
+    fn gradient(&self, x: &OVector<f64, D>) -> Option<OVector<f64, D>> {
         let n = x.len();
-        let mut grad = DVector::zeros(n);
+        let mut grad = OVector::<f64, D>::zeros_generic(D::from_usize(n), U1);
         for i in 0..n {
             grad[i] = -2.0 * self.b * x[i] + self.a;
         }
         Some(grad)
     }
 
-    fn x_lower_bound(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
-        Some(DVector::from_element(x.len(), 0.0))
+    fn x_lower_bound(&self, x: &OVector<f64, D>) -> Option<OVector<f64, D>> {
+        Some(OVector::<f64, D>::from_element_generic(D::from_usize(x.len()), U1, 0.0))
     }
 
-    fn x_upper_bound(&self, x: &DVector<f64>) -> Option<DVector<f64>> {
-        Some(DVector::from_element(x.len(), 1.0))
+    fn x_upper_bound(&self, x: &OVector<f64, D>) -> Option<OVector<f64, D>> {
+        Some(OVector::<f64, D>::from_element_generic(D::from_usize(x.len()), U1, 1.0))
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct QuadraticConstraints {}
 
-impl BooleanConstraintFunction<f64> for QuadraticConstraints {
-    fn g(&self, x: &DVector<f64>) -> bool {
+impl<D: Dim> BooleanConstraintFunction<f64, D> for QuadraticConstraints 
+where 
+    DefaultAllocator: Allocator<D>
+{
+    fn g(&self, x: &OVector<f64, D>) -> bool {
         x.iter().all(|&xi| xi >= 0.0 && xi <= 1.0)
     }
 }   

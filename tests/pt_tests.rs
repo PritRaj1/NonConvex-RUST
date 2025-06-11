@@ -18,10 +18,10 @@ fn test_metropolis_hastings_accept_reject() {
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mh = MetropolisHastings::new(opt_prob, 0.1, 0.1, 2.1);
-
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let x_new = DVector::from_vec(vec![0.6, 0.6]);
+
+    let mh: MetropolisHastings<f64, nalgebra::Dyn> = MetropolisHastings::new(opt_prob, 0.1, 0.1, 2.1, x_old.clone());
     let constraints_new = true;
     let t = 1.0;
     let t_swap = 2.0;
@@ -36,10 +36,10 @@ fn test_metropolis_hastings_local_move() {
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
-    let mh = MetropolisHastings::new(opt_prob, 0.1, 0.1, 2.1);
 
     let x_old = DVector::from_vec(vec![0.5, 0.5]);
     let step_size = DMatrix::identity(2, 2);
+    let mh = MetropolisHastings::new(opt_prob, 0.1, 0.1, 2.1, x_old.clone());
     let x_new = mh.local_move(&x_old, &step_size, 1.0);
 
     assert_eq!(x_old.len(), x_new.len());
@@ -53,7 +53,7 @@ fn test_metropolis_hastings_update_step_size() {
     let obj_f = RosenbrockObjective{ a: 1.0, b: 1.0};
     let constraints = RosenbrockConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
-    let mh = MetropolisHastings::new(opt_prob, 0.1, 0.1, 2.1);
+    let mh = MetropolisHastings::new(opt_prob, 0.1, 0.1, 2.1, x_old.clone());
     step_size = mh.update_step_size(&mut step_size, &x_old, &x_new);
 
     assert_eq!(step_size.nrows(), 2);

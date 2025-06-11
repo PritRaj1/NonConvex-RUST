@@ -1,6 +1,6 @@
 mod common;
 
-use nalgebra::{DMatrix, DVector};
+use nalgebra::{OMatrix, OVector, U10, U5, U2, U1};
 use common::fcns::{RosenbrockObjective, RosenbrockConstraints};
 use non_convex_opt::utils::{
     config::{Config, AlgConf},
@@ -15,9 +15,9 @@ use non_convex_opt::algorithms::continous_ga::{
 #[test]
 fn test_roulette_wheel_selection() {
     let selection = RouletteWheel::new(10, 5);
-    let population = DMatrix::<f64>::from_vec(10, 5, vec![1.0; 50]);
-    let fitness = DVector::<f64>::from_vec(vec![1.0; 10]);
-    let constraint = DVector::from_vec(vec![true; 10]);
+    let population = OMatrix::<f64, U10, U5>::from_element_generic(U10, U5, 1.0);
+    let fitness = OVector::<f64, U10>::from_element_generic(U10, U1, 1.0);
+    let constraint = OVector::<bool, U10>::from_element_generic(U10, U1, true);
     let selected = selection.select(&population, &fitness, &constraint);
     assert_eq!(selected.nrows(), 5);
     assert_eq!(selected.ncols(), 5);
@@ -26,9 +26,9 @@ fn test_roulette_wheel_selection() {
 #[test]
 fn test_tournament_selection() {
     let selection = Tournament::new(10, 5, 2);
-    let population = DMatrix::<f64>::from_vec(10, 5, vec![1.0; 50]);
-    let fitness = DVector::<f64>::from_vec(vec![1.0; 10]);
-    let constraint = DVector::from_vec(vec![true; 10]);
+    let population = OMatrix::<f64, U10, U5>::from_element_generic(U10, U5, 1.0);
+    let fitness = OVector::<f64, U10>::from_element_generic(U10, U1, 1.0);
+    let constraint = OVector::<bool, U10>::from_element_generic(U10, U1, true);
     let selected = selection.select(&population, &fitness, &constraint);
     assert_eq!(selected.nrows(), 5);
     assert_eq!(selected.ncols(), 5);
@@ -37,9 +37,9 @@ fn test_tournament_selection() {
 #[test]
 fn test_residual_selection() {
     let selection = Residual::new(10, 5);
-    let population = DMatrix::<f64>::from_vec(10, 5, vec![1.0; 50]);
-    let fitness = DVector::<f64>::from_vec(vec![1.0; 10]);
-    let constraint = DVector::from_vec(vec![true; 10]);
+    let population = OMatrix::<f64, U10, U5>::from_element_generic(U10, U5, 1.0);
+    let fitness = OVector::<f64, U10>::from_element_generic(U10, U1, 1.0);
+    let constraint = OVector::<bool, U10>::from_element_generic(U10, U1, true);
     let selected = selection.select(&population, &fitness, &constraint);
     assert_eq!(selected.nrows(), 5);
     assert_eq!(selected.ncols(), 5);
@@ -48,12 +48,12 @@ fn test_residual_selection() {
 #[test]
 fn test_random_crossover() {
     let selection = RouletteWheel::new(10, 5);
-    let population = DMatrix::<f64>::from_vec(10, 5, vec![1.0; 50]);
-    let fitness = DVector::<f64>::from_vec(vec![1.0; 10]);
-    let constraint = DVector::from_vec(vec![true; 10]);
+    let population = OMatrix::<f64, U10, U5>::from_element_generic(U10, U5, 1.0);
+    let fitness = OVector::<f64, U10>::from_element_generic(U10, U1, 1.0);
+    let constraint = OVector::<bool, U10>::from_element_generic(U10, U1, true);
     let selected = selection.select(&population, &fitness, &constraint);
     let crossover = Random::new(0.9, 10);
-    let offspring = crossover.crossover(&selected);
+    let offspring: OMatrix<f64, U10, U5> = crossover.crossover(&selected);
     assert_eq!(offspring.nrows(), 10);
     assert_eq!(offspring.ncols(), 5);
 }
@@ -61,12 +61,12 @@ fn test_random_crossover() {
 #[test]
 fn test_heuristic_crossover() {
     let selection = RouletteWheel::new(10, 5);
-    let population = DMatrix::<f64>::from_vec(10, 5, vec![1.0; 50]);
-    let fitness = DVector::<f64>::from_vec(vec![1.0; 10]);
-    let constraint = DVector::from_vec(vec![true; 10]);
+    let population = OMatrix::<f64, U10, U5>::from_element_generic(U10, U5, 1.0);
+    let fitness = OVector::<f64, U10>::from_element_generic(U10, U1, 1.0);
+    let constraint = OVector::<bool, U10>::from_element_generic(U10, U1, true);
     let selected = selection.select(&population, &fitness, &constraint);
     let crossover = Heuristic::new(0.9, 10);
-    let offspring = crossover.crossover(&selected);
+    let offspring: OMatrix<f64, U10, U5> = crossover.crossover(&selected);
     assert_eq!(offspring.nrows(), 10);
     assert_eq!(offspring.ncols(), 5);
 }
@@ -82,7 +82,7 @@ fn test_cga() {
 
     let pop_size = cga_conf.common.population_size;
 
-    let mut init_pop = DMatrix::zeros(pop_size, 2);
+    let mut init_pop = OMatrix::zeros_generic(U10, U2);
     for i in 0..pop_size {
         for j in 0..2 {
             init_pop[(i, j)] = rand::random::<f64>() * 4.0 - 2.0; // Random values in [-2, 2]

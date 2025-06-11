@@ -20,8 +20,11 @@ non_convex_opt = "0.1.0"
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::Config;
 use non_convex_opt::utils::opt_prob::{ObjectiveFunction, BooleanConstraintFunction};
-use nalgebra::{DVector, DMatrix};
+use nalgebra::{DVector, DMatrix}; // Works with dynamic
+use nalgebra::{SVector, SMatrix}; // Works with static
 ```
+
+The library works with both statically-sized and dynamically-size vectors. For dynamic examples, see [de_tests](./tests/de_tests.rs), [mspo_tests](./tests/mspo_tests.rs), [nm_tests](./tests/nm_tests.rs), [pt_tests](./tests/pt_tests.rs), or[solver_tests](./tests/solver_tests.rs). For static examples, see any other test.
 
 ## Usage
 
@@ -67,7 +70,7 @@ let config = Config::new(config_json).unwrap();
 
 let mut opt = NonConvexOpt::new(
     config,
-    init_x, // Initial population - must be a DMatrix from nalgebra
+    init_x, // Initial population - must be from nalgebra
     obj_f,  // Objective function
     Some(constraints) // Optional constraints
 );

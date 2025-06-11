@@ -7,8 +7,8 @@
     "alg_conf": {
         "CGA": {
             "common": {
-                "population_size": 50,
-                "num_parents": 10
+                "population_size": 10,
+                "num_parents": 5
             },
             "crossover": {
                 "Heuristic": {

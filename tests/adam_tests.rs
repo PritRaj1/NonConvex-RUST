@@ -1,6 +1,6 @@
 mod common;
 
-use nalgebra::DMatrix;
+use nalgebra::{SMatrix, U1, U2};
 use non_convex_opt::algorithms::adam::adam::Adam;
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
 use non_convex_opt::utils::{
@@ -17,12 +17,12 @@ fn test_adam() {
         epsilon: 1e-8,
     };
 
-    let init_x = DMatrix::from_row_slice(1, 2, &[0.5, 0.5]);
+    let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     
-    let mut adam = Adam::new(conf, init_x.clone(), opt_prob);
+    let mut adam = Adam::<f64, U1, U2>::new(conf, init_x.clone(), opt_prob);
     
     let initial_fitness = adam.st.best_f;
     
