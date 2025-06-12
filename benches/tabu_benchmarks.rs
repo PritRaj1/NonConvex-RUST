@@ -2,7 +2,7 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::random;
 use std::sync::LazyLock;
 use serde_json;
-use nalgebra::DMatrix;
+use nalgebra::SMatrix;
 
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config};
@@ -76,7 +76,7 @@ fn bench_tabu_unconstrained(c: &mut Criterion) {
 
     c.bench_function("tabu_unconstrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 1, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 CONFIG.clone(),
                 black_box(init_pop),
@@ -92,7 +92,7 @@ fn bench_tabu_constrained(c: &mut Criterion) {
 
     c.bench_function("tabu_constrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 1, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 CONFIG.clone(),
                 black_box(init_pop),
@@ -108,7 +108,7 @@ fn bench_reactive_tabu_unconstrained(c: &mut Criterion) {
 
     c.bench_function("reactive_tabu_unconstrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 1, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 REACTIVE_CONFIG.clone(),
                 black_box(init_pop),
@@ -124,7 +124,7 @@ fn bench_reactive_tabu_constrained(c: &mut Criterion) {
 
     c.bench_function("reactive_tabu_constrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 1, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 REACTIVE_CONFIG.clone(),
                 black_box(init_pop),

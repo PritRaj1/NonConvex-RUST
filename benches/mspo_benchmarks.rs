@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use nalgebra::DMatrix;
+use nalgebra::SMatrix;
 use serde_json;
 use rand::random;
 use std::sync::LazyLock;
@@ -21,7 +21,7 @@ static CONFIG_JSON: &str = r#"
     "alg_conf": {
         "MSPO": {
             "num_swarms": 10,
-            "swarm_size": 50,
+            "swarm_size": 10,
             "w": 0.729,
             "c1": 1.5,
             "c2": 1.5,
@@ -41,7 +41,7 @@ fn bench_mspo_unconstrained(c: &mut Criterion) {
 
     c.bench_function("mspo_unconstrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(100, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 100, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 CONFIG.clone(),
                 black_box(init_pop),
@@ -57,7 +57,7 @@ fn bench_mspo_constrained(c: &mut Criterion) {
 
     c.bench_function("mspo_constrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(100, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 100, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 CONFIG.clone(),
                 black_box(init_pop),

@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::random;
-use nalgebra::DMatrix;
+use nalgebra::SMatrix;
 
 use non_convex_opt::NonConvexOpt;
 use non_convex_opt::utils::config::{Config, OptConf, AlgConf, SAConf};
@@ -29,7 +29,7 @@ fn bench_sa_unconstrained(c: &mut Criterion) {
 
     c.bench_function("sa_unconstrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 1, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 config.clone(),
                 black_box(init_pop),
@@ -62,7 +62,7 @@ fn bench_sa_constrained(c: &mut Criterion) {
 
     c.bench_function("sa_constrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 1, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 config.clone(),
                 black_box(init_pop),

@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use nalgebra::DMatrix;
+use nalgebra::SMatrix;
 use rand::random;
 
 use non_convex_opt::NonConvexOpt;
@@ -27,7 +27,7 @@ fn bench_grasp_unconstrained(c: &mut Criterion) {
 
     c.bench_function("grasp_unconstrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 1,2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 config.clone(),
                 black_box(init_pop),
@@ -58,7 +58,7 @@ fn bench_grasp_constrained(c: &mut Criterion) {
 
     c.bench_function("grasp_constrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(1, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 1, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 config.clone(),
                 black_box(init_pop),

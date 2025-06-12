@@ -1,6 +1,6 @@
 mod common;
 use common::fcns::{KBF, KBFConstraints};
-use nalgebra::{DVector, DMatrix};
+use nalgebra::{SVector, SMatrix};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use non_convex_opt::NonConvexOpt;
@@ -24,10 +24,9 @@ fn bench_nm_unconstrained(c: &mut Criterion) {
 
     c.bench_function("nm_unconstrained", |b| {
         b.iter(|| {
-            let init_simplex = DMatrix::from_columns(&[
-                DVector::from_vec(vec![1.6, 0.55]),
-                DVector::from_vec(vec![1.5, 0.6]),
-                DVector::from_vec(vec![1.7, 0.5]),
+            let init_simplex = SMatrix::<f64, 3, 2>::from_columns(&[
+                SVector::<f64, 3>::from_vec(vec![1.8, 1.0, 0.0]),
+                SVector::<f64, 3>::from_vec(vec![0.5, 4.0, 0.0]),
             ]);
             let mut opt = NonConvexOpt::new(
                 config.clone(),
@@ -58,10 +57,9 @@ fn bench_nm_constrained(c: &mut Criterion) {
 
     c.bench_function("nm_constrained", |b| {
         b.iter(|| {
-            let init_simplex = DMatrix::from_columns(&[
-                DVector::from_vec(vec![1.6, 0.55]),
-                DVector::from_vec(vec![1.5, 0.6]),
-                DVector::from_vec(vec![1.7, 0.5]),
+            let init_simplex = SMatrix::<f64, 3, 2>::from_columns(&[
+                SVector::<f64, 3>::from_vec(vec![1.8, 1.0, 0.0]),
+                SVector::<f64, 3>::from_vec(vec![0.5, 4.0, 0.0]),
             ]);
             let mut opt = NonConvexOpt::new(
                 config.clone(),

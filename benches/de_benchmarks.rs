@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use nalgebra::DMatrix;
+use nalgebra::SMatrix;
 use rand::random;
 use std::sync::LazyLock;
 
@@ -20,7 +20,7 @@ static CONFIG_JSON: &str = r#"
     "alg_conf": {
         "DE": {
             "common": {
-                "population_size": 50,
+                "population_size": 100,
                 "archive_size": 10,
                 "success_history_size": 50
             },
@@ -44,7 +44,7 @@ static CONFIG: LazyLock<Config> = LazyLock::new(|| {
 fn bench_de_unconstrained(c: &mut Criterion) {
     c.bench_function("de_unconstrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(50, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 100, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 CONFIG.clone(),
                 black_box(init_pop),
@@ -59,7 +59,7 @@ fn bench_de_unconstrained(c: &mut Criterion) {
 fn bench_de_constrained(c: &mut Criterion) {
     c.bench_function("de_constrained", |b| {
         b.iter(|| {
-            let init_pop = DMatrix::from_fn(50, 2, |_, _| random::<f64>() * 10.0);
+            let init_pop = SMatrix::<f64, 100, 2>::from_fn(|_, _| random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 CONFIG.clone(),
                 black_box(init_pop),

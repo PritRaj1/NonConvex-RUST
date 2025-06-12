@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use nalgebra::{DMatrix, DVector};
+use nalgebra::{SMatrix, SVector};
 use serde_json;
 use std::sync::LazyLock;
 
@@ -32,10 +32,10 @@ static CONFIG: LazyLock<Config> = LazyLock::new(|| {
 fn bench_cmaes_unconstrained(c: &mut Criterion) {
     c.bench_function("cmaes_unconstrained", |b| {
         b.iter(|| {
-            let init_x = DVector::from_fn(2, |_,_| rand::random::<f64>() * 10.0);
+            let init_x = SVector::<f64, 2>::from_fn(|_,_| rand::random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 CONFIG.clone(),
-                black_box(DMatrix::from_columns(&[init_x])),
+                black_box(SMatrix::<f64, 1, 2>::from_vec(init_x.iter().cloned().collect())),
                 KBF,
                 None::<KBFConstraints>,
             );
@@ -47,10 +47,10 @@ fn bench_cmaes_unconstrained(c: &mut Criterion) {
 fn bench_cmaes_constrained(c: &mut Criterion) {
     c.bench_function("cmaes_constrained", |b| {
         b.iter(|| {
-            let init_x = DVector::from_fn(2, |_,_| rand::random::<f64>() * 10.0);
+            let init_x = SVector::<f64, 2>::from_fn(|_,_| rand::random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 CONFIG.clone(),
-                black_box(DMatrix::from_columns(&[init_x])),
+                black_box(SMatrix::<f64, 1, 2>::from_vec(init_x.iter().cloned().collect())),
                 KBF,
                 Some(KBFConstraints)
             );
