@@ -24,9 +24,10 @@ fn bench_nm_unconstrained(c: &mut Criterion) {
 
     c.bench_function("nm_unconstrained", |b| {
         b.iter(|| {
-            let init_simplex = SMatrix::<f64, 3, 2>::from_columns(&[
-                SVector::<f64, 3>::from_vec(vec![1.8, 1.0, 0.0]),
-                SVector::<f64, 3>::from_vec(vec![0.5, 4.0, 0.0]),
+            let init_simplex = SMatrix::<f64, 2, 3>::from_columns(&[
+                SVector::<f64, 2>::from_vec(vec![1.8, 1.0]),
+                SVector::<f64, 2>::from_vec(vec![0.5, 4.0]),
+                SVector::<f64, 2>::from_vec(vec![3.0, 3.0]),
             ]);
             let mut opt = NonConvexOpt::new(
                 config.clone(),
@@ -57,9 +58,10 @@ fn bench_nm_constrained(c: &mut Criterion) {
 
     c.bench_function("nm_constrained", |b| {
         b.iter(|| {
-            let init_simplex = SMatrix::<f64, 3, 2>::from_columns(&[
-                SVector::<f64, 3>::from_vec(vec![1.8, 1.0, 0.0]),
-                SVector::<f64, 3>::from_vec(vec![0.5, 4.0, 0.0]),
+            let init_simplex = SMatrix::<f64, 2, 3>::from_columns(&[
+                SVector::<f64, 2>::from_vec(vec![1.8, 1.0]),
+                SVector::<f64, 2>::from_vec(vec![0.5, 4.0]),
+                SVector::<f64, 2>::from_vec(vec![3.0, 3.0]),
             ]);
             let mut opt = NonConvexOpt::new(
                 config.clone(),
