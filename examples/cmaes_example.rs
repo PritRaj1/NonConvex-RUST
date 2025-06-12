@@ -37,10 +37,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut opt = NonConvexOpt::new(
         config,
-        SMatrix::<f64, 20, 2>::from_vec(vec![
-            4.0,
-            9.0,
-        ]),
+        SMatrix::<f64, 20, 2>::from_vec({
+            let mut v = vec![4.0, 9.0];
+            v.resize(20 * 2, 0.0);
+            v
+        }),
         obj_f.clone(), 
         Some(constraints.clone())
     );
