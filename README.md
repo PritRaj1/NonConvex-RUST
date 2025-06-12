@@ -95,18 +95,18 @@ The following GIFs are based on the [2D unconstrained maximization problems](./e
 ### Population-Based 
 |  |  |
 |-----------|---------------|
-| [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) - Population-based natural selection | <img src="./examples/gifs/cga_kbf.gif" width="200" alt="CGA Example"> |
-| <img src="./examples/gifs/pt_kbf.gif" width="200" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Metropolis-Hastings |
-| [Multi-Swarm Particle Optimization (MSPO)](./src/multi_swarm/MSPO.md) - Multi-swarm particle optimization | <img src="./examples/gifs/mspo_kbf.gif" width="200" alt="MSPO Example"> |
-| <img src="./examples/gifs/de_kbf.gif" width="200" alt="DE Example"> | [Differential Evolution (DE)](./src/differential_evolution/DE.md) - Differential evolution |
-| [Covariance Matrix Adaptation Evolution Strategy (CMA-ES)](./src/cma_es/CMA_ES.md) - I love this algorithm! | <img src="./examples/gifs/cmaes_kbf.gif" width="200" alt="CMAES Example"> |
+| [Continuous Genetic Algorithm (CGA)](./src/continous_ga/CGA.md) - Population-based natural selection | <img src="./examples/gifs/cga_kbf.gif" width="300" alt="CGA Example"> |
+| <img src="./examples/gifs/pt_kbf.gif" width="300" alt="PT Example"> | [Parallel Tempering (PT)](./src/parallel_tempering/PT.md) - Multi-temperature Metropolis-Hastings |
+| [Multi-Swarm Particle Optimization (MSPO)](./src/multi_swarm/MSPO.md) - Multi-swarm particle optimization | <img src="./examples/gifs/mspo_kbf.gif" width="300" alt="MSPO Example"> |
+| <img src="./examples/gifs/de_kbf.gif" width="300" alt="DE Example"> | [Differential Evolution (DE)](./src/differential_evolution/DE.md) - Differential evolution |
+| [Covariance Matrix Adaptation Evolution Strategy (CMA-ES)](./src/cma_es/CMA_ES.md) - I love this algorithm! | <img src="./examples/gifs/cmaes_kbf.gif" width="300" alt="CMAES Example"> |
 
 
 ### Local Search 
 |  |  |
 |-----------|---------------|
-| [Tabu Search (TS)](./src/tabu_search/tabu.md) - Local search with memory | <img src="./examples/gifs/tabu_kbf.gif" width="200" alt="Tabu Example"> |
-| <img src="./examples/gifs/grasp_kbf.gif" width="200" alt="GRASP Example"> | [Greedy Randomized Adaptive Search Procedure (GRASP)](./src/grasp/GRASP.md) - Construction and local search |
+| [Tabu Search (TS)](./src/tabu_search/tabu.md) - Local search with memory | <img src="./examples/gifs/tabu_kbf.gif" width="300" alt="Tabu Example"> |
+| <img src="./examples/gifs/grasp_kbf.gif" width="300" alt="GRASP Example"> | [Greedy Randomized Adaptive Search Procedure (GRASP)](./src/grasp/GRASP.md) - Construction and local search |
 
 ### Gradient-Based 
 
@@ -114,16 +114,16 @@ These work better with mini-batches, and best for unconstrained problems!
 
 |  |  |
 |-----------|---------------|
-| [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation | <img src="./examples/gifs/adam_kbf.gif" width="200" alt="Adam Example"> |
-| <img src="./examples/gifs/sga_kbf.gif" width="200" alt="SGA Example"> | [Stochastic Gradient Ascent (SGA)](./src/sg_ascent/SGA.md) - Gradient-based optimization |
-| [Limited Memory BFGS (L-BFGS)](./src/limited_memory_bfgs/LBFGS.md) - Quasi-Newton gradient-based optimization | <img src="./examples/gifs/lbfgs_kbf.gif" width="200" alt="LBFGS Example"> |
+| [Adam](./src/adam/ADAM.md) - Adaptive Moment Estimation | <img src="./examples/gifs/adam_kbf.gif" width="300" alt="Adam Example"> |
+| <img src="./examples/gifs/sga_kbf.gif" width="300" alt="SGA Example"> | [Stochastic Gradient Ascent (SGA)](./src/sg_ascent/SGA.md) - Gradient-based optimization |
+| [Limited Memory BFGS (L-BFGS)](./src/limited_memory_bfgs/LBFGS.md) - Quasi-Newton gradient-based optimization | <img src="./examples/gifs/lbfgs_kbf.gif" width="300" alt="LBFGS Example"> |
 
 ### Direct Search and stochastic optimization
 
 |  |  |
 |-----------|---------------|
-| [Nelder-Mead](./src/nelder_mead/NM.md) - Direct search with simplex | <img src="./examples/gifs/nm_kbf.gif" width="200" alt="Nelder-Mead Example"> |
-| <img src="./examples/gifs/sa_kbf.gif" width="200" alt="SA Example"> | [Simulated Annealing (SA)](./src/simulated_annealing/SA.md) - Stochastic optimization |
+| [Nelder-Mead](./src/nelder_mead/NM.md) - Direct search with simplex | <img src="./examples/gifs/nm_kbf.gif" width="300" alt="Nelder-Mead Example"> |
+| <img src="./examples/gifs/sa_kbf.gif" width="300" alt="SA Example"> | [Simulated Annealing (SA)](./src/simulated_annealing/SA.md) - Stochastic optimization |
 
 ## Config
 
