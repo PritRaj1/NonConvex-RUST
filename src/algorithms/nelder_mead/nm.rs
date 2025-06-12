@@ -43,8 +43,8 @@ where
                     + Allocator<D, U1>
 {
     pub fn new(conf: NelderMeadConf, init_x: OMatrix<T, N, D>, opt_prob: OptProb<T, D>) -> Self {
-        let n: usize = init_x.nrows();
-        assert_eq!(init_x.ncols(), n + 1, "Initial simplex must have n+1 vertices");
+        let n: usize = init_x.ncols();
+        assert_eq!(init_x.nrows(), n + 1, "Initial simplex must have n + 1 vertices");
         
         let simplex: Vec<_> = (0..(n+1))
             .map(|j| init_x.row(j).transpose())

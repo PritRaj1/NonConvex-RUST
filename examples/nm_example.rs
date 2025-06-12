@@ -1,6 +1,6 @@
 mod common;
 
-use nalgebra::{SVector, SMatrix};
+use nalgebra::{SMatrix};
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
@@ -31,9 +31,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let constraints = KBFConstraints;
 
     // Create initial simplex directly
-    let init_simplex = SMatrix::<f64, 3, 2>::from_columns(&[
-        SVector::<f64, 3>::from_vec(vec![1.8, 1.0, 0.0]),
-        SVector::<f64, 3>::from_vec(vec![0.5, 4.0, 0.0]),
+    let init_simplex = SMatrix::<f64, 3, 2>::from_rows(&[
+        SMatrix::<f64, 1, 2>::from_row_slice(&[1.8, 1.0]),
+        SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 4.0]),
+        SMatrix::<f64, 1, 2>::from_row_slice(&[3.0, 3.0]),
     ]);
 
     let mut opt = NonConvexOpt::new(config, init_simplex, obj_f.clone(), Some(constraints.clone()));
