@@ -31,7 +31,7 @@ where
 
 impl<T: FloatNum> Parameters<T> 
 {
-    pub fn new<D: Dim>(conf: &CMAESConf, init_x: &OVector<T, D>) -> Self 
+    pub fn new<D: Dim>(conf: &CMAESConf, init_x: &OVector<T, D>, pop_size: usize) -> Self 
     where
     T: Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -40,7 +40,7 @@ impl<T: FloatNum> Parameters<T>
                      + Allocator<D>
     {
         let n = init_x.len();
-        let lambda = conf.population_size;
+        let lambda = pop_size;
         let mu = conf.num_parents;
         
         let weights = Self::compute_weights(mu, lambda);

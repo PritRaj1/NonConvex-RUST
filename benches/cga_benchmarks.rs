@@ -21,7 +21,6 @@ static CONFIG_JSON: &str = r#"
     "alg_conf": {
         "CGA": {
             "common": {
-                "population_size": 100,
                 "num_parents": 20
             },
             "crossover": {

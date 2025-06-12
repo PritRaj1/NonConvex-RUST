@@ -8,8 +8,6 @@ pub struct DEConf {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CommonConf {
-    #[serde(default = "default_population_size")]
-    pub population_size: usize,
     #[serde(default = "default_archive_size")]
     pub archive_size: usize,
     #[serde(default = "default_success_history_size")]
@@ -55,7 +53,6 @@ pub enum DEStrategy {
     Rand2Bin,
 }
 
-fn default_population_size() -> usize { 50 }
 fn default_archive_size() -> usize { 10 }
 fn default_f() -> f64 { 0.8 }
 fn default_cr() -> f64 { 0.9 }

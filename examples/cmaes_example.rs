@@ -24,7 +24,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         "alg_conf": {
             "CMAES": {
-                "population_size": 100,
                 "num_parents": 50,
                 "initial_sigma": 1.5
             }
@@ -38,7 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut opt = NonConvexOpt::new(
         config,
-        SMatrix::<f64, 1, 2>::from_vec(vec![
+        SMatrix::<f64, 20, 2>::from_vec(vec![
             4.0,
             9.0,
         ]),

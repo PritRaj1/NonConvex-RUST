@@ -1,6 +1,6 @@
 mod common;
 
-use nalgebra::{OMatrix, OVector, U20, U2, U1};
+use nalgebra::{OMatrix, OVector, U20, U2};
 use common::fcns::{QuadraticObjective, QuadraticConstraints};
 
 use non_convex_opt::algorithms::cma_es::cma_es::CMAES;
@@ -12,12 +12,11 @@ use non_convex_opt::utils::{
 #[test]
 fn test_cmaes_initialization() {
     let conf = CMAESConf {
-        population_size: 20,
         num_parents: 10,
         initial_sigma: 0.5,
     };
 
-    let init_x = OMatrix::<f64, U1, U2>::from_element_generic(U1, U2, 0.5);
+    let init_x = OMatrix::<f64, U20, U2>::from_element_generic(U20, U2, 0.5);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
@@ -41,12 +40,11 @@ fn test_cmaes_initialization() {
 #[test]
 fn test_cmaes() {
     let conf = CMAESConf {
-        population_size: 20,
         num_parents: 10,
         initial_sigma: 0.3,
     };
 
-    let init_x = OMatrix::<f64, U1, U2>::from_element_generic(U1, U2, 0.5);
+    let init_x = OMatrix::<f64, U20, U2>::from_element_generic(U20, U2, 0.5);
     let obj_f = QuadraticObjective { a: 1.0, b: 100.0 };
     let constraints = QuadraticConstraints{};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));

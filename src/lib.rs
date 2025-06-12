@@ -123,7 +123,7 @@ where
             AlgConf::MSPO(mspo_conf) => Box::new(MSPO::new(mspo_conf, init_pop, opt_prob)),
             AlgConf::SA(sa_conf) => Box::new(SimulatedAnnealing::new(sa_conf, init_pop.row(0).into_owned(), opt_prob)),
             AlgConf::DE(de_conf) => Box::new(DE::new(de_conf, init_pop, opt_prob)),
-            AlgConf::CMAES(cma_es_conf) => Box::new(CMAES::new(cma_es_conf, init_pop.row(0).into_owned(), opt_prob)),
+            AlgConf::CMAES(cma_es_conf) => Box::new(CMAES::new(cma_es_conf, init_pop, opt_prob)),
         };
 
         Self { alg, conf: conf.opt_conf, converged: false }

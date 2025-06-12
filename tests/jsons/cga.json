@@ -7,7 +7,6 @@
     "alg_conf": {
         "CGA": {
             "common": {
-                "population_size": 10,
                 "num_parents": 5
             },
             "crossover": {

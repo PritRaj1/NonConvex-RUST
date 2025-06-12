@@ -62,16 +62,16 @@ where
     pub fn new(conf: CGAConf, init_pop: OMatrix<T, N, D>, opt_prob: OptProb<T, D>, max_iter: usize) -> Self {
         let selector: Box<dyn SelectionOperator<T, N, D> + Send + Sync> = match &conf.selection {
             SelectionConf::RouletteWheel(_) => Box::new(RouletteWheel::new(
-                conf.common.population_size, 
+                init_pop.nrows(), 
                 conf.common.num_parents
             )),
             SelectionConf::Tournament(tournament) => Box::new(Tournament::new(
-                conf.common.population_size, 
+                init_pop.nrows(), 
                 conf.common.num_parents, 
                 tournament.tournament_size
             )),
             SelectionConf::Residual(_) => Box::new(Residual::new(
-                conf.common.population_size, 
+                init_pop.nrows(), 
                 conf.common.num_parents
             )),
         };
@@ -79,11 +79,11 @@ where
         let crossover: Box<dyn CrossoverOperator<T, N, D> + Send + Sync> = match &conf.crossover {
             CrossoverConf::Random(random) => Box::new(Random::new(
                 random.crossover_prob, 
-                conf.common.population_size
+                init_pop.nrows()
             )),
             CrossoverConf::Heuristic(heuristic) => Box::new(Heuristic::new(
                 heuristic.crossover_prob, 
-                conf.common.population_size
+                init_pop.nrows()
             )),
         };
 

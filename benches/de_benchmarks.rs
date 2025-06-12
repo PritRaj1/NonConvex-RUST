@@ -20,7 +20,6 @@ static CONFIG_JSON: &str = r#"
     "alg_conf": {
         "DE": {
             "common": {
-                "population_size": 100,
                 "archive_size": 10,
                 "success_history_size": 50
             },

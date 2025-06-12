@@ -25,7 +25,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "alg_conf": {
             "CGA": {
                 "common": {
-                    "population_size": 100,
                     "num_parents": 40
                 },
                 "crossover": {

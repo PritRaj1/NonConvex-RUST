@@ -77,11 +77,11 @@ where
                     + Allocator<D, D>
                     + Allocator<U1, D>
 {
-    pub fn new(conf: CMAESConf, init_pop: OMatrix<T, U1, D>, opt_prob: OptProb<T, D>) -> Self {
+    pub fn new(conf: CMAESConf, init_pop: OMatrix<T, N, D>, opt_prob: OptProb<T, D>) -> Self {
         let init_x: OVector<T, D> = init_pop.row(0).transpose().into_owned();
 
         let n = init_x.len();
-        let params = Parameters::new(&conf, &init_x);
+        let params = Parameters::new(&conf, &init_x, init_pop.nrows());
         
         // Initial population
         let normal = Normal::new(0.0, 1.0).unwrap();

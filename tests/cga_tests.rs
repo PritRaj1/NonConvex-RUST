@@ -82,7 +82,7 @@ fn test_cga() {
         _ => panic!("Expected CGAConf"),
     };
 
-    let pop_size = cga_conf.common.population_size;
+    let pop_size = 10;
 
     let mut init_pop = OMatrix::zeros_generic(U10, U2);
     for i in 0..pop_size {

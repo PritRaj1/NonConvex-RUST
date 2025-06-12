@@ -10,8 +10,6 @@ pub struct CGAConf {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CommonConf {
-    #[serde(default = "default_population_size")]
-    pub population_size: usize,
     #[serde(default = "default_num_parents")]
     pub num_parents: usize,
 }
@@ -91,7 +89,6 @@ pub struct PolynomialMutationConf {
     pub eta_m: f64,
 }
 
-fn default_population_size() -> usize { 100 }
 fn default_num_parents() -> usize { 2 }
 fn default_crossover_prob() -> f64 { 0.8 }
 fn default_tournament_size() -> usize { 5 }

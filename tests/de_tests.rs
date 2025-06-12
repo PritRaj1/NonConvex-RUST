@@ -18,7 +18,6 @@ use non_convex_opt::utils::alg_conf::de_conf::{
 fn test_de_basic() {
     let conf = DEConf {
         common: CommonConf {
-            population_size: 100,
             archive_size: 10,
             success_history_size: 50,
         },
@@ -54,7 +53,6 @@ fn test_de_basic() {
 fn test_adaptive_de() {
     let conf = DEConf {
         common: CommonConf {
-            population_size: 100,
             archive_size: 10,
             success_history_size: 50,
         },

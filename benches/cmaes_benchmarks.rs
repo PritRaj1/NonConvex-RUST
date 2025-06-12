@@ -20,7 +20,6 @@ static CONFIG_JSON: &str = r#"
     "alg_conf": {
         "CMAES": {
             "initial_sigma": 1.0,
-            "population_size": 100
         }
     }
 }"#;
@@ -35,7 +34,7 @@ fn bench_cmaes_unconstrained(c: &mut Criterion) {
             let init_x = SVector::<f64, 2>::from_fn(|_,_| rand::random::<f64>() * 10.0);
             let mut opt = NonConvexOpt::new(
                 CONFIG.clone(),
-                black_box(SMatrix::<f64, 1, 2>::from_vec(init_x.iter().cloned().collect())),
+                black_box(SMatrix::<f64, 100, 2>::from_vec(init_x.iter().cloned().collect())),
                 KBF,
                 None::<KBFConstraints>,
             );
