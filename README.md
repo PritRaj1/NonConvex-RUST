@@ -43,7 +43,6 @@ let config_json = r#"{
     "alg_conf": {
         "CGA": {
             "common": {
-                "population_size": 100,
                 "num_parents": 2,
             },
             "crossover": {

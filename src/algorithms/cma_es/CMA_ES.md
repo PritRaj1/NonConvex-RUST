@@ -12,7 +12,6 @@ Fully-defined:
 {
     "alg_conf": {
         "CMAES": {
-            "population_size": 100,
             "num_parents": 50,
             "initial_sigma": 1.5
         }
