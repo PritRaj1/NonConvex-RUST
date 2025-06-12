@@ -1,7 +1,7 @@
 mod common;
 
 use serde_json;
-use nalgebra::SMatrix;
+use nalgebra::{SMatrix, RowVector2};
 use plotters::prelude::*;
 use gif::Frame;
 use image::ImageReader;
@@ -35,13 +35,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let obj_f = KBF;
     let constraints = KBFConstraints;
 
+    let mut init_x = SMatrix::<f64, 100, 2>::zeros();
+    init_x.row_mut(0).copy_from(&RowVector2::new(4.0, 9.0));
+    
     let mut opt = NonConvexOpt::new(
         config,
-        SMatrix::<f64, 20, 2>::from_vec({
-            let mut v = vec![4.0, 9.0];
-            v.resize(20 * 2, 0.0);
-            v
-        }),
+        init_x,
         obj_f.clone(), 
         Some(constraints.clone())
     );
