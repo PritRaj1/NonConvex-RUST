@@ -202,7 +202,4 @@ This project is open-sourced under the [MIT License](LICENSE).
 | MSPO | [√] |
 | SA | [√] |
 | DE | [√] |
-| CMAES | [x] |
-
-- OMatrices and allocation.
-- Upload as crate.
+| CMAES | [√] |
