@@ -1,5 +1,5 @@
 [package]
-name = "non-convex-opt"
+name = "nonconvex-opt"
 version = "0.1.0"
 authors = ["PritRaj1 <prithvi@exalaboratories.com>"]
 edition = "2021"
