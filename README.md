@@ -104,7 +104,7 @@ The following GIFs are based on the [2D unconstrained maximization problems](./e
 ### Local Search 
 |  |  |
 |-----------|---------------|
-| [Tabu Search (TS)](./src/algorithms/tabu_search/tabu.md) - Local search with memory | <img src="./examples/gifs/tabu_kbf.gif" width="300" alt="Tabu Example"> |
+| [Tabu Search (TS)](./src/algorithms/tabu_search/TS.md) - Local search with memory | <img src="./examples/gifs/tabu_kbf.gif" width="300" alt="Tabu Example"> |
 | <img src="./examples/gifs/grasp_kbf.gif" width="300" alt="GRASP Example"> | [Greedy Randomized Adaptive Search Procedure (GRASP)](./src/algorithms/grasp/GRASP.md) - Construction and local search |
 
 ### Gradient-Based 
