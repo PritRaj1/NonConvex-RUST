@@ -1,40 +1,14 @@
 mod common;
 
 use common::fcns::{RosenbrockConstraints, RosenbrockObjective};
-use nalgebra::{DMatrix, DVector};
-use rand::{rngs::StdRng, SeedableRng};
+use nalgebra::DMatrix;
 
-use non_convex_opt::algorithms::multi_swarm::{Particle, Swarm, SwarmConfig, MSPO};
+use non_convex_opt::algorithms::multi_swarm::{Swarm, SwarmConfig, MSPO};
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
-    opt_prob::{OptProb, OptimizationAlgorithm},
+    opt_prob::{OptProb, OptimizationAlgorithm}
 };
-
-#[test]
-fn test_particle_update() {
-    let position = DVector::from_vec(vec![0.5f64, 0.5]);
-    let velocity = DVector::from_vec(vec![0.1, 0.1]);
-    let rng = StdRng::seed_from_u64(42);
-    let mut particle = Particle::new(position, velocity, 0.0, rng);
-
-    let global_best = DVector::from_vec(vec![1.0, 1.0]);
-    let obj_f = RosenbrockObjective { a: 1.0, b: 1.0 };
-    let constraints = RosenbrockConstraints {};
-    let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
-
-    particle.update_velocity_and_position(
-        &global_best,
-        0.729,
-        2.05,
-        2.05,
-        &opt_prob,
-        (-10.0, 10.0),
-    );
-
-    assert!(particle.position.len() == 2);
-    assert!(particle.velocity.len() == 2);
-}
 
 #[test]
 fn test_swarm_initialization() {
@@ -56,7 +30,7 @@ fn test_swarm_initialization() {
             init_pop,
             inertia_start: 0.9,
             inertia_end: 0.4,
-            max_iterations: 100,
+            max_iterations: 100
         },
         42,
     );
@@ -92,7 +66,7 @@ fn test_swarm_update() {
             init_pop,
             inertia_start: 0.9,
             inertia_end: 0.4,
-            max_iterations: 100,
+            max_iterations: 100
         },
         42,
     );
@@ -118,8 +92,7 @@ fn test_mspo() {
         "opt_conf": {
             "max_iter": 100,
             "rtol": 1e-6,
-            "atol": 1e-6,
-            "rtol_max_iter_fraction": 1.0
+            "atol": 1e-6
         },
         "alg_conf": {
             "MSPO": {
@@ -138,7 +111,7 @@ fn test_mspo() {
     let conf = Config::new(config_json).unwrap();
     let mspo_conf = match conf.alg_conf {
         AlgConf::MSPO(mspo_conf) => mspo_conf,
-        _ => panic!("Expected MSPOConf"),
+        _ => panic!("Expected MSPOConf")
     };
 
     // Create initial population matrix

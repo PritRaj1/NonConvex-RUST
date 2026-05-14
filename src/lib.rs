@@ -27,7 +27,6 @@ pub use utils::opt_prob::{
 pub enum ConvergenceReason {
     AbsoluteTolerance,
     RelativeTolerance,
-    Stagnation,
 }
 
 pub struct NonConvexOpt<T, N, D>
@@ -117,42 +116,22 @@ where
         }
     }
 
-    fn check_convergence(&self, current: T, previous: T) -> Option<ConvergenceReason> {
-        let atol: T = T::cast(self.conf.atol);
-        let rtol: T = T::cast(self.conf.rtol);
-        let min_iter_for_rtol =
-            (self.conf.max_iter as f64 * self.conf.rtol_max_iter_fraction).floor() as usize;
-        let iter = self.alg.state().iter;
-        let eps: T = T::cast(1e-10);
-
-        let abs_imp = num_traits::Float::abs(current - previous);
-
-        if abs_imp < atol && iter > min_iter_for_rtol {
+    // window-based; single-step diff is noise on monotonic best_f
+    fn check_convergence(&self, current: T) -> Option<ConvergenceReason> {
+        let window = self.conf.stagnation_window;
+        if self.best_fitness_history.len() < window {
+            return None;
+        }
+        let oldest = self.best_fitness_history[self.best_fitness_history.len() - window];
+        let imp = num_traits::Float::abs(current - oldest);
+        let atol = T::cast(self.conf.atol);
+        if imp < atol {
             return Some(ConvergenceReason::AbsoluteTolerance);
         }
-
         let cur_abs = num_traits::Float::abs(current);
-        let rel_converged = if cur_abs > eps {
-            abs_imp / cur_abs <= rtol
-        } else {
-            abs_imp <= atol
-        };
-        if rel_converged && iter > min_iter_for_rtol {
+        if cur_abs > T::cast(1e-10) && imp / cur_abs <= T::cast(self.conf.rtol) {
             return Some(ConvergenceReason::RelativeTolerance);
         }
-
-        if self.best_fitness_history.len() >= self.conf.stagnation_window
-            && iter > min_iter_for_rtol
-        {
-            let oldest = self.best_fitness_history
-                [self.best_fitness_history.len() - self.conf.stagnation_window];
-            let stag_imp = num_traits::Float::abs(current - oldest);
-            let stagnant = stag_imp < atol || (cur_abs > eps && stag_imp / cur_abs <= rtol);
-            if stagnant {
-                return Some(ConvergenceReason::Stagnation);
-            }
-        }
-
         None
     }
 
@@ -160,7 +139,6 @@ where
         if self.converged {
             return;
         }
-        let prev = self.alg.state().best_f;
         self.alg.step();
         let cur = self.alg.state().best_f;
         self.best_fitness_history.push(cur);
@@ -171,7 +149,7 @@ where
             self.best_fitness_history.drain(0..excess);
         }
 
-        if let Some(reason) = self.check_convergence(cur, prev) {
+        if let Some(reason) = self.check_convergence(cur) {
             self.convergence_reason = Some(reason);
             self.converged = true;
         }

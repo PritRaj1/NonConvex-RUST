@@ -5,7 +5,7 @@ use nalgebra::{SMatrix, U2, U5};
 
 use non_convex_opt::algorithms::tpe::{
     AcquisitionConf, AcquisitionType, AdvancedConf, BandwidthConf, BandwidthMethod, KernelType,
-    SamplingConf, SamplingStrategy, TPEConf, TPE,
+    SamplingConf, SamplingStrategy, TPEConf, TPE
 };
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
@@ -33,7 +33,7 @@ fn create_test_conf(
             meta_optimization_frequency: 50,
             use_early_stopping: false,
             early_stopping_patience: 50,
-            use_constraint_aware: false,
+            use_constraint_aware: false
         },
         bandwidth: BandwidthConf {
             method: BandwidthMethod::Silverman,
@@ -42,14 +42,14 @@ fn create_test_conf(
             min_bandwidth: 1e-6,
             max_bandwidth: 10.0,
             cache_threshold: 0.2,
-            min_observations: 10,
+            min_observations: 10
         },
         acquisition: AcquisitionConf {
             acquisition_type: AcquisitionType::ExpectedImprovement,
             xi: 0.01,
             kappa: 2.0,
             use_entropy: false,
-            entropy_weight: 0.1,
+            entropy_weight: 0.1
         },
         sampling: SamplingConf {
             strategy: SamplingStrategy::KDEBased,
@@ -57,8 +57,8 @@ fn create_test_conf(
             noise_scale: 0.1,
             use_thompson: false,
             local_search: false,
-            local_search_steps: 10,
-        },
+            local_search_steps: 10
+        }
     }
 }
 
@@ -80,7 +80,7 @@ fn test_basic() {
             meta_optimization_frequency: 50,
             use_early_stopping: false,
             early_stopping_patience: 50,
-            use_constraint_aware: false,
+            use_constraint_aware: false
         },
         bandwidth: BandwidthConf {
             method: BandwidthMethod::Silverman,
@@ -89,14 +89,14 @@ fn test_basic() {
             min_bandwidth: 1e-6,
             max_bandwidth: 10.0,
             cache_threshold: 0.2,
-            min_observations: 10,
+            min_observations: 10
         },
         acquisition: AcquisitionConf {
             acquisition_type: AcquisitionType::ExpectedImprovement,
             xi: 0.01,
             kappa: 2.0,
             use_entropy: false,
-            entropy_weight: 0.1,
+            entropy_weight: 0.1
         },
         sampling: SamplingConf {
             strategy: SamplingStrategy::KDEBased,
@@ -104,8 +104,8 @@ fn test_basic() {
             noise_scale: 0.1,
             use_thompson: false,
             local_search: false,
-            local_search_steps: 10,
-        },
+            local_search_steps: 10
+        }
     };
 
     let init_pop = SMatrix::<f64, 5, 2>::from_rows(&[
@@ -113,7 +113,7 @@ fn test_basic() {
         [0.8, 0.8].into(),
         [0.7, 0.7].into(),
         [0.6, 0.6].into(),
-        [0.5, 0.5].into(),
+        [0.5, 0.5].into()
     ]);
 
     let obj_f = RosenbrockObjective { a: 1.0, b: 100.0 };
@@ -149,7 +149,7 @@ fn test_restart() {
         [0.4, 0.4].into(),
         [0.3, 0.3].into(),
         [0.2, 0.2].into(),
-        [0.1, 0.1].into(),
+        [0.1, 0.1].into()
     ]);
 
     let obj_f = RosenbrockObjective { a: 1.0, b: 100.0 };
@@ -185,7 +185,7 @@ fn test_adaptive_gamma() {
         [0.4, 0.4].into(),
         [0.3, 0.3].into(),
         [0.2, 0.2].into(),
-        [0.1, 0.1].into(),
+        [0.1, 0.1].into()
     ]);
 
     let obj_f = RosenbrockObjective { a: 1.0, b: 100.0 };
@@ -224,7 +224,7 @@ fn test_thompson_sampling() {
         [0.4, 0.4].into(),
         [0.3, 0.3].into(),
         [0.2, 0.2].into(),
-        [0.1, 0.1].into(),
+        [0.1, 0.1].into()
     ]);
 
     let obj_f = RosenbrockObjective { a: 1.0, b: 100.0 };
@@ -259,7 +259,7 @@ fn test_hybrid_sampling() {
         [0.4, 0.4].into(),
         [0.3, 0.3].into(),
         [0.2, 0.2].into(),
-        [0.1, 0.1].into(),
+        [0.1, 0.1].into()
     ]);
 
     let obj_f = RosenbrockObjective { a: 1.0, b: 100.0 };
@@ -294,7 +294,7 @@ fn test_adaptive_bandwidth() {
         [0.4, 0.4].into(),
         [0.3, 0.3].into(),
         [0.2, 0.2].into(),
-        [0.1, 0.1].into(),
+        [0.1, 0.1].into()
     ]);
 
     let obj_f = RosenbrockObjective { a: 1.0, b: 100.0 };
@@ -329,7 +329,7 @@ fn test_cross_validation_bandwidth() {
         [0.4, 0.4].into(),
         [0.3, 0.3].into(),
         [0.2, 0.2].into(),
-        [0.1, 0.1].into(),
+        [0.1, 0.1].into()
     ]);
 
     let obj_f = RosenbrockObjective { a: 1.0, b: 100.0 };
@@ -364,7 +364,7 @@ fn test_ucb_acquisition() {
         [0.4, 0.4].into(),
         [0.3, 0.3].into(),
         [0.2, 0.2].into(),
-        [0.1, 0.1].into(),
+        [0.1, 0.1].into()
     ]);
 
     let obj_f = RosenbrockObjective { a: 1.0, b: 100.0 };
@@ -399,7 +399,7 @@ fn test_entropy_search_acquisition() {
         [0.4, 0.4].into(),
         [0.3, 0.3].into(),
         [0.2, 0.2].into(),
-        [0.1, 0.1].into(),
+        [0.1, 0.1].into()
     ]);
 
     let obj_f = RosenbrockObjective { a: 1.0, b: 100.0 };
@@ -432,7 +432,7 @@ fn test_performance_stats() {
         [0.4, 0.4].into(),
         [0.3, 0.3].into(),
         [0.2, 0.2].into(),
-        [0.1, 0.1].into(),
+        [0.1, 0.1].into()
     ]);
 
     let obj_f = RosenbrockObjective { a: 1.0, b: 100.0 };

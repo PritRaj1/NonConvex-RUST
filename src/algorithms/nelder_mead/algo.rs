@@ -26,10 +26,8 @@ where
     current_sigma: f64,
     success_history: VecDeque<bool>,
     improvement_history: VecDeque<f64>,
-    operation_success_counts: [usize; 4], // [reflection, expansion, contraction, shrink]
     stagnation_counter: usize,
     last_improvement: T,
-    restart_counter: usize,
     last_restart_iter: usize,
     rng: StdRng,
 }
@@ -105,11 +103,9 @@ where
             current_sigma: conf.common.sigma,
             success_history: VecDeque::with_capacity(success_history_size),
             improvement_history: VecDeque::with_capacity(improvement_history_size),
-            operation_success_counts: [0; 4],
 
             stagnation_counter: 0,
             last_improvement: fitness_values[best_idx],
-            restart_counter: 0,
             last_restart_iter: 0,
             rng: rng::seeded(seed),
         }
@@ -163,18 +159,14 @@ where
 
                 if expanded_fitness > reflected_fitness {
                     self.update_vertex(worst_idx, expanded, expanded_fitness);
-                    self.record_operation_success(2); // expansion
-                    return true;
                 } else {
                     self.update_vertex(worst_idx, reflected, reflected_fitness);
-                    self.record_operation_success(0); // reflection
-                    return true;
                 }
             } else {
                 self.update_vertex(worst_idx, reflected, reflected_fitness);
-                self.record_operation_success(0); // reflection
-                return true;
             }
+            self.record_operation_success();
+            return true;
         }
 
         false
@@ -192,15 +184,15 @@ where
 
         if contracted_fitness > self.st.fitness[worst_idx] {
             self.update_vertex(worst_idx, contracted, contracted_fitness);
-            self.record_operation_success(1); // contraction
+            self.record_operation_success();
             return true;
         }
 
         false
     }
 
-    // Close simplex around region
-    fn shrink_simplex(&mut self, best_idx: usize) -> bool {
+    // fallback after refl/contract fail
+    fn shrink_simplex(&mut self, best_idx: usize) {
         let best = self.simplex[best_idx].clone();
         let shrink_results: Vec<_> = (0..self.simplex.len())
             .into_par_iter()
@@ -215,8 +207,6 @@ where
         for (i, vertex, fitness) in shrink_results {
             self.update_vertex(i, vertex, fitness);
         }
-        self.record_operation_success(3); // shrink
-        true
     }
 
     // Negative inf when infeasible, handle invalid fitness values
@@ -240,22 +230,18 @@ where
     }
 
     fn update_best_solution(&mut self) {
-        // Find the best valid fitness value, handling NaN/Inf cases
         let best_idx = self
             .st
             .fitness
             .iter()
             .enumerate()
-            .filter(|(_, &fitness)| fitness.is_finite()) // Filter out NaN/Inf values
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-            .map(|(idx, _)| idx);
-
-        // If no valid fitness values found, use the first index as fallback
-        let best_idx = best_idx.unwrap_or(0);
+            .filter(|(_, &fitness)| fitness.is_finite())
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Equal))
+            .map(|(idx, _)| idx)
+            .unwrap_or(0);
 
         let old_best_f = self.st.best_f;
-        self.st.best_x = self.simplex[best_idx].clone();
-
+        // only adopt on improve; keeps best_x in sync with best_f
         if self.st.fitness[best_idx].is_finite() && self.st.fitness[best_idx] > self.st.best_f {
             self.st.best_f = self.st.fitness[best_idx];
             self.st.best_x = self.simplex[best_idx].clone();
@@ -347,8 +333,7 @@ where
             .clamp(bounds.sigma_bounds.0, bounds.sigma_bounds.1);
     }
 
-    fn record_operation_success(&mut self, operation_idx: usize) {
-        self.operation_success_counts[operation_idx] += 1;
+    fn record_operation_success(&mut self) {
         self.success_history.push_back(true);
         if self.success_history.len() > self.conf.advanced.success_history_size {
             self.success_history.pop_front();
@@ -428,7 +413,6 @@ where
         // Reinit
         self.stagnation_counter = 0;
         self.last_improvement = current_best_f;
-        self.restart_counter += 1;
         self.last_restart_iter = self.st.iter;
         self.current_alpha = self.conf.common.alpha;
         self.current_gamma = self.conf.common.gamma;
@@ -470,11 +454,11 @@ where
 
         let centroid = self.centroid(worst_idx);
 
-        let operation_successful = self.try_reflection_expansion(worst_idx, best_idx, &centroid)
-            || self.try_contraction(worst_idx, best_idx, &centroid)
-            || self.shrink_simplex(best_idx);
+        let improved = self.try_reflection_expansion(worst_idx, best_idx, &centroid)
+            || self.try_contraction(worst_idx, best_idx, &centroid);
 
-        if !operation_successful {
+        if !improved {
+            self.shrink_simplex(best_idx);
             self.record_operation_failure();
         }
 

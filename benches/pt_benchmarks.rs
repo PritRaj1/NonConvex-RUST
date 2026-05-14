@@ -12,7 +12,6 @@ static PT_CONFIG_JSON: &str = r#"
         "max_iter": 50,
         "rtol": 0.0,
         "atol": 0.0,
-        "rtol_max_iter_fraction": 1.0,
         "stagnation_window": 10
     },
     "alg_conf": {

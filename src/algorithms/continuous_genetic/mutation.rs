@@ -13,7 +13,8 @@ where
     fn mutate(
         &mut self,
         individual: &OVector<T, D>,
-        bounds: (T, T),
+        lower: &OVector<T, D>,
+        upper: &OVector<T, D>,
         generation: usize,
     ) -> OVector<T, D>;
 }
@@ -37,14 +38,29 @@ where
     fn mutate(
         &mut self,
         individual: &OVector<T, D>,
-        bounds: (T, T),
+        lower: &OVector<T, D>,
+        upper: &OVector<T, D>,
         generation: usize,
     ) -> OVector<T, D> {
         match self {
-            MutationOperatorEnum::Gaussian(op, _) => op.mutate(individual, bounds, generation),
-            MutationOperatorEnum::Uniform(op, _) => op.mutate(individual, bounds, generation),
-            MutationOperatorEnum::NonUniform(op, _) => op.mutate(individual, bounds, generation),
-            MutationOperatorEnum::Polynomial(op, _) => op.mutate(individual, bounds, generation),
+            MutationOperatorEnum::Gaussian(op, _) => op.mutate(individual, lower, upper, generation),
+            MutationOperatorEnum::Uniform(op, _) => op.mutate(individual, lower, upper, generation),
+            MutationOperatorEnum::NonUniform(op, _) => op.mutate(individual, lower, upper, generation),
+            MutationOperatorEnum::Polynomial(op, _) => op.mutate(individual, lower, upper, generation),
+        }
+    }
+}
+
+impl<T: FloatNumber, D: Dim> MutationOperatorEnum<T, D>
+where
+    DefaultAllocator: Allocator<D>,
+{
+    pub fn set_seed(&mut self, seed: u64) {
+        match self {
+            MutationOperatorEnum::Gaussian(op, _) => op.rng = rng::seeded(seed),
+            MutationOperatorEnum::Uniform(op, _) => op.rng = rng::seeded(seed),
+            MutationOperatorEnum::NonUniform(op, _) => op.rng = rng::seeded(seed),
+            MutationOperatorEnum::Polynomial(op, _) => op.rng = rng::seeded(seed),
         }
     }
 }
@@ -53,7 +69,7 @@ where
 pub struct Gaussian {
     pub mutation_rate: f64,
     pub sigma: f64,
-    rng: StdRng,
+    pub rng: StdRng,
 }
 
 impl Gaussian {
@@ -76,7 +92,8 @@ where
     fn mutate(
         &mut self,
         individual: &OVector<T, D>,
-        bounds: (T, T),
+        lower: &OVector<T, D>,
+        upper: &OVector<T, D>,
         _generation: usize,
     ) -> OVector<T, D> {
         let normal = Normal::new(0.0, self.sigma).unwrap();
@@ -85,7 +102,7 @@ where
         for i in 0..individual.len() {
             if self.rng.random::<f64>() < self.mutation_rate {
                 let noise = T::cast(normal.sample(&mut self.rng));
-                mutated[i] = (mutated[i] + noise).clamp(bounds.0, bounds.1);
+                mutated[i] = (mutated[i] + noise).clamp(lower[i], upper[i]);
             }
         }
         mutated
@@ -95,7 +112,7 @@ where
 #[derive(Clone)]
 pub struct Uniform {
     pub mutation_rate: f64,
-    rng: StdRng,
+    pub rng: StdRng,
 }
 
 impl Uniform {
@@ -117,7 +134,8 @@ where
     fn mutate(
         &mut self,
         individual: &OVector<T, D>,
-        bounds: (T, T),
+        lower: &OVector<T, D>,
+        upper: &OVector<T, D>,
         _generation: usize,
     ) -> OVector<T, D> {
         let mut mutated = individual.clone();
@@ -126,7 +144,7 @@ where
             if self.rng.random::<f64>() < self.mutation_rate {
                 mutated[i] = T::cast(
                     self.rng
-                        .random_range(bounds.0.to_f64().unwrap()..bounds.1.to_f64().unwrap()),
+                        .random_range(lower[i].to_f64().unwrap()..upper[i].to_f64().unwrap()),
                 );
             }
         }
@@ -139,7 +157,7 @@ pub struct NonUniform {
     pub mutation_rate: f64,
     pub b: f64, // Shape parameter
     pub max_generations: usize,
-    rng: StdRng,
+    pub rng: StdRng,
 }
 
 impl NonUniform {
@@ -163,18 +181,20 @@ where
     fn mutate(
         &mut self,
         individual: &OVector<T, D>,
-        bounds: (T, T),
+        lower: &OVector<T, D>,
+        upper: &OVector<T, D>,
         generation: usize,
     ) -> OVector<T, D> {
         let mut mutated = individual.clone();
-        let r = T::cast(self.rng.random::<f64>() * generation as f64 / self.max_generations as f64);
+        // Michalewicz non-uniform: r is the deterministic time fraction
+        let r = T::cast(generation as f64 / self.max_generations as f64);
 
         for i in 0..individual.len() {
             if self.rng.random::<f64>() < self.mutation_rate {
                 let delta = if self.rng.random_bool(0.5) {
-                    bounds.1 - mutated[i]
+                    upper[i] - mutated[i]
                 } else {
-                    mutated[i] - bounds.0
+                    mutated[i] - lower[i]
                 };
 
                 let power = T::cast(
@@ -187,7 +207,7 @@ where
                     mutated[i] -= delta * power;
                 }
 
-                mutated[i] = mutated[i].clamp(bounds.0, bounds.1);
+                mutated[i] = mutated[i].clamp(lower[i], upper[i]);
             }
         }
         mutated
@@ -198,7 +218,7 @@ where
 pub struct Polynomial {
     pub mutation_rate: f64,
     pub eta_m: f64, // Distribution index
-    rng: StdRng,
+    pub rng: StdRng,
 }
 
 impl Polynomial {
@@ -221,7 +241,8 @@ where
     fn mutate(
         &mut self,
         individual: &OVector<T, D>,
-        bounds: (T, T),
+        lower: &OVector<T, D>,
+        upper: &OVector<T, D>,
         _generation: usize,
     ) -> OVector<T, D> {
         let mut mutated = individual.clone();
@@ -236,7 +257,7 @@ where
                 };
 
                 mutated[i] =
-                    (mutated[i] + T::cast(delta) * (bounds.1 - bounds.0)).clamp(bounds.0, bounds.1);
+                    (mutated[i] + T::cast(delta) * (upper[i] - lower[i])).clamp(lower[i], upper[i]);
             }
         }
         mutated

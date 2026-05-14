@@ -7,7 +7,7 @@ use plotters::prelude::*;
 
 use common::fcns::{BoxConstraints, MultiModalFunction};
 use common::img::{
-    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams,
+    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams
 };
 use non_convex_opt::utils::config::{AdamConf, AlgConf, Config, OptConf};
 use non_convex_opt::NonConvexOpt;
@@ -18,8 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             max_iter: 100,
             rtol: 1e-6,
             atol: 0.0,
-            rtol_max_iter_fraction: 1.0,
-            stagnation_window: 50,
+            stagnation_window: 50
         },
         alg_conf: AlgConf::Adam(AdamConf {
             learning_rate: 0.1,
@@ -28,8 +27,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             epsilon: 1e-8,
             weight_decay: 0.0,
             gradient_clip: 0.0,
-            amsgrad: false,
-        }),
+            amsgrad: false
+        })
     };
 
     let obj_f = MultiModalFunction;
@@ -57,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             min_val,
             max_val,
             constraints: &constraints,
-            frame_path: "examples/adam_frame.png",
+            frame_path: "examples/adam_frame.png"
         })?;
 
         // Draw best individual in yellow

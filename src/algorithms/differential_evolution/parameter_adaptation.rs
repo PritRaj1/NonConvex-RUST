@@ -1,5 +1,6 @@
 use crate::utils::rng;
 use rand::{rngs::StdRng, Rng};
+use rand_distr::{Distribution, Normal};
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
@@ -43,7 +44,7 @@ pub struct JADEParameterAdaptation {
     pub memory_pointer: usize,
     pub successful_f: Vec<f64>,
     pub successful_cr: Vec<f64>,
-    rng: StdRng,
+    pub rng: StdRng,
 }
 
 impl JADEParameterAdaptation {
@@ -66,26 +67,22 @@ impl JADEParameterAdaptation {
         }
     }
 
+    // JADE: F ~ Cauchy(μ_F, 0.1), CR ~ Normal(μ_CR, 0.1)
     pub fn generate_jade_parameters(&mut self) -> (f64, f64) {
-        let memory_idx = self.rng.random_range(0..self.f_memory.len()); // Random mem index
+        let memory_idx = self.rng.random_range(0..self.f_memory.len());
 
-        // Sample from Cauchy distribution around memory value
-        let f_memory = self.f_memory[memory_idx];
+        let mu_f = self.f_memory[memory_idx];
         let f = loop {
-            let f_candidate = f_memory + 0.1 * (2.0 * self.rng.random::<f64>() - 1.0);
-            if (0.1..=1.0).contains(&f_candidate) {
-                break f_candidate;
+            let u: f64 = self.rng.random();
+            let cand = mu_f + 0.1 * (std::f64::consts::PI * (u - 0.5)).tan();
+            if cand > 0.0 {
+                break cand.min(1.0);
             }
         };
 
-        // CR using normal distribution
-        let cr_memory = self.cr_memory[memory_idx];
-        let cr = loop {
-            let cr_candidate = cr_memory + 0.1 * (2.0 * self.rng.random::<f64>() - 1.0);
-            if (0.0..=1.0).contains(&cr_candidate) {
-                break cr_candidate;
-            }
-        };
+        let mu_cr = self.cr_memory[memory_idx];
+        let normal = Normal::new(mu_cr, 0.1).expect("Normal stddev > 0");
+        let cr = normal.sample(&mut self.rng).clamp(0.0, 1.0);
 
         (f, cr)
     }

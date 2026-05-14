@@ -15,8 +15,7 @@ static CONFIG_JSON: &str = r#"
     "opt_conf": {
         "max_iter": 100,
         "rtol": 0.0,
-        "atol": 0.0,
-        "rtol_max_iter_fraction": 1.0
+        "atol": 0.0
     },
     "alg_conf": {
         "TS": {
@@ -50,8 +49,6 @@ static CONFIG_JSON: &str = r#"
                         "threshold": 1e-6
                     }
                 },
-                "intensification_cycles": 4,
-                "diversification_threshold": 0.1,
                 "success_history_size": 20,
                 "adaptation_rate": 0.1
             }
@@ -64,8 +61,7 @@ static REACTIVE_CONFIG_JSON: &str = r#"
     "opt_conf": {
         "max_iter": 10,
         "rtol": 0.0,
-        "atol": 0.0,
-        "rtol_max_iter_fraction": 1.0
+        "atol": 0.0
     },
     "alg_conf": {
         "TS": {
@@ -99,8 +95,6 @@ static REACTIVE_CONFIG_JSON: &str = r#"
                         "threshold": 1e-6
                     }
                 },
-                "intensification_cycles": 4,
-                "diversification_threshold": 0.1,
                 "success_history_size": 20,
                 "adaptation_rate": 0.1
             }

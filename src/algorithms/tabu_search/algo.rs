@@ -33,16 +33,8 @@ where
     improvement_history: VecDeque<f64>,
     current_step_size: f64,
     current_perturbation_prob: f64,
-    phase: SearchPhase,
-    phase_iterations: usize,
     rng: StdRng,
     seed: u64,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-enum SearchPhase {
-    Intensification,
-    Diversification,
 }
 
 impl<T, N, D> TabuSearch<T, N, D>
@@ -77,8 +69,6 @@ where
             improvement_history: VecDeque::with_capacity(conf.advanced.success_history_size),
             current_step_size: conf.common.step_size,
             current_perturbation_prob: conf.common.perturbation_prob,
-            phase: SearchPhase::Intensification,
-            phase_iterations: 0,
             rng: rng::seeded(seed),
             seed,
             conf,
@@ -199,7 +189,6 @@ where
         }
     }
 
-    // Reset when stagnant
     fn restart_search(&mut self) {
         self.tabu_list.clear_frequency_map();
         self.tabu_list.reset_quality_memory();
@@ -210,39 +199,10 @@ where
         self.current_step_size = self.conf.common.step_size;
         self.current_perturbation_prob = self.conf.common.perturbation_prob;
 
-        // Generate a new random starting position for restart
         let mut local_rng = self.rng.clone();
-        let neighbor = self.generate_neighbor(&mut local_rng);
+        self.x = self.generate_neighbor(&mut local_rng);
         self.rng = local_rng;
-        self.x = neighbor;
-
-        // Switch phase
-        self.phase = match self.phase {
-            SearchPhase::Intensification => SearchPhase::Diversification,
-            SearchPhase::Diversification => SearchPhase::Intensification,
-        };
-        self.phase_iterations = 0;
         self.iterations_since_improvement = 0;
-    }
-
-    fn update_search_phase(&mut self) {
-        self.phase_iterations += 1;
-
-        if self.phase_iterations >= self.conf.advanced.intensification_cycles {
-            match self.phase {
-                SearchPhase::Intensification => {
-                    if self.iterations_since_improvement > 5 {
-                        // harcoded at 5
-                        self.phase = SearchPhase::Diversification;
-                        self.phase_iterations = 0;
-                    }
-                }
-                SearchPhase::Diversification => {
-                    self.phase = SearchPhase::Intensification;
-                    self.phase_iterations = 0;
-                }
-            }
-        }
     }
 }
 
@@ -310,7 +270,6 @@ where
 
         self.track_success(previous_best, self.st.best_f);
         self.adapt_parameters();
-        self.update_search_phase();
 
         self.st.pop.row_mut(0).copy_from(&self.x.transpose());
         self.st.fitness[0] = self.opt_prob.evaluate(&self.x);

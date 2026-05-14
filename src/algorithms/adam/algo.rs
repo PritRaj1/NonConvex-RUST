@@ -67,8 +67,9 @@ where
             .gradient(&self.st.best_x)
             .expect("Adam requires gradient");
 
+        // ascent + L2 penalty: subtract λx to pull toward origin
         if self.conf.weight_decay > 0.0 {
-            grad += &self.st.best_x * T::cast(self.conf.weight_decay);
+            grad -= &self.st.best_x * T::cast(self.conf.weight_decay);
         }
 
         if self.conf.gradient_clip > 0.0 {

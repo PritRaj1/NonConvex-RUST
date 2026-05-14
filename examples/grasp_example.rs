@@ -7,7 +7,7 @@ use plotters::prelude::*;
 
 use common::fcns::{Kbf, KbfConstraints};
 use common::img::{
-    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams,
+    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams
 };
 
 use non_convex_opt::utils::config::{AlgConf, Config, GRASPConf, OptConf};
@@ -19,8 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             max_iter: 50,
             rtol: 1e-6,
             atol: 0.0,
-            rtol_max_iter_fraction: 1.0,
-            stagnation_window: 50,
+            stagnation_window: 50
         },
         alg_conf: AlgConf::GRASP(GRASPConf {
             num_candidates: 100,
@@ -32,8 +31,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             cache_bounds: true,
             diversity_prob: 0.7,
             restart_threshold: 15,
-            diversity_strength: 10.0,
-        }),
+            diversity_strength: 10.0
+        })
     };
 
     let obj_f = Kbf;
@@ -43,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         config,
         SMatrix::<f64, 1, 2>::from_vec(vec![
             rand::random::<f64>() * 10.0,
-            rand::random::<f64>() * 10.0,
+            rand::random::<f64>() * 10.0
         ]),
         obj_f.clone(),
         Some(constraints.clone()),
@@ -64,7 +63,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             min_val,
             max_val,
             constraints: &constraints,
-            frame_path: "examples/grasp_frame.png",
+            frame_path: "examples/grasp_frame.png"
         })?;
 
         // Draw current solution in red

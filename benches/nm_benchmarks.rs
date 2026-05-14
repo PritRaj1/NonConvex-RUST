@@ -11,8 +11,7 @@ static NM_CONFIG_JSON: &str = r#"
     "opt_conf": {
         "max_iter": 50,
         "rtol": 0.0,
-        "atol": 0.0,
-        "rtol_max_iter_fraction": 1.0
+        "atol": 0.0
     },
     "alg_conf": {
         "NM": {
@@ -32,8 +31,7 @@ static NM_CONFIG_JSON: &str = r#"
                 },
                 "stagnation_detection": {
                     "stagnation_window": 100,
-                    "improvement_threshold": 1e-6,
-                    "diversity_threshold": 1e-3
+                    "improvement_threshold": 1e-6
                 },
                 "coefficient_bounds": {
                     "alpha_bounds": [0.1, 3.0],

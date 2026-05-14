@@ -58,11 +58,12 @@ where
     }
     *params.ps = ps_new;
 
-    // Update hsig
+    // exponent uses (g+1) so denom is non-zero at g=0
     let decay = T::one() - params.cs;
-    let decay_pow = decay.powi(2 * params.generation as i32);
+    let decay_pow = decay.powi(2 * (params.generation as i32 + 1));
     let ps_norm = params.ps.dot(params.ps).sqrt();
-    ps_norm / (T::sqrt(T::one() - decay_pow) * params.chi_n) < T::cast(1.4)
+    let threshold = T::cast(1.4 + 2.0 / (params.n as f64 + 1.0));
+    ps_norm / (T::sqrt(T::one() - decay_pow) * params.chi_n) < threshold
 }
 
 #[derive(Debug)]
@@ -136,7 +137,7 @@ pub fn update_covariance<T: FloatNumber + RealField, N: Dim, D>(
         }
     }
 
-    // Rank-mu update (positive weights)
+    // Rank-mu update (+ve weights)
     for k in 0..params.mu {
         if k >= params.indices.len() || k >= params.weights.len() {
             continue;
@@ -166,7 +167,7 @@ pub fn update_covariance<T: FloatNumber + RealField, N: Dim, D>(
         }
     }
 
-    // Active CMA-ES: Rank-mu update with negative weights
+    // Active CMA-ES: rank-mu with -ve weights
     if let Some(ref weights_neg) = params.weights_negative {
         for k in 0..params.mu_neg {
             let neg_idx = params.mu + k;
@@ -177,7 +178,7 @@ pub fn update_covariance<T: FloatNumber + RealField, N: Dim, D>(
             if idx >= params.population.nrows() {
                 continue;
             }
-            let w_neg = weights_neg[k]; // This is already negative
+            let w_neg = weights_neg[k]; // already -ve
 
             let mut y_k: OVector<T, D> = OVector::zeros_generic(D::from_usize(params.n), U1);
             for i in 0..params.n {
@@ -186,7 +187,7 @@ pub fn update_covariance<T: FloatNumber + RealField, N: Dim, D>(
                 }
             }
 
-            // Negative push away from bad solutions
+            // -ve push away from bad solutions
             for i in 0..params.n {
                 for j in i..params.n {
                     let val = params.cmu_neg * w_neg * y_k[i] * y_k[j];

@@ -12,8 +12,6 @@ where
     pub velocity: OVector<T, D>,
     pub best_position: OVector<T, D>,
     pub best_fitness: T,
-    pub improvement_counter: usize,
-    pub stagnation_counter: usize,
     rng: StdRng,
 }
 
@@ -29,8 +27,6 @@ where
             velocity,
             best_position: position,
             best_fitness: fitness,
-            improvement_counter: 0,
-            stagnation_counter: 0,
             rng,
         }
     }
@@ -44,6 +40,7 @@ where
         opt_prob: &OptProb<T, D>,
         bounds: (T, T),
     ) {
+        let v_max = (bounds.1 - bounds.0) * T::cast(0.2);
         for i in 0..self.velocity.len() {
             let r1 = T::cast(self.rng.random::<f64>());
             let r2 = T::cast(self.rng.random::<f64>());
@@ -51,61 +48,36 @@ where
             let cognitive = c1 * r1 * (self.best_position[i] - self.position[i]);
             let social = c2 * r2 * (global_best[i] - self.position[i]);
 
-            // Clamp based on search space size
-            let search_space_size = bounds.1 - bounds.0;
-            let v_max = search_space_size * T::cast(0.2); // More aggressive clamping
-
             self.velocity[i] = (w * self.velocity[i] + cognitive + social).clamp(-v_max, v_max);
         }
 
-        // Reflective boundary
+        // reflective boundary
         let new_positions: Vec<T> = self
             .position
             .iter()
             .zip(self.velocity.iter())
             .map(|(&p, &v)| {
-                let new_pos = p + v;
-                if new_pos < bounds.0 {
-                    let reflected_pos = bounds.0 + (bounds.0 - new_pos);
-                    reflected_pos.clamp(bounds.0, bounds.1)
-                } else if new_pos > bounds.1 {
-                    let reflected_pos = bounds.1 - (new_pos - bounds.1);
-                    reflected_pos.clamp(bounds.0, bounds.1)
+                let np = p + v;
+                if np < bounds.0 {
+                    (bounds.0 + (bounds.0 - np)).clamp(bounds.0, bounds.1)
+                } else if np > bounds.1 {
+                    (bounds.1 - (np - bounds.1)).clamp(bounds.0, bounds.1)
                 } else {
-                    new_pos
+                    np
                 }
             })
             .collect();
 
-        let final_position = OVector::<T, D>::from_vec_generic(
+        self.position = OVector::<T, D>::from_vec_generic(
             D::from_usize(new_positions.len()),
             U1,
             new_positions,
         );
-        self.position = final_position;
 
-        // Only update best position if new position is better AND feasible
         let new_fitness = opt_prob.evaluate(&self.position);
         if new_fitness > self.best_fitness && opt_prob.is_feasible(&self.position) {
             self.best_fitness = new_fitness;
             self.best_position = self.position.clone();
-            self.improvement_counter += 1;
-            self.stagnation_counter = 0;
-        } else {
-            self.stagnation_counter += 1;
         }
-    }
-
-    pub fn is_stagnated(&self, threshold: usize) -> bool {
-        self.stagnation_counter > threshold
-    }
-
-    // Iterations since last improvement
-    pub fn age(&self) -> usize {
-        self.stagnation_counter
-    }
-
-    pub fn reset_stagnation(&mut self) {
-        self.stagnation_counter = 0;
     }
 }

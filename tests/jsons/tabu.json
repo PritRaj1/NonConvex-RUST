@@ -33,8 +33,6 @@
                 "restart_strategy": {
                     "None": null
                 },
-                "intensification_cycles": 5,
-                "diversification_threshold": 0.1,
                 "success_history_size": 20,
                 "adaptation_rate": 0.1
             }

@@ -56,7 +56,7 @@ where
     items: VecDeque<OVector<T, D>>,
     max_size: usize,
     tabu_type: TabuType,
-    frequency_map: HashMap<String, usize>,
+    frequency_map: HashMap<Vec<i64>, usize>,
     quality_memory: VecDeque<(OVector<T, D>, T)>,
     best_fitness: Option<T>,
 }
@@ -80,20 +80,14 @@ where
     }
 
     pub fn is_tabu(&self, x: &OVector<T, D>, threshold: T) -> bool {
-        let in_tabu_list = self.items.par_iter().any(|tabu_x| {
+        let near_tabu = self.items.par_iter().any(|tabu_x| {
             let diff = x - tabu_x;
             diff.dot(&diff).sqrt() < threshold
         });
-
-        // Aspiration criteria- allow tabu move if it leads to the best solution found
-        if in_tabu_list {
-            if let Some(_best_f) = self.best_fitness {
-                return false;
-            }
+        if near_tabu {
             return true;
         }
 
-        // Frequency-based restrictions
         if let TabuType::FrequencyBased {
             frequency_threshold,
             ..
@@ -101,9 +95,7 @@ where
         {
             let key = self.solution_key(x);
             if let Some(&freq) = self.frequency_map.get(&key) {
-                if freq >= *frequency_threshold {
-                    return true;
-                }
+                return freq >= *frequency_threshold;
             }
         }
 
@@ -169,13 +161,11 @@ where
         }
     }
 
-    fn solution_key(&self, x: &OVector<T, D>) -> String {
-        let precision = 6;
-        let rounded: Vec<String> = x
-            .iter()
-            .map(|&val| format!("{:.prec$}", val.to_f64().unwrap(), prec = precision))
-            .collect();
-        rounded.join(",")
+    // 1e-6-bucketed integer key for HashMap identity
+    fn solution_key(&self, x: &OVector<T, D>) -> Vec<i64> {
+        x.iter()
+            .map(|&v| (v.to_f64().unwrap_or(0.0) * 1e6).round() as i64)
+            .collect()
     }
 
     pub fn clear_frequency_map(&mut self) {

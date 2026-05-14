@@ -7,7 +7,7 @@ use plotters::prelude::*;
 
 use common::fcns::{Kbf, KbfConstraints};
 use common::img::{
-    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams,
+    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams
 };
 
 use non_convex_opt::utils::config::Config;
@@ -19,25 +19,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "opt_conf": {
             "max_iter": 50,
             "rtol": 1e-6,
-            "atol": 0.0,
-            "rtol_max_iter_fraction": 1.0
+            "atol": 0.0
         },
         "alg_conf": {
             "DE": {
                 "common": {
-                    "archive_size": 10,
-                    "success_history_size": 50
                 },
                 "mutation_type": {
                     "Adaptive": {
                         "strategy": "Best2Bin",
-                        "f_min": 0.4,
-                        "f_max": 0.9,
-                        "cr_min": 0.1,
-                        "cr_max": 0.9,
                         "use_jade": false,
-                        "memory_size": 5,
-                        "learning_rate": 0.1
+                        "memory_size": 5
                     }
                 }
             }
@@ -78,7 +70,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             min_val,
             max_val,
             constraints: &constraints,
-            frame_path: "examples/de_frame.png",
+            frame_path: "examples/de_frame.png"
         })?;
 
         // Draw population

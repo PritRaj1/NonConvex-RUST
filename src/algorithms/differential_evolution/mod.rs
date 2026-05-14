@@ -1,5 +1,4 @@
 mod algo;
-mod archive;
 mod bounds;
 mod config;
 mod mutation;

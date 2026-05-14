@@ -7,7 +7,7 @@ use plotters::prelude::*;
 
 use common::fcns::{Kbf, KbfConstraints};
 use common::img::{
-    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams,
+    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams
 };
 
 use non_convex_opt::utils::config::Config;
@@ -19,8 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "opt_conf": {
             "max_iter": 100,
             "rtol": 1e-8,
-            "atol": 1e-8,
-            "rtol_max_iter_fraction": 0.8
+            "atol": 1e-8
         },
         "alg_conf": {
             "SA": {
@@ -30,8 +29,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "num_neighbors": 50,
                 "x_min": 0.0,
                 "x_max": 10.0,
-                "min_step_size_factor": 0.3,
-                "step_size_decay_power": 0.2,
                 "min_temp_factor": 0.01,
                 "use_adaptive_cooling": true,
                 "advanced": {
@@ -65,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         config,
         SMatrix::<f64, 1, 2>::from_vec(vec![
             rand::random::<f64>() * 10.0,
-            rand::random::<f64>() * 10.0,
+            rand::random::<f64>() * 10.0
         ]),
         obj_f.clone(),
         Some(constraints.clone()),
@@ -86,7 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             min_val,
             max_val,
             constraints: &constraints,
-            frame_path: "examples/sa_frame.png",
+            frame_path: "examples/sa_frame.png"
         })?;
 
         // Draw current individual

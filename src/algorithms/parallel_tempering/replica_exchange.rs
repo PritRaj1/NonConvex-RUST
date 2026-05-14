@@ -1,10 +1,21 @@
-use rand::prelude::*;
-use rand::rng;
+use rand::{rngs::StdRng, Rng};
+
+use crate::utils::rng;
 
 pub enum SwapCheck {
     Periodic(Periodic),
     Stochastic(Stochastic),
-    Always(Always),
+    Always,
+}
+
+impl SwapCheck {
+    pub fn should_swap(&mut self, step: usize) -> bool {
+        match self {
+            SwapCheck::Periodic(p) => p.should_swap(step),
+            SwapCheck::Stochastic(s) => s.should_swap(),
+            SwapCheck::Always => true,
+        }
+    }
 }
 
 pub struct Periodic {
@@ -27,27 +38,18 @@ impl Periodic {
 
 pub struct Stochastic {
     pub swap_probability: f64,
+    rng: StdRng,
 }
 
 impl Stochastic {
-    pub fn new(swap_probability: f64) -> Self {
-        Self { swap_probability }
+    pub fn new(swap_probability: f64, seed: u64) -> Self {
+        Self {
+            swap_probability,
+            rng: rng::seeded(seed),
+        }
     }
 
-    pub fn should_swap(&self, _current_step: usize) -> bool {
-        rng().random::<f64>() < self.swap_probability
-    }
-}
-
-#[derive(Default)]
-pub struct Always {}
-
-impl Always {
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    pub fn should_swap(&self, _current_step: usize) -> bool {
-        true
+    pub fn should_swap(&mut self) -> bool {
+        self.rng.random::<f64>() < self.swap_probability
     }
 }

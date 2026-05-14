@@ -7,7 +7,7 @@ use plotters::prelude::*;
 
 use common::fcns::{Kbf, KbfConstraints};
 use common::img::{
-    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams,
+    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams
 };
 
 use non_convex_opt::utils::config::Config;
@@ -19,8 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "opt_conf": {
             "max_iter": 100,
             "rtol": 1e-6,
-            "atol": 0.0,
-            "rtol_max_iter_fraction": 1.0
+            "atol": 0.0
         },
         "alg_conf": {
             "MSPO": {
@@ -77,7 +76,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             min_val,
             max_val,
             constraints: &constraints,
-            frame_path: "examples/mspo_frame.png",
+            frame_path: "examples/mspo_frame.png"
         })?;
 
         // Draw population

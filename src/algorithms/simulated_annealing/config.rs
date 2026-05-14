@@ -14,10 +14,6 @@ pub struct SAConf {
     pub x_min: f64,
     #[serde(default = "default_x_max")]
     pub x_max: f64,
-    #[serde(default = "default_min_step_size_factor")]
-    pub min_step_size_factor: f64,
-    #[serde(default = "default_step_size_decay_power")]
-    pub step_size_decay_power: f64,
     #[serde(default = "default_min_temp_factor")]
     pub min_temp_factor: f64,
     #[serde(default = "default_use_adaptive_cooling")]
@@ -86,12 +82,6 @@ fn default_x_min() -> f64 {
 }
 fn default_x_max() -> f64 {
     10.0
-}
-fn default_min_step_size_factor() -> f64 {
-    0.1
-}
-fn default_step_size_decay_power() -> f64 {
-    0.5
 }
 fn default_min_temp_factor() -> f64 {
     0.1

@@ -99,7 +99,6 @@ where
                 {
                     target_swarm.particles[target_particle_idx].best_position = better_pos;
                     target_swarm.particles[target_particle_idx].best_fitness = better_fitness;
-                    break; // Only use the first better solution
                 }
             }
         }

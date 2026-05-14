@@ -7,12 +7,12 @@ use plotters::prelude::*;
 
 use common::fcns::{Kbf, KbfConstraints};
 use common::img::{
-    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams,
+    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams
 };
 
 use non_convex_opt::algorithms::nelder_mead::{
     AdvancedConf, CoefficientBounds, CommonConf, NelderMeadConf, RestartStrategy,
-    StagnationDetection,
+    StagnationDetection
 };
 use non_convex_opt::utils::config::{AlgConf, Config, OptConf};
 use non_convex_opt::NonConvexOpt;
@@ -23,38 +23,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             max_iter: 100,
             rtol: 1e-6,
             atol: 0.0,
-            rtol_max_iter_fraction: 1.0,
-            stagnation_window: 50,
+            stagnation_window: 50
         },
         alg_conf: AlgConf::NM(NelderMeadConf {
             common: CommonConf {
                 alpha: 1.0,
                 gamma: 2.0,
                 rho: 0.5,
-                sigma: 0.5,
+                sigma: 0.5
             },
             advanced: AdvancedConf {
                 adaptive_parameters: true,
                 restart_strategy: RestartStrategy::Stagnation {
                     max_iterations: 30,
-                    threshold: 1e-6,
+                    threshold: 1e-6
                 },
                 stagnation_detection: StagnationDetection {
                     stagnation_window: 20,
-                    improvement_threshold: 1e-6,
-                    diversity_threshold: 1e-3,
+                    improvement_threshold: 1e-6
                 },
                 coefficient_bounds: CoefficientBounds {
                     alpha_bounds: (0.1, 3.0),
                     gamma_bounds: (1.0, 5.0),
                     rho_bounds: (0.1, 1.0),
-                    sigma_bounds: (0.1, 1.0),
+                    sigma_bounds: (0.1, 1.0)
                 },
                 adaptation_rate: 0.1,
                 success_history_size: 20,
-                improvement_history_size: 30,
-            },
-        }),
+                improvement_history_size: 30
+            }
+        })
     };
 
     let obj_f = Kbf;
@@ -64,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let init_simplex = SMatrix::<f64, 3, 2>::from_rows(&[
         SMatrix::<f64, 1, 2>::from_row_slice(&[1.0, 1.0]),
         SMatrix::<f64, 1, 2>::from_row_slice(&[0.1, 10.0]),
-        SMatrix::<f64, 1, 2>::from_row_slice(&[10.0, 0.1]),
+        SMatrix::<f64, 1, 2>::from_row_slice(&[10.0, 0.1])
     ]);
 
     let mut opt = NonConvexOpt::new(
@@ -89,7 +87,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             min_val,
             max_val,
             constraints: &constraints,
-            frame_path: "examples/nm_frame.png",
+            frame_path: "examples/nm_frame.png"
         })?;
 
         // Get current simplex vertices and best point
@@ -113,7 +111,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             chart.draw_series(std::iter::once(PathElement::new(
                 vec![
                     (vertices[i][0], vertices[i][1]),
-                    (vertices[j][0], vertices[j][1]),
+                    (vertices[j][0], vertices[j][1])
                 ],
                 RGBColor(100, 100, 255).stroke_width(2),
             )))?;

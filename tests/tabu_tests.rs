@@ -7,7 +7,7 @@ use non_convex_opt::algorithms::tabu_search::TabuSearch;
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
-    opt_prob::{OptProb, OptimizationAlgorithm},
+    opt_prob::{OptProb, OptimizationAlgorithm}
 };
 
 #[test]
@@ -45,8 +45,6 @@ fn test_standard_tabu() {
                             "threshold": 1e-6
                         }
                     },
-                    "intensification_cycles": 5,
-                    "diversification_threshold": 0.1,
                     "success_history_size": 20,
                     "adaptation_rate": 0.1
                 }
@@ -57,7 +55,7 @@ fn test_standard_tabu() {
     let conf = Config::new(conf_json).unwrap();
     let tabu_conf = match conf.alg_conf {
         AlgConf::TS(tabu_conf) => tabu_conf,
-        _ => panic!("Expected TabuConf"),
+        _ => panic!("Expected TabuConf")
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -82,7 +80,7 @@ fn test_reactive_tabu() {
 
     let tabu_conf = match conf.alg_conf {
         AlgConf::TS(tabu_conf) => tabu_conf,
-        _ => panic!("Expected TabuConf"),
+        _ => panic!("Expected TabuConf")
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -139,8 +137,6 @@ fn test_frequency_based_tabu() {
                             "frequency": 25
                         }
                     },
-                    "intensification_cycles": 5,
-                    "diversification_threshold": 0.1,
                     "success_history_size": 20,
                     "adaptation_rate": 0.1
                 }
@@ -151,7 +147,7 @@ fn test_frequency_based_tabu() {
     let conf = Config::new(conf_json).unwrap();
     let tabu_conf = match conf.alg_conf {
         AlgConf::TS(tabu_conf) => tabu_conf,
-        _ => panic!("Expected TabuConf"),
+        _ => panic!("Expected TabuConf")
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -208,8 +204,6 @@ fn test_quality_based_tabu() {
                             "frequency": 20
                         }
                     },
-                    "intensification_cycles": 5,
-                    "diversification_threshold": 0.1,
                     "success_history_size": 20,
                     "adaptation_rate": 0.1
                 }
@@ -220,7 +214,7 @@ fn test_quality_based_tabu() {
     let conf = Config::new(conf_json).unwrap();
     let tabu_conf = match conf.alg_conf {
         AlgConf::TS(tabu_conf) => tabu_conf,
-        _ => panic!("Expected TabuConf"),
+        _ => panic!("Expected TabuConf")
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -272,8 +266,6 @@ fn test_gaussian_neighborhood() {
                     "restart_strategy": {
                         "None": null
                     },
-                    "intensification_cycles": 5,
-                    "diversification_threshold": 0.1,
                     "success_history_size": 20,
                     "adaptation_rate": 0.1
                 }
@@ -284,7 +276,7 @@ fn test_gaussian_neighborhood() {
     let conf = Config::new(conf_json).unwrap();
     let tabu_conf = match conf.alg_conf {
         AlgConf::TS(tabu_conf) => tabu_conf,
-        _ => panic!("Expected TabuConf"),
+        _ => panic!("Expected TabuConf")
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -339,8 +331,6 @@ fn test_adaptive_neighborhood() {
                             "threshold": 1e-6
                         }
                     },
-                    "intensification_cycles": 3,
-                    "diversification_threshold": 0.1,
                     "success_history_size": 20,
                     "adaptation_rate": 0.1
                 }
@@ -351,7 +341,7 @@ fn test_adaptive_neighborhood() {
     let conf = Config::new(conf_json).unwrap();
     let tabu_conf = match conf.alg_conf {
         AlgConf::TS(tabu_conf) => tabu_conf,
-        _ => panic!("Expected TabuConf"),
+        _ => panic!("Expected TabuConf")
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);

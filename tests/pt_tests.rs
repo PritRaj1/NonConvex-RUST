@@ -1,18 +1,18 @@
 mod common;
 
 use crate::common::fcns::{
-    QuadraticConstraints, QuadraticObjective, RosenbrockConstraints, RosenbrockObjective,
+    QuadraticConstraints, QuadraticObjective, RosenbrockConstraints, RosenbrockObjective
 };
 use nalgebra::{DMatrix, DVector};
 use non_convex_opt::algorithms::parallel_tempering::{
     AdaptiveCovariance, AutoConf, FitnessWeightedCovariance, MALAConf, MetropolisHastings,
     MetropolisHastingsConf, PCNConf, Preconditioner, SampleCovariance, ShrinkageCovariance,
-    UpdateConf, PT,
+    UpdateConf, PT
 };
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
-    opt_prob::{OptProb, OptimizationAlgorithm},
+    opt_prob::{OptProb, OptimizationAlgorithm}
 };
 
 #[test]
@@ -78,7 +78,7 @@ fn test_pcn_local_move() {
 
     let pcn_conf = PCNConf {
         step_size: 0.01,
-        preconditioner: 1.0,
+        preconditioner: 1.0
     };
 
     let mut mh = MetropolisHastings::new(opt_prob, &UpdateConf::PCN(pcn_conf), x_old.clone(), 42);
@@ -99,7 +99,7 @@ fn test_mala_local_move() {
 
     let mala_conf = MALAConf {
         step_size: 0.01,
-        use_preconditioning: false,
+        use_preconditioning: false
     };
 
     let mut mh = MetropolisHastings::new(opt_prob, &UpdateConf::MALA(mala_conf), x_old.clone(), 42);
@@ -119,7 +119,7 @@ fn test_metropolis_hastings_config() {
     let step_size = DMatrix::identity(2, 2);
 
     let mh_conf = MetropolisHastingsConf {
-        random_walk_step_size: 0.05,
+        random_walk_step_size: 0.05
     };
 
     let mut mh = MetropolisHastings::new(
@@ -138,7 +138,7 @@ fn test_pt_swap() {
     let conf = Config::new(include_str!("jsons/pt.json")).unwrap();
     let pt_conf = match conf.alg_conf {
         AlgConf::PT(pt_conf) => pt_conf,
-        _ => panic!("Expected PTConf"),
+        _ => panic!("Expected PTConf")
     };
 
     let init_pop = DMatrix::from_vec(2, 2, vec![0.5, 0.5, 0.5, 0.5]);
@@ -168,7 +168,7 @@ fn test_pt_step() {
     let conf = Config::new(include_str!("jsons/pt.json")).unwrap();
     let pt_conf = match conf.alg_conf {
         AlgConf::PT(pt_conf) => pt_conf,
-        _ => panic!("Expected PTConf"),
+        _ => panic!("Expected PTConf")
     };
 
     let init_pop = DMatrix::from_vec(2, 2, vec![0.5, 0.5, 0.5, 0.5]);
@@ -198,7 +198,7 @@ fn test_different_update_configurations() {
     let pcn_conf = Config::new(include_str!("jsons/pt_pcn.json")).unwrap();
     let pt_conf_pcn = match pcn_conf.alg_conf {
         AlgConf::PT(pt_conf) => pt_conf,
-        _ => panic!("Expected PTConf"),
+        _ => panic!("Expected PTConf")
     };
 
     let init_pop = DMatrix::from_vec(2, 2, vec![0.5, 0.5, 0.5, 0.5]);
@@ -219,7 +219,7 @@ fn test_different_update_configurations() {
     let mala_conf = Config::new(include_str!("jsons/pt_mala.json")).unwrap();
     let pt_conf_mala = match mala_conf.alg_conf {
         AlgConf::PT(pt_conf) => pt_conf,
-        _ => panic!("Expected PTConf"),
+        _ => panic!("Expected PTConf")
     };
 
     let obj_f_mala = QuadraticObjective { a: 1.0, b: 1.0 }; // Has gradients
@@ -239,7 +239,7 @@ fn test_different_update_configurations() {
     let mh_conf = Config::new(include_str!("jsons/pt_mh.json")).unwrap();
     let pt_conf_mh = match mh_conf.alg_conf {
         AlgConf::PT(pt_conf) => pt_conf,
-        _ => panic!("Expected PTConf"),
+        _ => panic!("Expected PTConf")
     };
 
     let obj_f_mala = RosenbrockObjective { a: 1.0, b: 1.0 }; // No gradients needed
@@ -269,7 +269,7 @@ fn create_test_pt_pcn() -> PT<f64, nalgebra::Dyn, nalgebra::Dyn> {
     let conf = Config::new(include_str!("jsons/pt_pcn.json")).unwrap();
     let pt_conf = match conf.alg_conf {
         AlgConf::PT(pt_conf) => pt_conf,
-        _ => panic!("Expected PTConf"),
+        _ => panic!("Expected PTConf")
     };
 
     // Need fairly large pop for covariance to change

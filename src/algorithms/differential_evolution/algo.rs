@@ -1,6 +1,5 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
 use rayon::prelude::*;
-use std::collections::VecDeque;
 
 use super::config::{DEConf, DEStrategy, MutationType};
 use crate::utils::config::OptConf;
@@ -8,7 +7,6 @@ use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State}
 use crate::utils::rng;
 
 use crate::algorithms::differential_evolution::{
-    archive::Archive,
     bounds::BoundsCache,
     mutation::{Best1Bin, Best2Bin, MutationStrategy, Rand1Bin, Rand2Bin, RandToBest1Bin},
     parameter_adaptation::{
@@ -29,8 +27,6 @@ where
     pub conf: DEConf,
     pub st: State<T, N, D>,
     pub opt_prob: OptProb<T, D>,
-    archive: Archive<T, D>,
-    success_history: VecDeque<bool>,
     parameter_adaptation: ParameterAdaptationType,
     bounds_cache: BoundsCache<T, D>,
     seed: u64,
@@ -56,8 +52,6 @@ where
     ) -> Self {
         let dim = init_pop.ncols();
         let st = State::from_population(init_pop, &opt_prob);
-        let archive_size = conf.common.archive_size;
-        let success_history_size = conf.common.success_history_size;
 
         let parameter_adaptation = match &conf.mutation_type {
             MutationType::Standard(s) => {
@@ -67,10 +61,7 @@ where
                 JADEParameterAdaptation::new(a.memory_size, seed),
             )),
             MutationType::Adaptive(a) => {
-                ParameterAdaptationType::Standard(StandardParameterAdaptation::new(
-                    (a.f_min + a.f_max) / 2.0,
-                    (a.cr_min + a.cr_max) / 2.0,
-                ))
+                ParameterAdaptationType::Standard(StandardParameterAdaptation::new(a.f, a.cr))
             }
         };
 
@@ -78,8 +69,6 @@ where
             conf,
             st,
             opt_prob,
-            archive: Archive::new(archive_size),
-            success_history: VecDeque::with_capacity(success_history_size),
             parameter_adaptation,
             bounds_cache: BoundsCache::new(dim),
             seed,
@@ -128,12 +117,14 @@ where
             .bounds_cache
             .get_bounds(&self.opt_prob, &sample_individual);
 
+        let seed = self.seed;
+        let iter = self.st.iter as u64;
         let trials: Vec<_> = (0..pop_size)
             .into_par_iter()
             .map_init(
                 || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
-                    rng::split(self.seed, [self.st.iter as u64, thread_id as u64])
+                    rng::split(seed, [iter, thread_id as u64])
                 },
                 |rng, i| {
                     let strategy = match &self.conf.mutation_type {
@@ -149,7 +140,11 @@ where
                         DEStrategy::Rand2Bin => &Rand2Bin,
                     };
 
+                    // split adaptation RNG per (iter, i) — clone alone shares state
                     let mut local_pa = self.parameter_adaptation.clone();
+                    if let ParameterAdaptationType::JADE(jade) = &mut local_pa {
+                        jade.rng = rng::split(seed, [iter, i as u64, 0xDEu64]);
+                    }
                     let (f, cr) = local_pa.generate_parameters();
 
                     let trial = strategy.generate_trial(
@@ -176,20 +171,12 @@ where
             )
             .collect();
 
-        let mut successes = Vec::new();
-
         let updates: Vec<_> = trials
             .into_iter()
             .filter_map(
                 |(i, trial, trial_fitness, trial_constraint, success, f, cr)| {
-                    if trial_constraint && trial_fitness > self.st.fitness[i] {
-                        self.archive.add_solution(trial.clone(), trial_fitness);
-                        self.parameter_adaptation.record_success(f, cr);
-                    }
-
-                    successes.push(success);
-
                     if success {
+                        self.parameter_adaptation.record_success(f, cr);
                         Some((i, trial, trial_fitness, trial_constraint))
                     } else {
                         None
@@ -197,13 +184,6 @@ where
                 },
             )
             .collect();
-
-        for success in successes {
-            self.success_history.push_back(success);
-            if self.success_history.len() > self.conf.common.success_history_size {
-                self.success_history.pop_front();
-            }
-        }
 
         self.parameter_adaptation.update_parameters();
 

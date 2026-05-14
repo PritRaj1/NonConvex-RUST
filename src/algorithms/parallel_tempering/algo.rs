@@ -11,7 +11,7 @@ use super::config::UpdateConf;
 use crate::algorithms::parallel_tempering::{
     metropolis_hastings::MetropolisHastings,
     preconditioners::{Preconditioner, SampleCovariance},
-    replica_exchange::{Always, Periodic, Stochastic, SwapCheck},
+    replica_exchange::{Periodic, Stochastic, SwapCheck},
     replica_state::ReplicaState,
     statistics::Statistics,
     swap_manager::SwapManager,
@@ -19,6 +19,7 @@ use crate::algorithms::parallel_tempering::{
 };
 use crate::utils::config::{OptConf, PTConf, SwapConf};
 use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 pub struct PT<T, N, D>
 where
@@ -47,10 +48,9 @@ where
     swap_check: SwapCheck,
     temperature_manager: PowerLawScheduler<T>,
     swap_manager: SwapManager<T, N, D>,
-    best_individual: OVector<T, D>,
-    best_fitness: T,
     preconditioner: Box<dyn Preconditioner<T, N, D> + Send + Sync>,
     last_covariance_update: usize,
+    seed: u64,
 }
 
 impl<T, N, D> PT<T, N, D>
@@ -94,8 +94,11 @@ where
 
         let swap_check = match &conf.swap_conf {
             SwapConf::Periodic(p) => SwapCheck::Periodic(Periodic::new(p.swap_frequency, max_iter)),
-            SwapConf::Stochastic(s) => SwapCheck::Stochastic(Stochastic::new(s.swap_probability)),
-            SwapConf::Always(_) => SwapCheck::Always(Always::new()),
+            SwapConf::Stochastic(s) => SwapCheck::Stochastic(Stochastic::new(
+                s.swap_probability,
+                rng::mix([seed, 0x5AAFu64]),
+            )),
+            SwapConf::Always(_) => SwapCheck::Always,
         };
 
         let metropolis_hastings = MetropolisHastings::<T, D>::new(
@@ -135,10 +138,9 @@ where
             replicas.push(replica);
         }
 
-        // Find best individual across all replicas
+        // Find best across all replicas
         let mut best_individual = replicas[0].population.row(0).transpose().into_owned();
         let mut best_fitness = replicas[0].fitness[0];
-
         for replica in &replicas {
             if let Some((individual, fitness)) = replica.find_best_individual() {
                 if fitness > best_fitness {
@@ -173,8 +175,6 @@ where
             swap_manager,
             replicas,
             opt_prob,
-            best_individual: best_individual.clone(),
-            best_fitness,
             preconditioner,
             covariance_matrices,
             st: State {
@@ -186,6 +186,7 @@ where
                 iter: 1,
             },
             last_covariance_update: 1,
+            seed,
         }
     }
 
@@ -325,8 +326,10 @@ where
         self.temperature_manager.update_iteration(self.st.iter);
         let temperatures = self.temperature_manager.get_all_temperatures();
 
-        let mut new_best_fitness = self.best_fitness;
-        let mut new_best_individual = self.best_individual.clone();
+        let mut new_best_fitness = self.st.best_f;
+        let mut new_best_individual = self.st.best_x.clone();
+        let iter = self.st.iter as u64;
+        let seed = self.seed;
 
         let replica_updates: Vec<_> = (0..self.conf.common.num_replicas)
             .into_par_iter()
@@ -340,6 +343,8 @@ where
                     .map(|j| {
                         let x_old = self.replicas[replica_idx].population.row(j).transpose();
                         let mut local_mh = self.metropolis_hastings.clone();
+                        // split per (iter, replica, particle) — clone alone shares state
+                        local_mh.rng = rng::split(seed, [iter, replica_idx as u64, j as u64]);
                         let x_new = if matches!(local_mh.move_type, crate::algorithms::parallel_tempering::metropolis_hastings::MoveType::PCN) {
                             let variance_param = T::one() / ComplexField::sqrt(T::from_usize(self.st.iter).unwrap() + T::one());
                             local_mh.local_move_pcn_with_variance(
@@ -393,7 +398,6 @@ where
             })
             .collect();
 
-        // Apply updates, not threads safe (race conditions)
         for (replica_idx, individual_updates) in replica_updates {
             let mut accepted_count = 0;
             let total_count = individual_updates.len();
@@ -421,16 +425,12 @@ where
             self.replicas[replica_idx].update_acceptance_rate(current_rate, smoothing);
         }
 
-        if new_best_fitness > self.best_fitness {
-            self.best_fitness = new_best_fitness;
-            self.best_individual = new_best_individual;
+        if new_best_fitness > self.st.best_f {
+            self.st.best_f = new_best_fitness;
+            self.st.best_x = new_best_individual;
         }
 
-        if match &self.swap_check {
-            SwapCheck::Periodic(p) => p.should_swap(self.st.iter),
-            SwapCheck::Stochastic(s) => s.should_swap(self.st.iter),
-            SwapCheck::Always(a) => a.should_swap(self.st.iter),
-        } {
+        if self.swap_check.should_swap(self.st.iter) {
             self.swap();
         }
 
@@ -439,8 +439,6 @@ where
         }
 
         let coldest_replica_idx = self.conf.common.num_replicas - 1;
-        self.st.best_x = self.best_individual.clone();
-        self.st.best_f = self.best_fitness;
         self.st.pop = self.replicas[coldest_replica_idx].population.clone();
         self.st.fitness = self.replicas[coldest_replica_idx].fitness.clone();
         self.st.constraints = self.replicas[coldest_replica_idx].constraints.clone();

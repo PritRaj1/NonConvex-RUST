@@ -24,7 +24,6 @@ where
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
-    pub k: T, // Boltzmann constant
     pub move_type: MoveType,
     pub prob: OptProb<T, D>,
     pub mala_step_size: T,
@@ -47,8 +46,6 @@ where
         generic_x: OVector<T, D>,
         seed: u64,
     ) -> Self {
-        let k = T::one(); // Boltzmann constant
-
         // MALA needs gradients, PCN and Metropolis-Hastings don't
         let (
             move_type,
@@ -110,7 +107,6 @@ where
         };
 
         MetropolisHastings {
-            k,
             move_type,
             prob,
             mala_step_size,
@@ -307,13 +303,13 @@ where
             return true; // Always accept uphill moves
         }
 
-        // Boltzmann acceptance criterion: P = min(1, exp(ΔE / (k*(1-T))))
-        let t_inverted = T::one() - t;
-        let t_safe = RealField::max(t_inverted, T::cast(1e-10));
-        let acceptance_prob = ComplexField::exp(delta_e / (self.k * t_safe));
+        // max: exp(Δf / T_eff), T_eff = 1 − t
+        let t_eff = RealField::max(T::one() - t, T::cast(1e-10));
+        let acceptance_prob = ComplexField::exp(delta_e / t_eff);
         self.rng.random::<f64>() < acceptance_prob.to_f64().unwrap()
     }
 
+    // max swap: log α = (β_i − β_j)(f_j − f_i)
     pub fn accept_replica_exchange<N>(
         &mut self,
         fitness_i: &OVector<T, N>,
@@ -325,32 +321,19 @@ where
         N: Dim,
         DefaultAllocator: Allocator<N>,
     {
-        // Calculate ensemble-level energy sums
-        let mut total_energy_i = T::zero();
-        let mut total_energy_j = T::zero();
+        let total_i: T = fitness_i.iter().copied().fold(T::zero(), |a, b| a + b);
+        let total_j: T = fitness_j.iter().copied().fold(T::zero(), |a, b| a + b);
 
-        for &energy in fitness_i.iter() {
-            total_energy_i += energy;
-        }
+        let t_i_eff = RealField::max(T::one() - t_i, T::cast(1e-10));
+        let t_j_eff = RealField::max(T::one() - t_j, T::cast(1e-10));
+        let beta_i = T::one() / t_i_eff;
+        let beta_j = T::one() / t_j_eff;
 
-        for &energy in fitness_j.iter() {
-            total_energy_j += energy;
-        }
-
-        // Replica exchange acceptance criterion: P = min(1, exp((E_i - E_j) * (1/(k*(1-T_i)) - 1/(k*(1-T_j)))))
-        let t_i_inverted = T::one() - t_i;
-        let t_j_inverted = T::one() - t_j;
-        let t_i_safe = RealField::max(t_i_inverted, T::cast(1e-10));
-        let t_j_safe = RealField::max(t_j_inverted, T::cast(1e-10));
-
-        let delta_beta = (T::one() / (self.k * t_i_safe)) - (T::one() / (self.k * t_j_safe));
-        let delta_e = total_energy_i - total_energy_j;
-
-        let log_acceptance = delta_beta * delta_e;
-        let acceptance_prob = if log_acceptance > T::zero() {
+        let log_alpha = (beta_i - beta_j) * (total_j - total_i);
+        let acceptance_prob = if log_alpha > T::zero() {
             T::one()
         } else {
-            ComplexField::exp(log_acceptance)
+            ComplexField::exp(log_alpha)
         };
 
         self.rng.random::<f64>() < acceptance_prob.to_f64().unwrap()

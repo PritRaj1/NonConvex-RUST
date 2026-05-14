@@ -55,17 +55,31 @@ where
         fitness: &OVector<T, N>,
         constraints: &OVector<bool, N>,
     ) -> OMatrix<T, Dyn, D> {
-        // Normalized selection probabilities only for valid individuals
+        // shift by min so probabilities stay +ve when fitness can be -ve
+        let min_f = fitness
+            .iter()
+            .zip(constraints.iter())
+            .filter(|(_, &v)| v)
+            .map(|(&f, _)| f)
+            .fold(T::infinity(), |a, b| if a < b { a } else { b });
+        let shift = if min_f.is_finite() && min_f < T::zero() {
+            min_f - T::cast(1e-10)
+        } else {
+            T::zero()
+        };
+
         let sum = fitness
             .iter()
             .zip(constraints.iter())
             .filter(|(_, &valid)| valid)
-            .fold(T::zero(), |acc, (&x, _)| acc + x);
+            .fold(T::zero(), |acc, (&x, _)| acc + (x - shift));
 
         let mut llhoods: OVector<T, N> = OVector::zeros_generic(N::from_usize(fitness.len()), U1);
-        for (j, (&fit, &valid)) in fitness.iter().zip(constraints.iter()).enumerate() {
-            if valid {
-                llhoods[j] = fit / sum;
+        if sum > T::zero() {
+            for (j, (&fit, &valid)) in fitness.iter().zip(constraints.iter()).enumerate() {
+                if valid {
+                    llhoods[j] = (fit - shift) / sum;
+                }
             }
         }
 
@@ -77,23 +91,22 @@ where
         for i in 0..self.num_parents {
             let r = T::cast(self.rng.random_range(0.0..1.0));
             let mut cumsum = T::zero();
-            let mut selected_individual = false;
+            let mut picked = false;
 
             for j in 0..population.nrows() {
                 if !constraints[j] {
-                    continue; // Skip individuals that don't satisfy constraints
+                    continue;
                 }
-
                 cumsum += llhoods[j];
                 if r <= cumsum {
                     selected.set_row(i, &population.row(j));
-                    selected_individual = true;
+                    picked = true;
                     break;
                 }
             }
 
-            // Fallback - never called
-            if !selected_individual {
+            // fp-roundoff / zero-sum fallback
+            if !picked {
                 for j in 0..population.nrows() {
                     if constraints[j] {
                         selected.set_row(i, &population.row(j));
@@ -237,15 +250,31 @@ where
             D::from_usize(population.ncols()),
         );
 
-        let fitness_vec: Vec<T> = (0..fitness.len()).map(|i| fitness[i]).collect();
-        let constraints_vec: Vec<bool> = (0..constraints.len()).map(|i| constraints[i]).collect();
+        // shift by min so probabilities stay +ve when fitness can be -ve
+        let min_f = fitness
+            .iter()
+            .zip(constraints.iter())
+            .filter(|(_, &v)| v)
+            .map(|(&f, _)| f)
+            .fold(T::infinity(), |a, b| if a < b { a } else { b });
+        let shift = if min_f.is_finite() && min_f < T::zero() {
+            min_f - T::cast(1e-10)
+        } else {
+            T::zero()
+        };
 
-        let sum = fitness_vec
-            .par_iter()
-            .zip(constraints_vec.par_iter())
-            .filter(|(_, &valid)| valid)
-            .map(|(&x, _)| x)
-            .reduce(|| T::zero(), |acc, x| acc + x);
+        let sum = fitness
+            .iter()
+            .zip(constraints.iter())
+            .filter(|(_, &v)| v)
+            .fold(T::zero(), |acc, (&x, _)| acc + (x - shift));
+
+        if !(sum > T::zero()) {
+            for i in 0..self.num_parents {
+                selected.set_row(i, &population.row(0));
+            }
+            return selected;
+        }
 
         let scale = T::cast(self.num_parents as f64);
         let mut expected_values = vec![T::zero(); fitness.len()];
@@ -254,7 +283,7 @@ where
 
         for (j, (&fit, &valid)) in fitness.iter().zip(constraints.iter()).enumerate() {
             if valid {
-                let expected = (fit / sum) * scale;
+                let expected = ((fit - shift) / sum) * scale;
                 let int_part = expected.floor();
                 expected_values[j] = int_part;
                 residual_probabilities[j] = expected - int_part;

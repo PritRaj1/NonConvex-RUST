@@ -6,13 +6,8 @@ pub struct DEConf {
     pub mutation_type: MutationType,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct CommonConf {
-    #[serde(default = "default_archive_size")]
-    pub archive_size: usize,
-    #[serde(default = "default_success_history_size")]
-    pub success_history_size: usize,
-}
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+pub struct CommonConf {}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum MutationType {
@@ -34,20 +29,15 @@ pub struct StandardConf {
 pub struct AdaptiveConf {
     #[serde(default = "default_strategy")]
     pub strategy: DEStrategy,
-    #[serde(default = "default_f_min")]
-    pub f_min: f64,
-    #[serde(default = "default_f_max")]
-    pub f_max: f64,
-    #[serde(default = "default_cr_min")]
-    pub cr_min: f64,
-    #[serde(default = "default_cr_max")]
-    pub cr_max: f64,
     #[serde(default = "default_use_jade")]
     pub use_jade: bool,
     #[serde(default = "default_memory_size")]
     pub memory_size: usize,
-    #[serde(default = "default_learning_rate")]
-    pub learning_rate: f64,
+    // Standard fallback when use_jade=false; JADE ignores these
+    #[serde(default = "default_f")]
+    pub f: f64,
+    #[serde(default = "default_cr")]
+    pub cr: f64,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -59,9 +49,6 @@ pub enum DEStrategy {
     Rand2Bin,
 }
 
-fn default_archive_size() -> usize {
-    10
-}
 fn default_f() -> f64 {
     0.8
 }
@@ -71,27 +58,9 @@ fn default_cr() -> f64 {
 fn default_strategy() -> DEStrategy {
     DEStrategy::Rand1Bin
 }
-fn default_f_min() -> f64 {
-    0.1
-}
-fn default_f_max() -> f64 {
-    0.9
-}
-fn default_cr_min() -> f64 {
-    0.1
-}
-fn default_cr_max() -> f64 {
-    0.9
-}
-fn default_success_history_size() -> usize {
-    50
-}
 fn default_use_jade() -> bool {
     true
 }
 fn default_memory_size() -> usize {
     5
-}
-fn default_learning_rate() -> f64 {
-    0.1
 }

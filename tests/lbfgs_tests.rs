@@ -6,7 +6,7 @@ use nalgebra::{SMatrix, U1, U2};
 use non_convex_opt::algorithms::limited_memory_bfgs::{
     AdvancedConf, BacktrackingConf, CommonConf, GoldenSectionConf, HagerZhangConf, LBFGSConf,
     LineSearchConf, MemoryAdaptation, MoreThuenteConf, NumericalSafeguards, RestartStrategy,
-    StagnationDetection, StrongWolfeConf, LBFGS,
+    StagnationDetection, StrongWolfeConf, LBFGS
 };
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
@@ -17,7 +17,7 @@ fn test_lbfgs() {
         common: CommonConf { memory_size: 10 },
         line_search: LineSearchConf::Backtracking(BacktrackingConf {
             c1: 0.0001,
-            rho: 0.5,
+            rho: 0.5
         }),
         advanced: AdvancedConf {
             adaptive_parameters: false,
@@ -26,23 +26,23 @@ fn test_lbfgs() {
             stagnation_detection: StagnationDetection {
                 stagnation_window: 50,
                 improvement_threshold: 1e-6,
-                gradient_threshold: 1e-6,
+                gradient_threshold: 1e-6
             },
             memory_adaptation: MemoryAdaptation {
                 adaptive_memory: false,
                 min_memory_size: 5,
                 max_memory_size: 20,
-                memory_adaptation_rate: 0.1,
+                memory_adaptation_rate: 0.1
             },
             numerical_safeguards: NumericalSafeguards {
                 conditioning_threshold: 1e-12,
                 curvature_threshold: 1e-8,
                 use_scaling: false,
-                scaling_factor: 1.0,
+                scaling_factor: 1.0
             },
             success_history_size: 20,
-            improvement_history_size: 20,
-        },
+            improvement_history_size: 20
+        }
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -73,23 +73,23 @@ fn test_backtracking_line_search() {
             stagnation_detection: StagnationDetection {
                 stagnation_window: 50,
                 improvement_threshold: 1e-6,
-                gradient_threshold: 1e-6,
+                gradient_threshold: 1e-6
             },
             memory_adaptation: MemoryAdaptation {
                 adaptive_memory: false,
                 min_memory_size: 5,
                 max_memory_size: 20,
-                memory_adaptation_rate: 0.1,
+                memory_adaptation_rate: 0.1
             },
             numerical_safeguards: NumericalSafeguards {
                 conditioning_threshold: 1e-12,
                 curvature_threshold: 1e-8,
                 use_scaling: false,
-                scaling_factor: 1.0,
+                scaling_factor: 1.0
             },
             success_history_size: 20,
-            improvement_history_size: 20,
-        },
+            improvement_history_size: 20
+        }
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -114,7 +114,7 @@ fn test_strong_wolfe_line_search() {
         line_search: LineSearchConf::StrongWolfe(StrongWolfeConf {
             c1: 1e-4,
             c2: 0.9,
-            max_iters: 100,
+            max_iters: 100
         }),
         advanced: AdvancedConf {
             adaptive_parameters: false,
@@ -123,23 +123,23 @@ fn test_strong_wolfe_line_search() {
             stagnation_detection: StagnationDetection {
                 stagnation_window: 50,
                 improvement_threshold: 1e-6,
-                gradient_threshold: 1e-6,
+                gradient_threshold: 1e-6
             },
             memory_adaptation: MemoryAdaptation {
                 adaptive_memory: false,
                 min_memory_size: 5,
                 max_memory_size: 20,
-                memory_adaptation_rate: 0.1,
+                memory_adaptation_rate: 0.1
             },
             numerical_safeguards: NumericalSafeguards {
                 conditioning_threshold: 1e-12,
                 curvature_threshold: 1e-8,
                 use_scaling: false,
-                scaling_factor: 1.0,
+                scaling_factor: 1.0
             },
             success_history_size: 20,
-            improvement_history_size: 20,
-        },
+            improvement_history_size: 20
+        }
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -166,7 +166,7 @@ fn test_hager_zhang_line_search() {
             c2: 0.9,
             theta: 0.5,
             gamma: 0.5,
-            max_iters: 100,
+            max_iters: 100
         }),
         advanced: AdvancedConf {
             adaptive_parameters: false,
@@ -175,23 +175,23 @@ fn test_hager_zhang_line_search() {
             stagnation_detection: StagnationDetection {
                 stagnation_window: 50,
                 improvement_threshold: 1e-6,
-                gradient_threshold: 1e-6,
+                gradient_threshold: 1e-6
             },
             memory_adaptation: MemoryAdaptation {
                 adaptive_memory: false,
                 min_memory_size: 5,
                 max_memory_size: 20,
-                memory_adaptation_rate: 0.1,
+                memory_adaptation_rate: 0.1
             },
             numerical_safeguards: NumericalSafeguards {
                 conditioning_threshold: 1e-12,
                 curvature_threshold: 1e-8,
                 use_scaling: false,
-                scaling_factor: 1.0,
+                scaling_factor: 1.0
             },
             success_history_size: 20,
-            improvement_history_size: 20,
-        },
+            improvement_history_size: 20
+        }
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -216,7 +216,7 @@ fn test_more_thuente_line_search() {
         line_search: LineSearchConf::MoreThuente(MoreThuenteConf {
             ftol: 1e-4,
             gtol: 0.9,
-            max_iters: 100,
+            max_iters: 100
         }),
         advanced: AdvancedConf {
             adaptive_parameters: false,
@@ -225,23 +225,23 @@ fn test_more_thuente_line_search() {
             stagnation_detection: StagnationDetection {
                 stagnation_window: 50,
                 improvement_threshold: 1e-6,
-                gradient_threshold: 1e-6,
+                gradient_threshold: 1e-6
             },
             memory_adaptation: MemoryAdaptation {
                 adaptive_memory: false,
                 min_memory_size: 5,
                 max_memory_size: 20,
-                memory_adaptation_rate: 0.1,
+                memory_adaptation_rate: 0.1
             },
             numerical_safeguards: NumericalSafeguards {
                 conditioning_threshold: 1e-12,
                 curvature_threshold: 1e-8,
                 use_scaling: false,
-                scaling_factor: 1.0,
+                scaling_factor: 1.0
             },
             success_history_size: 20,
-            improvement_history_size: 20,
-        },
+            improvement_history_size: 20
+        }
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -266,7 +266,7 @@ fn test_golden_section_line_search() {
         line_search: LineSearchConf::GoldenSection(GoldenSectionConf {
             tol: 1e-6,
             max_iters: 100,
-            bracket_factor: 2.0,
+            bracket_factor: 2.0
         }),
         advanced: AdvancedConf {
             adaptive_parameters: false,
@@ -275,23 +275,23 @@ fn test_golden_section_line_search() {
             stagnation_detection: StagnationDetection {
                 stagnation_window: 50,
                 improvement_threshold: 1e-6,
-                gradient_threshold: 1e-6,
+                gradient_threshold: 1e-6
             },
             memory_adaptation: MemoryAdaptation {
                 adaptive_memory: false,
                 min_memory_size: 5,
                 max_memory_size: 20,
-                memory_adaptation_rate: 0.1,
+                memory_adaptation_rate: 0.1
             },
             numerical_safeguards: NumericalSafeguards {
                 conditioning_threshold: 1e-12,
                 curvature_threshold: 1e-8,
                 use_scaling: false,
-                scaling_factor: 1.0,
+                scaling_factor: 1.0
             },
             success_history_size: 20,
-            improvement_history_size: 20,
-        },
+            improvement_history_size: 20
+        }
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);

@@ -7,7 +7,7 @@ use non_convex_opt::algorithms::cma_es::CMAES;
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::CMAESConf,
-    opt_prob::{OptProb, OptimizationAlgorithm},
+    opt_prob::{OptProb, OptimizationAlgorithm}
 };
 
 #[test]
@@ -16,7 +16,7 @@ fn test_cmaes() {
         num_parents: 10,
         initial_sigma: 0.3,
         use_active_cma: true,
-        active_cma_ratio: 0.25,
+        active_cma_ratio: 0.25
     };
 
     let init_x = OMatrix::<f64, U20, U2>::from_element_generic(U20, U2, 0.5);

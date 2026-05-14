@@ -4,6 +4,7 @@ use std::collections::VecDeque;
 
 use crate::utils::config::{CGAConf, CrossoverConf, MutationConf, OptConf, SelectionConf};
 use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 use crate::algorithms::continuous_genetic::{
     crossover::*,
@@ -35,6 +36,7 @@ where
     current_mutation_rate: f64,
     current_crossover_prob: f64,
     generation_improvements: VecDeque<f64>,
+    seed: u64,
 }
 
 impl<T, N, D> CGA<T, N, D>
@@ -151,6 +153,7 @@ where
             current_mutation_rate: initial_mutation_rate,
             current_crossover_prob: initial_crossover_prob,
             generation_improvements: VecDeque::with_capacity(20),
+            seed,
         }
     }
 
@@ -237,42 +240,40 @@ where
             .select(&self.st.pop, &self.st.fitness, &self.st.constraints);
         let mut offspring = self.crossover.crossover(&selected);
 
-        let bounds = if !self.bounds_cached {
-            let sample_individual = offspring.row(0).transpose();
-            let lower_bounds = self
-                .opt_prob
-                .objective
-                .x_lower_bound(&sample_individual)
-                .unwrap_or_else(|| self.cached_bounds_lower.clone());
-            let upper_bounds = self
-                .opt_prob
-                .objective
-                .x_upper_bound(&sample_individual)
-                .unwrap_or_else(|| self.cached_bounds_upper.clone());
-
-            self.cached_bounds_lower = lower_bounds.clone();
-            self.cached_bounds_upper = upper_bounds.clone();
+        if !self.bounds_cached {
+            let sample = offspring.row(0).transpose();
+            if let Some(lb) = self.opt_prob.objective.x_lower_bound(&sample) {
+                self.cached_bounds_lower = lb;
+            }
+            if let Some(ub) = self.opt_prob.objective.x_upper_bound(&sample) {
+                self.cached_bounds_upper = ub;
+            }
             self.bounds_cached = true;
-
-            (lower_bounds[0], upper_bounds[0])
-        } else {
-            (self.cached_bounds_lower[0], self.cached_bounds_upper[0])
-        };
+        }
+        let lower = self.cached_bounds_lower.clone();
+        let upper = self.cached_bounds_upper.clone();
 
         let generation = self.st.iter;
+        let seed = self.seed;
+        let iter = generation as u64;
 
         let mutated_rows: Vec<_> = (0..offspring.nrows())
             .into_par_iter()
             .map_init(
-                || self.mutation.clone(),
+                || {
+                    // split RNG per worker — clone alone shares state
+                    let thread_id = rayon::current_thread_index().unwrap_or(0);
+                    let mut local = self.mutation.clone();
+                    local.set_seed(rng::mix([seed, iter, thread_id as u64]));
+                    local
+                },
                 |mutation, i| {
                     let mut individual =
                         OVector::<T, D>::zeros_generic(D::from_usize(offspring.ncols()), U1);
                     for j in 0..offspring.ncols() {
                         individual[j] = offspring[(i, j)];
                     }
-
-                    mutation.mutate(&individual, bounds, generation)
+                    mutation.mutate(&individual, &lower, &upper, generation)
                 },
             )
             .collect();

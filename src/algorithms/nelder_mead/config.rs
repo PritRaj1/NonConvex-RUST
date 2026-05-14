@@ -58,8 +58,6 @@ pub struct StagnationDetection {
     pub stagnation_window: usize,
     #[serde(default = "default_improvement_threshold")]
     pub improvement_threshold: f64,
-    #[serde(default = "default_diversity_threshold")]
-    pub diversity_threshold: f64,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -113,7 +111,6 @@ impl Default for StagnationDetection {
         Self {
             stagnation_window: 20,
             improvement_threshold: 1e-6,
-            diversity_threshold: 1e-3,
         }
     }
 }
@@ -183,7 +180,4 @@ fn default_stagnation_window() -> usize {
 }
 fn default_improvement_threshold() -> f64 {
     1e-6
-}
-fn default_diversity_threshold() -> f64 {
-    1e-3
 }

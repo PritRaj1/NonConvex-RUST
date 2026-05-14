@@ -73,22 +73,31 @@ where
                         position = config.init_pop.row(i).transpose();
                         fitness = config.opt_prob.evaluate(&position);
                     } else {
-                        loop {
+                        // bounded rejection sampling
+                        const MAX_FEASIBILITY_TRIES: usize = 1024;
+                        let mut last_pos = position.clone();
+                        let mut found = false;
+                        for _ in 0..MAX_FEASIBILITY_TRIES {
                             let values = (0..config.dim).map(|_| {
                                 let r = T::cast(rng.random::<f64>());
                                 config.bounds.0 + (config.bounds.1 - config.bounds.0) * r
                             });
-                            let position: OVector<T, D> = OVector::from_iterator_generic(
+                            last_pos = OVector::from_iterator_generic(
                                 D::from_usize(config.dim),
                                 U1,
                                 values,
                             );
-
-                            if config.opt_prob.is_feasible(&position) {
-                                fitness = config.opt_prob.evaluate(&position);
+                            if config.opt_prob.is_feasible(&last_pos) {
+                                found = true;
                                 break;
                             }
                         }
+                        position = last_pos;
+                        fitness = if found {
+                            config.opt_prob.evaluate(&position)
+                        } else {
+                            T::neg_infinity()
+                        };
                     }
 
                     let values = (0..config.dim).map(|_| {
@@ -210,25 +219,6 @@ where
     fn euclidean_distance(&self, v1: &OVector<T, D>, v2: &OVector<T, D>) -> T {
         let diff = v1 - v2;
         diff.dot(&diff).sqrt()
-    }
-
-    pub fn is_stagnated(&self, threshold: usize) -> bool {
-        if self.improvement_history.len() < threshold {
-            return false;
-        }
-
-        let recent_improvements: Vec<T> = self
-            .improvement_history
-            .iter()
-            .rev()
-            .take(threshold)
-            .cloned()
-            .collect();
-
-        let max_improvement = recent_improvements
-            .iter()
-            .fold(T::neg_infinity(), |a, &b| a.max(b));
-        max_improvement < T::epsilon()
     }
 
     pub fn average_improvement(&self, window_size: usize) -> T {

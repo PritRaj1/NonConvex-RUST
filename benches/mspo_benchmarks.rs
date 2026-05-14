@@ -11,8 +11,7 @@ static MSPO_CONFIG_JSON: &str = r#"
     "opt_conf": {
         "max_iter": 50,
         "rtol": 0.0,
-        "atol": 0.0,
-        "rtol_max_iter_fraction": 1.0
+        "atol": 0.0
     },
     "alg_conf": {
         "MSPO": {

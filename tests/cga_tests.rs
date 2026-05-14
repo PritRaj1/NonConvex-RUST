@@ -6,12 +6,12 @@ use nalgebra::{OMatrix, OVector, U1, U10, U2, U5};
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
-    opt_prob::{OptProb, OptimizationAlgorithm},
+    opt_prob::{OptProb, OptimizationAlgorithm}
 };
 
 use non_convex_opt::algorithms::continuous_genetic::{
     CrossoverOperator, Heuristic, Random, Residual, RouletteWheel, SelectionOperator,
-    SimulatedBinary, Tournament, CGA,
+    SimulatedBinary, Tournament, CGA
 };
 
 #[test]
@@ -92,7 +92,7 @@ fn test_adaptive_parameters() {
 
     let cga_conf = match conf.alg_conf {
         AlgConf::CGA(cga_conf) => cga_conf,
-        _ => panic!("Expected CGAConf"),
+        _ => panic!("Expected CGAConf")
     };
 
     let pop_size = 10;
@@ -138,7 +138,7 @@ fn test_cga() {
 
     let cga_conf = match conf.alg_conf {
         AlgConf::CGA(cga_conf) => cga_conf,
-        _ => panic!("Expected CGAConf"),
+        _ => panic!("Expected CGAConf")
     };
 
     let pop_size = 10;

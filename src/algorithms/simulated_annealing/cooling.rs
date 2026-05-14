@@ -101,14 +101,10 @@ impl<T: FloatNumber> CoolingSchedule<T> for CauchyCooling {
 
 pub struct AdaptiveCooling;
 
-// Start with exponential, then adapt based on iter
+// base is exponential; adaptation lives in adaptive_temperature() via success_rate
 impl<T: FloatNumber> CoolingSchedule<T> for AdaptiveCooling {
     fn temperature(&self, initial_temp: T, iteration: usize, cooling_rate: T) -> T {
-        if iteration < 100 {
-            initial_temp * cooling_rate.powi(iteration as i32)
-        } else {
-            initial_temp * cooling_rate.powi((iteration / 2) as i32)
-        }
+        initial_temp * cooling_rate.powi(iteration as i32)
     }
 
     fn reheat(&self, initial_temp: T) -> T {

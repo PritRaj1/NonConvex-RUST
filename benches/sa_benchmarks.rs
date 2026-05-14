@@ -11,8 +11,7 @@ static SA_CONFIG_JSON: &str = r#"
     "opt_conf": {
         "max_iter": 50,
         "rtol": 0.0,
-        "atol": 0.0,
-        "rtol_max_iter_fraction": 1.0
+        "atol": 0.0
     },
     "alg_conf": {
         "SA": {
@@ -22,8 +21,6 @@ static SA_CONFIG_JSON: &str = r#"
             "num_neighbors": 50,
             "x_min": 0.0,
             "x_max": 10.0,
-            "min_step_size_factor": 0.3,
-            "step_size_decay_power": 0.2,
             "min_temp_factor": 0.01,
             "use_adaptive_cooling": true,
             "advanced": {

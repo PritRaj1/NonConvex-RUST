@@ -123,14 +123,14 @@ where
         temperatures: &[T],
     ) {
         let n = populations.len();
-        if n < 3 {
+        // n=3: every pair is adjacent → no valid non-adjacent j
+        if n < 4 {
             return;
         }
 
         let i = self.rng.random_range(0..n);
         let mut j = self.rng.random_range(0..n);
-
-        while j == i || j == i.wrapping_sub(1) || j == i + 1 {
+        while j == i || j + 1 == i || j == i + 1 {
             j = self.rng.random_range(0..n);
         }
 
