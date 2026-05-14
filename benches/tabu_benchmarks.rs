@@ -14,8 +14,8 @@ static CONFIG_JSON: &str = r#"
 {
     "opt_conf": {
         "max_iter": 100,
-        "rtol": "0.0",
-        "atol": "0.0",
+        "rtol": 0.0,
+        "atol": 0.0,
         "rtol_max_iter_fraction": 1.0
     },
     "alg_conf": {
@@ -63,8 +63,8 @@ static REACTIVE_CONFIG_JSON: &str = r#"
 {
     "opt_conf": {
         "max_iter": 10,
-        "rtol": "0.0",
-        "atol": "0.0",
+        "rtol": 0.0,
+        "atol": 0.0,
         "rtol_max_iter_fraction": 1.0
     },
     "alg_conf": {

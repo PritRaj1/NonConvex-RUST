@@ -78,13 +78,13 @@ where
 
         // Weight decay
         if self.conf.weight_decay > 0.0 {
-            let weight_decay = T::from_f64(self.conf.weight_decay).unwrap();
+            let weight_decay = T::cast(self.conf.weight_decay);
             grad += &self.st.best_x * weight_decay;
         }
 
         // Grad clip
         if self.conf.gradient_clip > 0.0 {
-            let clip_norm = T::from_f64(self.conf.gradient_clip).unwrap();
+            let clip_norm = T::cast(self.conf.gradient_clip);
             let grad_norm = grad.dot(&grad).sqrt();
             if grad_norm > clip_norm {
                 grad *= clip_norm / grad_norm;
@@ -92,16 +92,16 @@ where
         }
 
         // Biased moment estimates
-        self.m = self.m.clone() * T::from_f64(self.conf.beta1).unwrap()
-            + grad.clone() * T::from_f64(1.0 - self.conf.beta1).unwrap();
-        self.v = self.v.clone() * T::from_f64(self.conf.beta2).unwrap()
-            + grad.component_mul(&grad) * T::from_f64(1.0 - self.conf.beta2).unwrap();
+        self.m = self.m.clone() * T::cast(self.conf.beta1)
+            + grad.clone() * T::cast(1.0 - self.conf.beta1);
+        self.v = self.v.clone() * T::cast(self.conf.beta2)
+            + grad.component_mul(&grad) * T::cast(1.0 - self.conf.beta2);
 
         // Bias-corrected moment estimates
-        let m_hat = self.m.clone()
-            / (T::one() - T::from_f64(self.conf.beta1.powi(self.st.iter as i32)).unwrap());
-        let v_hat = self.v.clone()
-            / (T::one() - T::from_f64(self.conf.beta2.powi(self.st.iter as i32)).unwrap());
+        let m_hat =
+            self.m.clone() / (T::one() - T::cast(self.conf.beta1.powi(self.st.iter as i32)));
+        let v_hat =
+            self.v.clone() / (T::one() - T::cast(self.conf.beta2.powi(self.st.iter as i32)));
 
         // AMSGrad: use max of v_hat
         if self.conf.amsgrad {
@@ -110,8 +110,8 @@ where
             }
         }
 
-        let step_size = T::from_f64(self.conf.learning_rate).unwrap();
-        let epsilon = T::from_f64(self.conf.epsilon).unwrap();
+        let step_size = T::cast(self.conf.learning_rate);
+        let epsilon = T::cast(self.conf.epsilon);
 
         let v_denom = if self.conf.amsgrad {
             &self.v_hat

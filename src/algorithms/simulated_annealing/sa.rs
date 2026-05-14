@@ -64,7 +64,7 @@ where
         let init_x = init_pop.row(0).transpose();
         let best_f = opt_prob.evaluate(&init_x);
         let n = init_x.len();
-        let improvement_threshold = T::from_f64(1e-6).unwrap(); // TODO: should this be hard-coded?
+        let improvement_threshold = T::cast(1e-6); // TODO: should this be hard-coded?
         let stagnation_monitor =
             SAStagnationMonitor::new(improvement_threshold, best_f, stagnation_window);
 
@@ -98,18 +98,18 @@ where
                 ),
                 iter: 1,
             },
-            temperature: T::from_f64(conf.initial_temp).unwrap(),
+            temperature: T::cast(conf.initial_temp),
             stagnation_monitor,
             improvement_history: VecDeque::with_capacity(conf.advanced.improvement_history_size),
             success_history: VecDeque::with_capacity(conf.advanced.success_history_size),
             restart_counter: 0,
             last_restart_iter: 1,
-            current_step_size: T::from_f64(conf.step_size).unwrap(),
-            current_cooling_rate: T::from_f64(conf.cooling_rate).unwrap(),
+            current_step_size: T::cast(conf.step_size),
+            current_cooling_rate: T::cast(conf.cooling_rate),
             neighbor_gen: GaussianGenerator::new(
                 opt_prob.clone(),
                 init_x.clone(),
-                T::from_f64(conf.step_size).unwrap(),
+                T::cast(conf.step_size),
                 seed,
             ),
             cooling_schedule,
@@ -164,14 +164,11 @@ where
         let dim = current_best.len();
 
         for i in 0..dim {
-            let perturbation = T::from_f64(self.rng.random_range(-0.1..0.1)).unwrap();
+            let perturbation = T::cast(self.rng.random_range(-0.1..0.1));
             self.x[i] = current_best[i] + perturbation;
         }
 
-        let bounds = (
-            T::from_f64(self.conf.x_min).unwrap(),
-            T::from_f64(self.conf.x_max).unwrap(),
-        );
+        let bounds = (T::cast(self.conf.x_min), T::cast(self.conf.x_max));
         for i in 0..self.x.len() {
             self.x[i] = self.x[i].clamp(bounds.0, bounds.1);
         }
@@ -180,7 +177,7 @@ where
         self.constraints = self.opt_prob.is_feasible(&self.x);
 
         self.stagnation_monitor = SAStagnationMonitor::new(
-            T::from_f64(1e-6).unwrap(), // TODO: should this be hard-coded?
+            T::cast(1e-6), // TODO: should this be hard-coded?
             current_best_f,
             self.stagnation_window,
         );
@@ -192,10 +189,10 @@ where
 
         self.temperature = self
             .cooling_schedule
-            .reheat(T::from_f64(self.conf.initial_temp).unwrap());
+            .reheat(T::cast(self.conf.initial_temp));
 
-        self.current_step_size = T::from_f64(self.conf.step_size).unwrap();
-        self.current_cooling_rate = T::from_f64(self.conf.cooling_rate).unwrap();
+        self.current_step_size = T::cast(self.conf.step_size);
+        self.current_cooling_rate = T::cast(self.conf.cooling_rate);
     }
 
     fn calculate_improvement_variance(&self) -> f64 {
@@ -226,15 +223,15 @@ where
 
         let (temp_factor, _) = self.stagnation_monitor.get_adaptation_suggestions();
 
-        self.temperature *= T::from_f64(temp_factor).unwrap();
+        self.temperature *= T::cast(temp_factor);
 
         let success_rate = self.success_history.iter().filter(|&&x| x).count() as f64
             / self.success_history.len() as f64;
 
         if success_rate < 0.2 {
-            self.current_cooling_rate *= T::from_f64(0.99).unwrap();
+            self.current_cooling_rate *= T::cast(0.99);
         } else if success_rate > 0.6 {
-            self.current_cooling_rate *= T::from_f64(1.01).unwrap();
+            self.current_cooling_rate *= T::cast(1.01);
         }
     }
 }
@@ -256,16 +253,13 @@ where
 
         let min_step = self.conf.step_size * 0.01;
         let step_size_f64 = (self.current_step_size.to_f64().unwrap()
-            * (self.temperature / T::from_f64(self.conf.initial_temp).unwrap())
+            * (self.temperature / T::cast(self.conf.initial_temp))
                 .to_f64()
                 .unwrap()
                 .sqrt())
         .max(min_step);
 
-        let bounds = (
-            T::from_f64(self.conf.x_min).unwrap(),
-            T::from_f64(self.conf.x_max).unwrap(),
-        );
+        let bounds = (T::cast(self.conf.x_min), T::cast(self.conf.x_max));
 
         let neighbors: Vec<_> = (0..self.conf.num_neighbors)
             .into_par_iter()
@@ -293,7 +287,7 @@ where
                 &neighbor,
                 neighbor_fitness,
                 self.temperature,
-                T::from_f64(step_size_f64).unwrap(),
+                T::cast(step_size_f64),
             ) && feasible
             {
                 self.x = neighbor;
@@ -307,7 +301,7 @@ where
         self.stagnation_monitor.check_stagnation(
             self.st.best_f,
             self.temperature,
-            T::from_f64(step_size_f64).unwrap(),
+            T::cast(step_size_f64),
         );
 
         let improvement = self.st.best_f - self.fitness;
@@ -327,21 +321,20 @@ where
 
         if self.conf.use_adaptive_cooling {
             self.temperature = self.cooling_schedule.adaptive_temperature(
-                T::from_f64(self.conf.initial_temp).unwrap(),
+                T::cast(self.conf.initial_temp),
                 self.st.iter,
                 self.current_cooling_rate,
                 success_rate_for_cooling,
             );
         } else {
             self.temperature = self.cooling_schedule.temperature(
-                T::from_f64(self.conf.initial_temp).unwrap(),
+                T::cast(self.conf.initial_temp),
                 self.st.iter,
                 self.current_cooling_rate,
             );
         }
 
-        let min_temp = T::from_f64(self.conf.initial_temp).unwrap()
-            * T::from_f64(self.conf.min_temp_factor).unwrap();
+        let min_temp = T::cast(self.conf.initial_temp) * T::cast(self.conf.min_temp_factor);
         self.temperature = self.temperature.max(min_temp);
 
         self.adapt_parameters();

@@ -170,12 +170,12 @@ where
             cached_bounds_lower: OVector::<T, D>::from_element_generic(
                 D::from_usize(n),
                 U1,
-                T::from_f64(-10.0).unwrap(),
+                T::cast(-10.0),
             ),
             cached_bounds_upper: OVector::<T, D>::from_element_generic(
                 D::from_usize(n),
                 U1,
-                T::from_f64(10.0).unwrap(),
+                T::cast(10.0),
             ),
             bounds_cached: false,
             success_history: VecDeque::with_capacity(success_history_size),

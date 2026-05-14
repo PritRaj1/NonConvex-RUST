@@ -30,7 +30,7 @@ where
                     * (i as f64 / max_iter as f64);
                 let p_current =
                     power_law_init + (power_law_final - power_law_init) * 0.5 * (1.0 - x.cos());
-                T::from_f64(p_current).unwrap()
+                T::cast(p_current)
             })
             .collect();
 
@@ -48,7 +48,7 @@ where
         let temp = (replica_idx as f64 / (self.num_replicas - 1) as f64).powf(power);
 
         let temp_clamped = temp.clamp(1e-10, 1.0 - 1e-10);
-        T::from_f64(temp_clamped).unwrap()
+        T::cast(temp_clamped)
     }
 
     pub fn get_all_temperatures(&self) -> Vec<T> {

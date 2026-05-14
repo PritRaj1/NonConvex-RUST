@@ -1,8 +1,4 @@
 use serde::{Deserialize, Serialize};
-use serde_json;
-use serde_with::serde_as;
-use serde_with::DisplayFromStr;
-use thiserror::Error;
 
 pub use crate::utils::alg_conf::{
     adam_conf::AdamConf,
@@ -48,15 +44,12 @@ pub struct Config {
     pub alg_conf: AlgConf,
 }
 
-#[serde_as]
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct OptConf {
     #[serde(default = "default_max_iter")]
     pub max_iter: usize,
-    #[serde_as(as = "DisplayFromStr")]
     #[serde(default = "default_rtol")]
     pub rtol: f64,
-    #[serde_as(as = "DisplayFromStr")]
     #[serde(default = "default_atol")]
     pub atol: f64,
     #[serde(default = "default_rtol_max_iter_fraction")]
@@ -81,23 +74,36 @@ fn default_stagnation_window() -> usize {
     50
 }
 
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum ConfigError {
-    #[error("Failed to deserialize configuration: {0}")]
-    DeserializationError(String),
-
-    #[error("Failed to serialize configuration: {0}")]
-    SerializationError(String),
+    Deserialization(serde_json::Error),
+    Serialization(serde_json::Error),
 }
 
-// Have the option to load config from a json
+impl std::fmt::Display for ConfigError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Deserialization(e) => write!(f, "failed to deserialize config: {e}"),
+            Self::Serialization(e) => write!(f, "failed to serialize config: {e}"),
+        }
+    }
+}
+
+impl std::error::Error for ConfigError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Deserialization(e) | Self::Serialization(e) => Some(e),
+        }
+    }
+}
+
 impl Config {
     pub fn new(config: &str) -> Result<Self, ConfigError> {
-        serde_json::from_str(config).map_err(|e| ConfigError::DeserializationError(e.to_string()))
+        serde_json::from_str(config).map_err(ConfigError::Deserialization)
     }
 
     pub fn to_json(&self) -> Result<String, ConfigError> {
-        serde_json::to_string(self).map_err(|e| ConfigError::SerializationError(e.to_string()))
+        serde_json::to_string(self).map_err(ConfigError::Serialization)
     }
 
     #[cfg(test)]

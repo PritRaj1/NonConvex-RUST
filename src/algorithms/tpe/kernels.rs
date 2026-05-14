@@ -15,14 +15,14 @@ impl KernelType {
         match self {
             KernelType::Gaussian => {
                 let z = x / bandwidth;
-                let factor = T::from_f64(1.0 / (2.0 * std::f64::consts::PI).sqrt()).unwrap();
-                factor * (-T::from_f64(0.5).unwrap() * z * z).exp() / bandwidth
+                let factor = T::cast(1.0 / (2.0 * std::f64::consts::PI).sqrt());
+                factor * (-T::cast(0.5) * z * z).exp() / bandwidth
             }
             KernelType::Epanechnikov => {
                 let z = x / bandwidth;
                 let abs_z = z.abs();
                 if abs_z <= T::one() {
-                    let factor = T::from_f64(0.75).unwrap();
+                    let factor = T::cast(0.75);
                     factor * (T::one() - z * z) / bandwidth
                 } else {
                     T::zero()
@@ -30,7 +30,7 @@ impl KernelType {
             }
             KernelType::Uniform => {
                 let z = x / bandwidth;
-                if z.abs() <= T::from_f64(0.5).unwrap() {
+                if z.abs() <= T::cast(0.5) {
                     T::one() / bandwidth
                 } else {
                     T::zero()
@@ -126,7 +126,7 @@ where
                 let default_bandwidth = if !self.bandwidths.is_empty() {
                     self.bandwidths[0]
                 } else {
-                    T::from_f64(1.0).unwrap()
+                    T::cast(1.0)
                 };
                 self.bandwidths.extend(vec![default_bandwidth; new_count]);
             }
@@ -201,9 +201,8 @@ where
         let dim = observations[0].len();
 
         // Silverman's rule of thumb: h = (4/(d+2))^(1/(d+4)) * n^(-1/(d+4)) * σ
-        let factor =
-            T::from_f64((4.0 / (dim as f64 + 2.0)).powf(1.0 / (dim as f64 + 4.0))).unwrap();
-        let n_factor = T::from_f64((n as f64).powf(-1.0 / (dim as f64 + 4.0))).unwrap();
+        let factor = T::cast((4.0 / (dim as f64 + 2.0)).powf(1.0 / (dim as f64 + 4.0)));
+        let n_factor = T::cast((n as f64).powf(-1.0 / (dim as f64 + 4.0)));
 
         let mut bandwidths = Vec::with_capacity(n);
 
@@ -216,7 +215,7 @@ where
             let std_dev = variance.sqrt();
 
             let bandwidth = factor * n_factor * std_dev;
-            bandwidths.push(bandwidth.max(T::from_f64(1e-6).unwrap()));
+            bandwidths.push(bandwidth.max(T::cast(1e-6)));
         }
 
         bandwidths
@@ -235,10 +234,10 @@ where
 
         // Golden-section search, (similar to L-BFGS)
         for i in 0..observations.len() {
-            let mut a = T::from_f64(0.01).unwrap();
-            let mut b = T::from_f64(5.0).unwrap();
-            let inv_phi = T::from_f64((3.0_f64 - (5.0_f64).sqrt()) / 2.0).unwrap();
-            let tolerance = T::from_f64(1e-4).unwrap();
+            let mut a = T::cast(0.01);
+            let mut b = T::cast(5.0);
+            let inv_phi = T::cast((3.0_f64 - (5.0_f64).sqrt()) / 2.0);
+            let tolerance = T::cast(1e-4);
 
             let mut x1 = b - inv_phi * (b - a);
             let mut x2 = a + inv_phi * (b - a);
@@ -293,7 +292,7 @@ where
             }
             distance = distance.sqrt();
 
-            let kernel_val = (-T::from_f64(0.5).unwrap() * distance * distance).exp();
+            let kernel_val = (-T::cast(0.5) * distance * distance).exp();
             score += kernel_val;
         }
 
@@ -318,7 +317,7 @@ where
 
         // Now update bandwidths using the pre-computed densities
         for (i, bandwidth) in bandwidths.iter_mut().enumerate() {
-            let adaptation_factor = T::one() / (local_densities[i] + T::from_f64(1e-6).unwrap());
+            let adaptation_factor = T::one() / (local_densities[i] + T::cast(1e-6));
             *bandwidth *= adaptation_factor.sqrt();
         }
 
@@ -349,11 +348,11 @@ where
         }
 
         // Golden section search similar to L-BFGS
-        let inv_phi = T::from_f64((3.0_f64 - (5.0_f64).sqrt()) / 2.0).unwrap();
-        let tolerance = T::from_f64(1e-6).unwrap();
+        let inv_phi = T::cast((3.0_f64 - (5.0_f64).sqrt()) / 2.0);
+        let tolerance = T::cast(1e-6);
 
-        let mut a = initial_h * T::from_f64(0.1).unwrap();
-        let mut b = initial_h * T::from_f64(10.0).unwrap();
+        let mut a = initial_h * T::cast(0.1);
+        let mut b = initial_h * T::cast(10.0);
 
         let mut x1 = b - inv_phi * (b - a);
         let mut x2 = a + inv_phi * (b - a);
@@ -378,7 +377,7 @@ where
         }
 
         // Midpoint of the final interval
-        (a + b) / T::from_f64(2.0).unwrap()
+        (a + b) / T::cast(2.0)
     }
 
     fn compute_likelihood(observations: &[OVector<T, D>], target_idx: usize, bandwidth: T) -> T {
@@ -400,7 +399,7 @@ where
             }
             distance = distance.sqrt();
 
-            let kernel_val = (-T::from_f64(0.5).unwrap() * distance * distance).exp();
+            let kernel_val = (-T::cast(0.5) * distance * distance).exp();
             likelihood += kernel_val.ln();
         }
 
@@ -431,7 +430,7 @@ where
                 distance += diff * diff;
             }
             distance = distance.sqrt();
-            let kernel_val = (-T::from_f64(0.5).unwrap() * distance * distance).exp();
+            let kernel_val = (-T::cast(0.5) * distance * distance).exp();
             density += kernel_val;
         }
 

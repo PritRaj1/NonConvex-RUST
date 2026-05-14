@@ -23,12 +23,12 @@ where
             lower_bounds: OVector::<T, D>::from_element_generic(
                 D::from_usize(dimension),
                 U1,
-                T::from_f64(-10.0).unwrap(),
+                T::cast(-10.0),
             ),
             upper_bounds: OVector::<T, D>::from_element_generic(
                 D::from_usize(dimension),
                 U1,
-                T::from_f64(10.0).unwrap(),
+                T::cast(10.0),
             ),
             cached: false,
         }

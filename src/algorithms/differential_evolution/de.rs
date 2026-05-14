@@ -1,10 +1,10 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
-use rand::{rngs::StdRng, SeedableRng};
 use rayon::prelude::*;
 use std::collections::VecDeque;
 
 use crate::utils::alg_conf::de_conf::{DEConf, DEStrategy, MutationType};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 use crate::algorithms::differential_evolution::{
     archive::Archive,
@@ -143,7 +143,7 @@ where
         match (trial_constraint, current_constraint) {
             (true, true) => {
                 // Both feasible - compare fitness with tolerance
-                let eps = T::from_f64(1e-10).unwrap();
+                let eps = T::cast(1e-10);
                 trial_fitness > current_fitness + eps
             }
             (true, false) => true,  // Prefer feasible
@@ -180,7 +180,7 @@ where
             .map_init(
                 || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
-                    StdRng::seed_from_u64(self.seed + self.st.iter as u64 * 1000 + thread_id as u64)
+                    rng::split(self.seed, [self.st.iter as u64, thread_id as u64])
                 },
                 |rng, i| {
                     let strategy = match &self.conf.mutation_type {
@@ -203,8 +203,8 @@ where
                         &self.st.pop,
                         Some(&self.st.best_x),
                         i,
-                        T::from_f64(f).unwrap(),
-                        T::from_f64(cr).unwrap(),
+                        T::cast(f),
+                        T::cast(cr),
                         rng,
                     );
 

@@ -61,8 +61,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         "opt_conf": {
             "max_iter": 100,
-            "rtol": "1e-6",
-            "atol": "0.0"
+            "rtol": 1e-6,
+            "atol": 0.0
         },
         "alg_conf": {
             "PT": {

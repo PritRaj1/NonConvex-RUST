@@ -1,8 +1,9 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, Dyn, OMatrix, OVector, U1};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::Rng;
 use rayon::prelude::*;
 
 use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::rng;
 
 pub trait CrossoverOperator<T, N, D>
 where
@@ -54,7 +55,7 @@ where
             .map_init(
                 || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
-                    StdRng::seed_from_u64(self.seed + thread_id as u64)
+                    rng::split(self.seed, [thread_id as u64])
                 },
                 |rng, _| {
                     if rng.random::<f64>() <= crossover_prob && num_parents >= 2 {
@@ -68,7 +69,7 @@ where
                         let parent1 = parents.row(parent1_idx);
                         let parent2 = parents.row(parent2_idx);
 
-                        let alpha = T::from_f64(rng.random::<f64>()).unwrap();
+                        let alpha = T::cast(rng.random::<f64>());
 
                         let mut child =
                             OVector::<T, D>::zeros_generic(D::from_usize(parents.ncols()), U1);
@@ -139,7 +140,7 @@ where
             .map_init(
                 || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
-                    StdRng::seed_from_u64(self.seed + thread_id as u64)
+                    rng::split(self.seed, [thread_id as u64])
                 },
                 |rng, _| {
                     if rng.random::<f64>() <= crossover_prob && num_parents >= 2 {
@@ -153,7 +154,7 @@ where
                         let parent1 = parents.row(parent1_idx);
                         let parent2 = parents.row(parent2_idx);
 
-                        let b = T::from_f64(rng.random::<f64>()).unwrap();
+                        let b = T::cast(rng.random::<f64>());
 
                         let mut child =
                             OVector::<T, D>::zeros_generic(D::from_usize(parents.ncols()), U1);
@@ -228,7 +229,7 @@ where
             .map_init(
                 || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
-                    StdRng::seed_from_u64(self.seed + thread_id as u64)
+                    rng::split(self.seed, [thread_id as u64])
                 },
                 |rng, _| {
                     if rng.random::<f64>() <= crossover_prob && num_parents >= 2 {
@@ -249,7 +250,7 @@ where
                             let y1 = parent1[k];
                             let y2 = parent2[k];
 
-                            if (y1 - y2).abs() > T::from_f64(1e-14).unwrap() {
+                            if (y1 - y2).abs() > T::cast(1e-14) {
                                 let u = rng.random::<f64>();
                                 let beta = if u <= 0.5 {
                                     (2.0 * u).powf(1.0 / (eta_c + 1.0))
@@ -257,8 +258,8 @@ where
                                     (1.0 / (2.0 * (1.0 - u))).powf(1.0 / (eta_c + 1.0))
                                 };
 
-                                let beta_t = T::from_f64(beta).unwrap();
-                                let half = T::from_f64(0.5).unwrap();
+                                let beta_t = T::cast(beta);
+                                let half = T::cast(0.5);
 
                                 // Generate two children and randomly select one
                                 let c1 =

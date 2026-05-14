@@ -76,7 +76,7 @@ impl UniformNeighborhood {
         let mut neighbor = current.clone();
         neighbor.iter_mut().for_each(|val| {
             if rng.random_bool(self.prob) {
-                *val += T::from_f64(rng.random_range(-self.step_size..self.step_size)).unwrap();
+                *val += T::cast(rng.random_range(-self.step_size..self.step_size));
             }
         });
         neighbor
@@ -108,7 +108,7 @@ impl GaussianNeighborhood {
 
         neighbor.iter_mut().for_each(|val| {
             if rng.random_bool(self.prob) {
-                let perturbation = T::from_f64(normal.sample(rng)).unwrap();
+                let perturbation = T::cast(normal.sample(rng));
                 *val += perturbation;
             }
         });
@@ -141,7 +141,7 @@ impl CauchyNeighborhood {
 
         neighbor.iter_mut().for_each(|val| {
             if rng.random_bool(self.prob) {
-                let perturbation = T::from_f64(cauchy.sample(rng)).unwrap();
+                let perturbation = T::cast(cauchy.sample(rng));
                 *val += perturbation;
             }
         });
@@ -179,8 +179,7 @@ impl AdaptiveNeighborhood {
         let mut neighbor = current.clone();
         neighbor.iter_mut().for_each(|val| {
             if rng.random_bool(self.prob) {
-                *val +=
-                    T::from_f64(rng.random_range(-self.current_step..self.current_step)).unwrap();
+                *val += T::cast(rng.random_range(-self.current_step..self.current_step));
             }
         });
         neighbor

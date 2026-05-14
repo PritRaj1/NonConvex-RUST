@@ -80,7 +80,7 @@ where
                 OMatrix::<T, D, D>::identity_generic(
                     D::from_usize(population.ncols()),
                     D::from_usize(population.ncols()),
-                ) * T::from_f64(step_size_value).unwrap()
+                ) * T::cast(step_size_value)
             })
             .collect();
 
@@ -103,7 +103,7 @@ where
 
     pub fn find_best_individual(&self) -> Option<(OVector<T, D>, T)> {
         let mut best_idx = None;
-        let mut best_fitness = T::from_f64(f64::NEG_INFINITY).unwrap();
+        let mut best_fitness = T::cast(f64::NEG_INFINITY);
 
         for i in 0..self.fitness.len() {
             if self.constraints[i] && self.fitness[i] > best_fitness {

@@ -18,8 +18,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         "opt_conf": {
             "max_iter": 100,
-            "rtol": "1e-8",
-            "atol": "1e-8",
+            "rtol": 1e-8,
+            "atol": 1e-8,
             "rtol_max_iter_fraction": 0.8
         },
         "alg_conf": {

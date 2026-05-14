@@ -53,7 +53,7 @@ where
         Self {
             acceptance_type,
             prob,
-            k: T::from_f64(1.0).unwrap(),
+            k: T::cast(1.0),
             rng: StdRng::seed_from_u64(seed),
         }
     }
@@ -82,10 +82,10 @@ where
                 let langevin_correction =
                     -((new_x - current_x - grad.clone() * step_size * temperature)
                         .dot(&(new_x - current_x - grad * step_size * temperature))
-                        / (T::from_f64(4.0).unwrap() * step_size * temperature))
+                        / (T::cast(4.0) * step_size * temperature))
                         + ((current_x - new_x - proposal_grad.clone() * step_size * temperature)
                             .dot(&(current_x - new_x - proposal_grad * step_size * temperature))
-                            / (T::from_f64(4.0).unwrap() * step_size * temperature));
+                            / (T::cast(4.0) * step_size * temperature));
 
                 (delta_f / (self.k * temperature) + langevin_correction).exp()
             }

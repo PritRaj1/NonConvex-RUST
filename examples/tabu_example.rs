@@ -17,8 +17,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let conf_json = r#"{
         "opt_conf": {
             "max_iter": 80,
-            "rtol": "1e-6",
-            "atol": "0.0"
+            "rtol": 1e-6,
+            "atol": 0.0
         },
         "alg_conf": {
             "TS": {

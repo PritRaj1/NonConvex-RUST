@@ -3,6 +3,7 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use rayon::prelude::*;
 
 use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::rng;
 
 pub trait SelectionOperator<T, N, D>
 where
@@ -74,7 +75,7 @@ where
         );
 
         for i in 0..self.num_parents {
-            let r = T::from_f64(self.rng.random_range(0.0..1.0)).unwrap();
+            let r = T::cast(self.rng.random_range(0.0..1.0));
             let mut cumsum = T::zero();
             let mut selected_individual = false;
 
@@ -165,7 +166,7 @@ where
             .map_init(
                 || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
-                    StdRng::seed_from_u64(self.seed + thread_id as u64)
+                    rng::split(self.seed, [thread_id as u64])
                 },
                 |rng, _| {
                     let mut tournament_indices = Vec::new();
@@ -246,7 +247,7 @@ where
             .map(|(&x, _)| x)
             .reduce(|| T::zero(), |acc, x| acc + x);
 
-        let scale = T::from_f64(self.num_parents as f64).unwrap();
+        let scale = T::cast(self.num_parents as f64);
         let mut expected_values = vec![T::zero(); fitness.len()];
         let mut residual_probabilities = vec![T::zero(); fitness.len()];
         let mut remaining_indices = Vec::new();
@@ -307,7 +308,7 @@ where
 
                 for &idx in &remaining_indices {
                     cumsum += residual_probabilities[idx] / total_residual;
-                    if T::from_f64(r).unwrap() <= cumsum {
+                    if T::cast(r) <= cumsum {
                         selected.set_row(parent_index, &population.row(idx));
                         parent_index += 1;
                         remaining_spots -= 1;

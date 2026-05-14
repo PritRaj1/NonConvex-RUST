@@ -179,7 +179,7 @@ where
             .iter()
             .find(|(stored_x, _)| {
                 let diff = x - stored_x;
-                diff.dot(&diff).sqrt() < T::from_f64(1e-6).unwrap()
+                diff.dot(&diff).sqrt() < T::cast(1e-6)
             })
             .map(|(_, fitness)| *fitness)
     }

@@ -147,7 +147,7 @@ where
         }
 
         let preconditioner: Box<dyn Preconditioner<T, N, D> + Send + Sync> =
-            Box::new(SampleCovariance::new(T::from_f64(0.01).unwrap()));
+            Box::new(SampleCovariance::new(T::cast(0.01)));
 
         let mut covariance_matrices = Vec::with_capacity(conf.common.num_replicas);
         for replica in &replicas {
@@ -330,8 +330,8 @@ where
             .into_par_iter()
             .map(|replica_idx| {
                 let temperature = temperatures[replica_idx];
-                let alpha = T::from_f64(self.conf.common.alpha).unwrap();
-                let omega = T::from_f64(self.conf.common.omega).unwrap();
+                let alpha = T::cast(self.conf.common.alpha);
+                let omega = T::cast(self.conf.common.omega);
 
                 let individual_updates: Vec<_> = (0..self.replicas[replica_idx].population.nrows())
                     .into_par_iter()
@@ -339,7 +339,7 @@ where
                         let x_old = self.replicas[replica_idx].population.row(j).transpose();
                         let mut local_mh = self.metropolis_hastings.clone();
                         let x_new = if matches!(local_mh.move_type, crate::algorithms::parallel_tempering::metropolis_hastings::MoveType::PCN) {
-                            let variance_param = T::from_f64(1.0).unwrap() / ComplexField::sqrt(T::from_usize(self.st.iter).unwrap() + T::from_f64(1.0).unwrap());
+                            let variance_param = T::cast(1.0) / ComplexField::sqrt(T::from_usize(self.st.iter).unwrap() + T::cast(1.0));
                             local_mh.local_move_pcn_with_variance(
                                 &x_old,
                                 &self.covariance_matrices[replica_idx],

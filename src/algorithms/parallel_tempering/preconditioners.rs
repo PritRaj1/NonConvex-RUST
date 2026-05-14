@@ -125,8 +125,8 @@ where
         Self {
             regularization,
             elite_fraction: RealField::max(
-                RealField::min(elite_fraction, T::from_f64(1.0).unwrap()),
-                T::from_f64(0.1).unwrap(),
+                RealField::min(elite_fraction, T::cast(1.0)),
+                T::cast(0.1),
             ),
             _phantom: std::marker::PhantomData,
         }
@@ -226,15 +226,15 @@ where
             regularization: initial_regularization,
             adaptation_rate,
             target_acceptance_rate,
-            min_regularization: initial_regularization * T::from_f64(0.01).unwrap(),
-            max_regularization: initial_regularization * T::from_f64(100.0).unwrap(),
+            min_regularization: initial_regularization * T::cast(0.01),
+            max_regularization: initial_regularization * T::cast(100.0),
             _phantom: std::marker::PhantomData,
         }
     }
 
     pub fn update_regularization(&mut self, acceptance_rate: T) {
         let rate_diff = acceptance_rate - self.target_acceptance_rate;
-        let adaptation = T::from_f64(1.0).unwrap() + self.adaptation_rate * rate_diff;
+        let adaptation = T::cast(1.0) + self.adaptation_rate * rate_diff;
 
         self.regularization *= adaptation;
         self.regularization = RealField::min(
@@ -289,8 +289,8 @@ where
     pub fn new(shrinkage_intensity: T) -> Self {
         Self {
             shrinkage_intensity: RealField::max(
-                RealField::min(shrinkage_intensity, T::from_f64(1.0).unwrap()),
-                T::from_f64(0.0).unwrap(),
+                RealField::min(shrinkage_intensity, T::cast(1.0)),
+                T::cast(0.0),
             ),
             _phantom: std::marker::PhantomData,
         }
@@ -315,7 +315,7 @@ where
     ) -> OMatrix<T, D, D> {
         let dim = population.ncols();
 
-        let sample_preconditioner = SampleCovariance::new(T::from_f64(1e-6).unwrap());
+        let sample_preconditioner = SampleCovariance::new(T::cast(1e-6));
         let sample_cov = sample_preconditioner.compute_covariance(population, fitness, constraints);
 
         let trace = (0..dim).map(|i| sample_cov[(i, i)]).sum::<T>();
@@ -324,7 +324,7 @@ where
         let identity = OMatrix::<T, D, D>::identity_generic(D::from_usize(dim), D::from_usize(dim))
             * target_variance;
 
-        let one_minus_shrinkage = T::from_f64(1.0).unwrap() - self.shrinkage_intensity;
+        let one_minus_shrinkage = T::cast(1.0) - self.shrinkage_intensity;
         sample_cov * one_minus_shrinkage + identity * self.shrinkage_intensity
     }
 

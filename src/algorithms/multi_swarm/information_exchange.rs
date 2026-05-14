@@ -94,7 +94,7 @@ where
 
                 if better_fitness
                     > target_swarm.particles[target_particle_idx].best_fitness
-                        * (T::one() + T::from_f64(self.conf.improvement_threshold).unwrap())
+                        * (T::one() + T::cast(self.conf.improvement_threshold))
                     && self.opt_prob.is_feasible(&better_pos)
                 {
                     target_swarm.particles[target_particle_idx].best_position = better_pos;

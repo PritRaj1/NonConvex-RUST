@@ -120,8 +120,8 @@ fn test_mspo() {
     let config_json = r#"{
         "opt_conf": {
             "max_iter": 100,
-            "rtol": "1e-6",
-            "atol": "1e-6",
+            "rtol": 1e-6,
+            "atol": 1e-6,
             "rtol_max_iter_fraction": 1.0
         },
         "alg_conf": {

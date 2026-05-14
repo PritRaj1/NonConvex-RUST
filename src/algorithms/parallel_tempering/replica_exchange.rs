@@ -21,7 +21,7 @@ impl Periodic {
     }
 
     pub fn should_swap(&self, current_step: usize) -> bool {
-        current_step % (self.swap_frequency * self.total_steps as f64) as usize == 0
+        current_step.is_multiple_of((self.swap_frequency * self.total_steps as f64) as usize)
     }
 }
 

@@ -40,15 +40,14 @@ impl<T: FloatNum> Parameters<T> {
 
         let weights = Self::compute_weights(mu, lambda);
         let mueff = T::one() / weights.map(|w| w * w).sum();
-        let n_f = T::from_f64(n as f64).unwrap();
+        let n_f = T::cast(n as f64);
 
         let (weights_negative, mu_neg, mueff_neg, cmu_neg) = if conf.use_active_cma {
-            let mu_neg = (T::from_f64(conf.active_cma_ratio).unwrap()
-                * T::from_f64(lambda as f64).unwrap())
-            .floor()
-            .to_usize()
-            .unwrap()
-            .min(lambda - mu);
+            let mu_neg = (T::cast(conf.active_cma_ratio) * T::cast(lambda as f64))
+                .floor()
+                .to_usize()
+                .unwrap()
+                .min(lambda - mu);
             if mu_neg > 0 {
                 let weights_neg = Self::compute_negative_weights(mu, mu_neg, lambda);
                 let mueff_neg = T::one() / weights_neg.map(|w| w * w).sum();
@@ -92,29 +91,28 @@ impl<T: FloatNum> Parameters<T> {
         let mut weights: OVector<T, Dyn> =
             OVector::from_element_generic(Dyn::from_usize(mu), U1, T::one());
         for i in 0..mu {
-            weights[i] = T::ln(T::from_f64((lambda as f64 + 1.0) / 2.0).unwrap())
-                - T::ln(T::from_f64((i + 1) as f64).unwrap());
+            weights[i] =
+                T::ln(T::cast((lambda as f64 + 1.0) / 2.0)) - T::ln(T::cast((i + 1) as f64));
         }
         weights /= weights.sum();
         weights
     }
 
     fn compute_time_constants(mueff: T, n_f: T) -> (T, T) {
-        let cc = (T::from_f64(4.0).unwrap() + mueff / n_f)
-            / (n_f + T::from_f64(4.0).unwrap() + T::from_f64(2.0).unwrap() * mueff / n_f);
+        let cc = (T::cast(4.0) + mueff / n_f) / (n_f + T::cast(4.0) + T::cast(2.0) * mueff / n_f);
 
-        let cs = (mueff + T::from_f64(2.0).unwrap()) / (n_f + mueff + T::from_f64(5.0).unwrap());
+        let cs = (mueff + T::cast(2.0)) / (n_f + mueff + T::cast(5.0));
 
         (cc, cs)
     }
 
     fn compute_learning_rates(mueff: T, n_f: T) -> (T, T) {
-        let c1 = T::from_f64(2.0).unwrap() / ((n_f + T::from_f64(1.3).unwrap()).powi(2) + mueff);
+        let c1 = T::cast(2.0) / ((n_f + T::cast(1.3)).powi(2) + mueff);
 
         let cmu = T::min(
             T::one() - c1,
-            T::from_f64(2.0).unwrap() * (mueff - T::from_f64(2.0).unwrap() + T::one() / mueff)
-                / ((n_f + T::from_f64(2.0).unwrap()).powi(2) + mueff),
+            T::cast(2.0) * (mueff - T::cast(2.0) + T::one() / mueff)
+                / ((n_f + T::cast(2.0)).powi(2) + mueff),
         );
 
         (c1, cmu)
@@ -122,7 +120,7 @@ impl<T: FloatNum> Parameters<T> {
 
     fn compute_damping(mueff: T, n_f: T, cs: T) -> T {
         T::one()
-            + T::from_f64(2.0).unwrap()
+            + T::cast(2.0)
                 * T::max(
                     T::zero(),
                     T::sqrt((mueff - T::one()) / (n_f + T::one())) - T::one(),
@@ -132,8 +130,8 @@ impl<T: FloatNum> Parameters<T> {
 
     fn compute_chi_n(n_f: T) -> T {
         T::sqrt(n_f)
-            * (T::one() - T::one() / (T::from_f64(4.0).unwrap() * n_f)
-                + T::one() / (T::from_f64(21.0).unwrap() * n_f.powi(2)))
+            * (T::one() - T::one() / (T::cast(4.0) * n_f)
+                + T::one() / (T::cast(21.0) * n_f.powi(2)))
     }
 
     fn compute_negative_weights(mu: usize, mu_neg: usize, lambda: usize) -> OVector<T, Dyn>
@@ -146,8 +144,8 @@ impl<T: FloatNum> Parameters<T> {
         // Starting from rank mu+1 (0-indexed: mu) to rank mu+mu_neg
         for i in 0..mu_neg {
             let rank = mu + i + 1; // 1-indexed rank
-            weights_neg[i] = -T::ln(T::from_f64((lambda as f64 + 1.0) / 2.0).unwrap())
-                + T::ln(T::from_f64(rank as f64).unwrap());
+            weights_neg[i] =
+                -T::ln(T::cast((lambda as f64 + 1.0) / 2.0)) + T::ln(T::cast(rank as f64));
         }
 
         let sum_neg = -weights_neg.sum();
@@ -161,9 +159,8 @@ impl<T: FloatNum> Parameters<T> {
 
     /// Ssmaller than the positive lr to avoid instability
     fn compute_negative_learning_rate(mueff_neg: T, n_f: T) -> T {
-        let alpha_neg = T::from_f64(0.4).unwrap(); // Damping
-        let cmu_neg_base = T::from_f64(2.0).unwrap() * mueff_neg
-            / ((n_f + T::from_f64(2.0).unwrap()).powi(2) + mueff_neg);
+        let alpha_neg = T::cast(0.4); // Damping
+        let cmu_neg_base = T::cast(2.0) * mueff_neg / ((n_f + T::cast(2.0)).powi(2) + mueff_neg);
         T::min(alpha_neg, cmu_neg_base)
     }
 }

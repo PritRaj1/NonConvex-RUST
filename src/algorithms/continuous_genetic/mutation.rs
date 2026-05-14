@@ -83,7 +83,7 @@ where
 
         for i in 0..individual.len() {
             if self.rng.random::<f64>() < self.mutation_rate {
-                let noise = T::from_f64(normal.sample(&mut self.rng)).unwrap();
+                let noise = T::cast(normal.sample(&mut self.rng));
                 mutated[i] = (mutated[i] + noise).clamp(bounds.0, bounds.1);
             }
         }
@@ -123,11 +123,10 @@ where
 
         for i in 0..individual.len() {
             if self.rng.random::<f64>() < self.mutation_rate {
-                mutated[i] = T::from_f64(
+                mutated[i] = T::cast(
                     self.rng
                         .random_range(bounds.0.to_f64().unwrap()..bounds.1.to_f64().unwrap()),
-                )
-                .unwrap();
+                );
             }
         }
         mutated
@@ -167,9 +166,7 @@ where
         generation: usize,
     ) -> OVector<T, D> {
         let mut mutated = individual.clone();
-        let r =
-            T::from_f64(self.rng.random::<f64>() * generation as f64 / self.max_generations as f64)
-                .unwrap();
+        let r = T::cast(self.rng.random::<f64>() * generation as f64 / self.max_generations as f64);
 
         for i in 0..individual.len() {
             if self.rng.random::<f64>() < self.mutation_rate {
@@ -179,10 +176,9 @@ where
                     mutated[i] - bounds.0
                 };
 
-                let power = T::from_f64(
+                let power = T::cast(
                     (T::one() - r).to_f64().unwrap().powf(self.b) * self.rng.random::<f64>(),
-                )
-                .unwrap();
+                );
 
                 if self.rng.random_bool(0.5) {
                     mutated[i] += delta * power;
@@ -238,8 +234,8 @@ where
                     1.0 - (2.0 * (1.0 - r)).powf(1.0 / (self.eta_m + 1.0))
                 };
 
-                mutated[i] = (mutated[i] + T::from_f64(delta).unwrap() * (bounds.1 - bounds.0))
-                    .clamp(bounds.0, bounds.1);
+                mutated[i] =
+                    (mutated[i] + T::cast(delta) * (bounds.1 - bounds.0)).clamp(bounds.0, bounds.1);
             }
         }
         mutated

@@ -92,9 +92,9 @@ where
         let mut samples = Vec::with_capacity(params.lambda);
 
         for _ in 0..params.lambda {
-            let mut z = init_x.clone() * T::from_f64(0.0).unwrap();
+            let mut z = init_x.clone() * T::cast(0.0);
             for j in 0..n {
-                z[j] = T::from_f64(normal.sample(&mut rng)).unwrap();
+                z[j] = T::cast(normal.sample(&mut rng));
             }
             samples.push(z);
         }
@@ -108,7 +108,7 @@ where
             &b_mat.clone(),
             &d_vec.clone(),
             &opt_prob,
-            T::from_f64(conf.initial_sigma).unwrap(),
+            T::cast(conf.initial_sigma),
         );
 
         let mut population: OMatrix<T, N, D> = OMatrix::from_element_generic(
@@ -149,7 +149,7 @@ where
             c_mat: OMatrix::<T, D, D>::identity_generic(D::from_usize(n), D::from_usize(n)),
             b_mat: OMatrix::<T, D, D>::identity_generic(D::from_usize(n), D::from_usize(n)),
             d_vec: OVector::from_element_generic(D::from_usize(n), U1, T::one()),
-            sigma: T::from_f64(conf.initial_sigma).unwrap(),
+            sigma: T::cast(conf.initial_sigma),
             weights: params.weights,
             weights_negative: params.weights_negative,
             mu: params.mu,
@@ -173,7 +173,7 @@ where
 
         (0..self.lambda)
             .map(|_| {
-                let iter = (0..n).map(|_| T::from_f64(normal.sample(&mut self.rng)).unwrap());
+                let iter = (0..n).map(|_| T::cast(normal.sample(&mut self.rng)));
                 OVector::<T, D>::from_iterator_generic(D::from_usize(n), U1, iter)
             })
             .collect()

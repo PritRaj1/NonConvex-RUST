@@ -83,7 +83,7 @@ where
             iter: 1,
         };
 
-        let improvement_threshold = T::from_f64(conf.improvement_threshold).unwrap();
+        let improvement_threshold = T::cast(conf.improvement_threshold);
         let stagnation_monitor = StagnationMonitor::new(improvement_threshold, best_fitness);
         let information_exchange = InformationExchange::new(conf.clone(), opt_prob.clone());
 
@@ -167,7 +167,7 @@ where
             self.conf.exchange_interval
         };
 
-        if self.st.iter % exchange_interval == 0 {
+        if self.st.iter.is_multiple_of(exchange_interval) {
             self.information_exchange.exchange_information(
                 &mut self.swarms,
                 self.stagnation_monitor.stagnation_counter(),

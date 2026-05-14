@@ -4,6 +4,7 @@ use rayon::prelude::*;
 
 use crate::utils::config::GRASPConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 pub struct GRASP<T, N, D>
 where
@@ -94,7 +95,7 @@ where
                     OVector::<T, D>::from_element_generic(
                         D::from_usize(candidate.len()),
                         U1,
-                        T::from_f64(-10.0).unwrap(),
+                        T::cast(-10.0),
                     )
                 });
             let ub = self
@@ -105,7 +106,7 @@ where
                     OVector::<T, D>::from_element_generic(
                         D::from_usize(candidate.len()),
                         U1,
-                        T::from_f64(10.0).unwrap(),
+                        T::cast(10.0),
                     )
                 });
             (lb, ub)
@@ -118,7 +119,7 @@ where
             .into_par_iter()
             .map_init(                || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
-                    StdRng::seed_from_u64(self.seed + self.st.iter as u64 * 1000 + thread_id as u64)
+                    rng::split(self.seed, [self.st.iter as u64, thread_id as u64])
                 }, |rng, _i| {
                 let mut candidate =
                     OVector::<T, D>::zeros_generic(D::from_usize(self.st.best_x.len()), U1);
@@ -133,16 +134,16 @@ where
                         self.conf.alpha
                     };
 
-                    let alpha = T::from_f64(adaptive_alpha).unwrap();
+                    let alpha = T::cast(adaptive_alpha);
                     let range = ub[i] - lb[i];
                     let rcl_min = lb[i] + (T::one() - alpha) * range;
                     let rcl_max = ub[i] - (T::one() - alpha) * range;
 
                     let (min_val, max_val) = if rcl_min < rcl_max {
                         (rcl_min, rcl_max)
-                    } else if (rcl_min - rcl_max).abs() < T::from_f64(1e-10).unwrap() {
+                    } else if (rcl_min - rcl_max).abs() < T::cast(1e-10) {
                         // If very close, use small range around the value
-                        let epsilon = T::from_f64(1e-6).unwrap();
+                        let epsilon = T::cast(1e-6);
                         (rcl_min - epsilon, rcl_max + epsilon)
                     } else {
                         // If rcl_min > rcl_max, use full bounds
@@ -151,10 +152,9 @@ where
                         (lb[i], ub[i])
                     };
 
-                    candidate[i] = T::from_f64(
+                    candidate[i] = T::cast(
                         rng.random_range(min_val.to_f64().unwrap()..max_val.to_f64().unwrap()),
-                    )
-                    .unwrap();
+                    );
                 }
                 candidate
             })
@@ -201,9 +201,7 @@ where
                 .map_init(
                     || {
                         let thread_id = rayon::current_thread_index().unwrap_or(0);
-                        StdRng::seed_from_u64(
-                            self.seed + self.st.iter as u64 * 1000 + thread_id as u64,
-                        )
+                        rng::split(self.seed, [self.st.iter as u64, thread_id as u64])
                     },
                     |rng, _i| {
                         let mut neighbor = current.clone();
@@ -211,10 +209,9 @@ where
                         // Perturb random dimensions
                         for i in 0..neighbor.len() {
                             if rng.random_bool(adaptive_perturbation_prob) {
-                                neighbor[i] += T::from_f64(
+                                neighbor[i] += T::cast(
                                     rng.random_range(-adaptive_step_size..adaptive_step_size),
-                                )
-                                .unwrap();
+                                );
                             }
                         }
 
@@ -257,12 +254,11 @@ where
 
             for i in 0..diverse_solution.len() {
                 if self.rng.random_bool(self.conf.diversity_prob) {
-                    let perturbation = T::from_f64(
+                    let perturbation = T::cast(
                         self.rng.random_range(-3.0..3.0)
                             * self.conf.step_size
                             * self.conf.diversity_strength,
-                    )
-                    .unwrap();
+                    );
                     diverse_solution[i] += perturbation;
                 }
             }
@@ -290,11 +286,10 @@ where
             OVector::<T, D>::zeros_generic(D::from_usize(self.st.best_x.len()), U1);
 
         for i in 0..new_solution.len() {
-            new_solution[i] = T::from_f64(
+            new_solution[i] = T::cast(
                 self.rng
                     .random_range(lb[i].to_f64().unwrap()..ub[i].to_f64().unwrap()),
-            )
-            .unwrap();
+            );
         }
 
         self.st.pop.row_mut(0).copy_from(&new_solution.transpose());

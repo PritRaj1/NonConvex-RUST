@@ -1,9 +1,10 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, Dyn, OMatrix, OVector, U1};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::Rng;
 use rayon::prelude::*;
 
 use crate::utils::config::MSPOConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::rng;
 
 use crate::algorithms::multi_swarm::particle::Particle;
 
@@ -56,13 +57,12 @@ where
     DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<Dyn, D>,
 {
     pub fn new(config: SwarmConfig<T, D>, seed: u64) -> Self {
-        let _base_rng = StdRng::seed_from_u64(seed);
         let particles: Vec<_> = (0..config.num_particles)
             .into_par_iter()
             .map_init(
                 || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
-                    StdRng::seed_from_u64(seed + thread_id as u64)
+                    rng::split(seed, [thread_id as u64])
                 },
                 |rng, i| {
                     let mut position =
@@ -75,7 +75,7 @@ where
                     } else {
                         loop {
                             let values = (0..config.dim).map(|_| {
-                                let r = T::from_f64(rng.random::<f64>()).unwrap();
+                                let r = T::cast(rng.random::<f64>());
                                 config.bounds.0 + (config.bounds.1 - config.bounds.0) * r
                             });
                             let position: OVector<T, D> = OVector::from_iterator_generic(
@@ -92,10 +92,8 @@ where
                     }
 
                     let values = (0..config.dim).map(|_| {
-                        let r = T::from_f64(rng.random::<f64>()).unwrap();
-                        (config.bounds.1 - config.bounds.0)
-                            * (r - T::from_f64(0.5).unwrap())
-                            * T::from_f64(0.1).unwrap()
+                        let r = T::cast(rng.random::<f64>());
+                        (config.bounds.1 - config.bounds.0) * (r - T::cast(0.5)) * T::cast(0.1)
                     });
 
                     let velocity: OVector<T, D> =
@@ -134,10 +132,7 @@ where
     }
 
     pub fn update(&mut self, opt_prob: &OptProb<T, D>) {
-        let bounds = (
-            T::from_f64(self.x_min).unwrap(),
-            T::from_f64(self.x_max).unwrap(),
-        );
+        let bounds = (T::cast(self.x_min), T::cast(self.x_max));
 
         // Adaptive weight based on stagnation and diversity
         let adaptive_w = self.compute_adaptive_inertia();
@@ -183,8 +178,7 @@ where
     fn compute_adaptive_inertia(&self) -> T {
         let progress = (self.iteration_count as f64 / self.max_iterations as f64).min(1.0);
 
-        self.inertia_start
-            + (self.inertia_end - self.inertia_start) * T::from_f64(progress).unwrap()
+        self.inertia_start + (self.inertia_end - self.inertia_start) * T::cast(progress)
     }
 
     // Avg distance between particles
@@ -303,7 +297,7 @@ where
         let center = init_pop.row(idx).transpose();
 
         // Centers should be far apart (for diversity)
-        let min_distance = T::from_f64(0.3 * (conf.x_max - conf.x_min)).unwrap();
+        let min_distance = T::cast(0.3 * (conf.x_max - conf.x_min));
 
         if promising_centers.is_empty() {
             promising_centers.push(center);
@@ -319,27 +313,25 @@ where
         }
     }
 
-    let mut fill_rng = StdRng::seed_from_u64(seed + 1000);
+    let mut fill_rng = rng::split(seed, [0xF111u64]);
     while promising_centers.len() < conf.num_swarms {
         let random_center = OVector::<T, D>::from_iterator_generic(
             D::from_usize(dim),
             U1,
             (0..dim).map(|_| {
-                T::from_f64(conf.x_min + fill_rng.random::<f64>() * (conf.x_max - conf.x_min))
-                    .unwrap()
+                T::cast(conf.x_min + fill_rng.random::<f64>() * (conf.x_max - conf.x_min))
             }),
         );
         promising_centers.push(random_center);
     }
 
-    // Fill with promising, fallback to random
-    let _base_rng = StdRng::seed_from_u64(seed + 2000);
+    // fill with promising, fallback to random
     (0..conf.num_swarms)
         .into_par_iter()
         .map_init(
             || {
                 let thread_id = rayon::current_thread_index().unwrap_or(0);
-                StdRng::seed_from_u64(seed + 2000 + thread_id as u64)
+                rng::split(seed, [0xC1u64, thread_id as u64])
             },
             |rng, i| {
                 let center = if i < promising_centers.len() {
@@ -349,16 +341,13 @@ where
                         D::from_usize(dim),
                         U1,
                         (0..dim).map(|_| {
-                            T::from_f64(
-                                conf.x_min + rng.random::<f64>() * (conf.x_max - conf.x_min),
-                            )
-                            .unwrap()
+                            T::cast(conf.x_min + rng.random::<f64>() * (conf.x_max - conf.x_min))
                         }),
                     )
                 };
 
                 // Spawn particles around center with controlled spread
-                let radius = T::from_f64(0.15 * (conf.x_max - conf.x_min)).unwrap(); // Smaller radius for better convergence
+                let radius = T::cast(0.15 * (conf.x_max - conf.x_min)); // Smaller radius for better convergence
                 let start_idx = i * pop_per_swarm;
                 let mut swarm_pop: OMatrix<T, Dyn, D> =
                     init_pop.rows(start_idx, particles_per_swarm).into_owned();
@@ -368,17 +357,15 @@ where
                     .map_init(
                         || {
                             let thread_id = rayon::current_thread_index().unwrap_or(0);
-                            StdRng::seed_from_u64(seed + 3000 + thread_id as u64)
+                            rng::split(seed, [0xC2u64, i as u64, thread_id as u64])
                         },
                         |particle_rng, j| {
                             let mut particle_row = Vec::with_capacity(dim);
                             for k in 0..dim {
-                                let r = T::from_f64(particle_rng.random::<f64>()).unwrap();
-                                let noise = (r - T::from_f64(0.5).unwrap()) * radius;
-                                let adjusted_value = (center[k] + noise).clamp(
-                                    T::from_f64(conf.x_min).unwrap(),
-                                    T::from_f64(conf.x_max).unwrap(),
-                                );
+                                let r = T::cast(particle_rng.random::<f64>());
+                                let noise = (r - T::cast(0.5)) * radius;
+                                let adjusted_value = (center[k] + noise)
+                                    .clamp(T::cast(conf.x_min), T::cast(conf.x_max));
                                 particle_row.push(adjusted_value);
                             }
                             (j, particle_row)
@@ -396,16 +383,13 @@ where
                     SwarmConfig {
                         num_particles: particles_per_swarm,
                         dim,
-                        c1: T::from_f64(conf.c1).unwrap(),
-                        c2: T::from_f64(conf.c2).unwrap(),
-                        bounds: (
-                            T::from_f64(conf.x_min).unwrap(),
-                            T::from_f64(conf.x_max).unwrap(),
-                        ),
+                        c1: T::cast(conf.c1),
+                        c2: T::cast(conf.c2),
+                        bounds: (T::cast(conf.x_min), T::cast(conf.x_max)),
                         opt_prob,
                         init_pop: swarm_pop,
-                        inertia_start: T::from_f64(conf.inertia_start).unwrap(),
-                        inertia_end: T::from_f64(conf.inertia_end).unwrap(),
+                        inertia_start: T::cast(conf.inertia_start),
+                        inertia_end: T::cast(conf.inertia_end),
                         max_iterations: max_iter,
                     },
                     seed,

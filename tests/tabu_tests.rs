@@ -14,8 +14,8 @@ fn test_standard_tabu() {
     let conf_json = r#"{
         "opt_conf": {
             "max_iter": 100,
-            "rtol": "1e-6",
-            "atol": "1e-6"
+            "rtol": 1e-6,
+            "atol": 1e-6
         },
         "alg_conf": {
             "TS": {
@@ -104,8 +104,8 @@ fn test_frequency_based_tabu() {
     let conf_json = r#"{
         "opt_conf": {
             "max_iter": 100,
-            "rtol": "1e-6",
-            "atol": "1e-6"
+            "rtol": 1e-6,
+            "atol": 1e-6
         },
         "alg_conf": {
             "TS": {
@@ -172,8 +172,8 @@ fn test_quality_based_tabu() {
     let conf_json = r#"{
         "opt_conf": {
             "max_iter": 100,
-            "rtol": "1e-6",
-            "atol": "1e-6"
+            "rtol": 1e-6,
+            "atol": 1e-6
         },
         "alg_conf": {
             "TS": {
@@ -240,8 +240,8 @@ fn test_gaussian_neighborhood() {
     let conf_json = r#"{
         "opt_conf": {
             "max_iter": 100,
-            "rtol": "1e-6",
-            "atol": "1e-6"
+            "rtol": 1e-6,
+            "atol": 1e-6
         },
         "alg_conf": {
             "TS": {
@@ -303,8 +303,8 @@ fn test_adaptive_neighborhood() {
     let conf_json = r#"{
         "opt_conf": {
             "max_iter": 100,
-            "rtol": "1e-6",
-            "atol": "1e-6"
+            "rtol": 1e-6,
+            "atol": 1e-6
         },
         "alg_conf": {
             "TS": {

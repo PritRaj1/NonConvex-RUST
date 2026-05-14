@@ -16,7 +16,7 @@ where
     let p_l = kde_l.evaluate(x);
     let p_g = kde_g.evaluate(x);
 
-    let epsilon = T::from_f64(1e-10).unwrap();
+    let epsilon = T::cast(1e-10);
     if p_g <= epsilon {
         return T::zero();
     }
@@ -43,7 +43,7 @@ where
     let p_l = kde_l.evaluate(x);
     let p_g = kde_g.evaluate(x);
 
-    let epsilon = T::from_f64(1e-10).unwrap();
+    let epsilon = T::cast(1e-10);
     if p_g <= epsilon {
         return T::zero();
     }
@@ -68,7 +68,7 @@ where
     let p_l = kde_l.evaluate(x);
     let p_g = kde_g.evaluate(x);
 
-    let epsilon = T::from_f64(1e-10).unwrap();
+    let epsilon = T::cast(1e-10);
     if p_g <= epsilon {
         return T::zero();
     }
@@ -95,7 +95,7 @@ where
     let p_l = kde_l.evaluate(x);
     let p_g = kde_g.evaluate(x);
 
-    let epsilon = T::from_f64(1e-10).unwrap();
+    let epsilon = T::cast(1e-10);
     if p_g <= epsilon || p_l <= epsilon {
         return T::zero();
     }

@@ -17,19 +17,11 @@ use crate::utils::opt_prob::{
     OptimizationAlgorithm, State,
 };
 
-pub struct Result<T, N, D>
-where
-    T: FloatNum,
-    D: Dim,
-    N: Dim,
-    DefaultAllocator: Allocator<D> + Allocator<N, D> + Allocator<N>,
-{
-    pub best_x: OVector<T, D>,
-    pub best_f: T,
-    pub final_pop: OMatrix<T, N, D>,
-    pub final_fitness: OVector<T, N>,
-    pub final_constraints: OVector<bool, N>,
-    pub convergence_iter: usize,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConvergenceReason {
+    AbsoluteTolerance,
+    RelativeTolerance,
+    Stagnation,
 }
 
 pub struct NonConvexOpt<T, N, D>
@@ -55,6 +47,7 @@ where
     pub alg: Box<dyn OptimizationAlgorithm<T, N, D>>,
     pub conf: OptConf,
     pub converged: bool,
+    pub convergence_reason: Option<ConvergenceReason>,
     best_fitness_history: Vec<T>,
 }
 
@@ -89,83 +82,62 @@ where
         constr_f: Option<G>,
         seed: u64,
     ) -> Self {
-        let opt_prob = OptProb::new(
-            Box::new(obj_f),
-            match constr_f {
-                Some(constr_f) => Some(Box::new(constr_f)),
-                None => None,
-            },
-        );
+        let opt_prob = OptProb::new(Box::new(obj_f), constr_f.map(|c| Box::new(c) as _));
 
         let alg: Box<dyn OptimizationAlgorithm<T, N, D>> = match conf.alg_conf {
-            AlgConf::CGA(cga_conf) => Box::new(CGA::new(
-                cga_conf,
+            AlgConf::CGA(c) => Box::new(CGA::new(
+                c,
                 init_pop,
                 opt_prob,
                 conf.opt_conf.max_iter,
                 seed,
             )),
-            AlgConf::PT(pt_conf) => Box::new(PT::new(
-                pt_conf,
-                init_pop,
-                opt_prob,
-                conf.opt_conf.max_iter,
-                seed,
-            )),
-            AlgConf::TS(ts_conf) => Box::new(TabuSearch::new(
-                ts_conf,
-                init_pop.row(0).into_owned(),
-                opt_prob,
-                seed,
-            )),
-            AlgConf::Adam(adam_conf) => {
-                Box::new(Adam::new(adam_conf, init_pop.row(0).into_owned(), opt_prob))
+            AlgConf::PT(c) => {
+                Box::new(PT::new(c, init_pop, opt_prob, conf.opt_conf.max_iter, seed))
             }
-            AlgConf::GRASP(grasp_conf) => Box::new(GRASP::new(
-                grasp_conf,
+            AlgConf::TS(c) => Box::new(TabuSearch::new(
+                c,
                 init_pop.row(0).into_owned(),
                 opt_prob,
                 seed,
             )),
-            AlgConf::SGA(sga_conf) => Box::new(SGAscent::new(
-                sga_conf,
+            AlgConf::Adam(c) => Box::new(Adam::new(c, init_pop.row(0).into_owned(), opt_prob)),
+            AlgConf::GRASP(c) => {
+                Box::new(GRASP::new(c, init_pop.row(0).into_owned(), opt_prob, seed))
+            }
+            AlgConf::SGA(c) => Box::new(SGAscent::new(
+                c,
                 init_pop.row(0).into_owned(),
                 opt_prob,
                 seed,
             )),
-            AlgConf::NM(nm_conf) => Box::new(NelderMead::new(nm_conf, init_pop, opt_prob, seed)),
-            AlgConf::LBFGS(lbfgs_conf) => Box::new(LBFGS::new(
-                lbfgs_conf,
-                init_pop.row(0).into_owned(),
-                opt_prob,
-            )),
-            AlgConf::MSPO(mspo_conf) => Box::new(MSPO::new(
-                mspo_conf,
+            AlgConf::NM(c) => Box::new(NelderMead::new(c, init_pop, opt_prob, seed)),
+            AlgConf::LBFGS(c) => Box::new(LBFGS::new(c, init_pop.row(0).into_owned(), opt_prob)),
+            AlgConf::MSPO(c) => Box::new(MSPO::new(
+                c,
                 init_pop,
                 opt_prob,
                 conf.opt_conf.max_iter,
                 seed,
             )),
-            AlgConf::SA(sa_conf) => Box::new(SimulatedAnnealing::new(
-                sa_conf,
+            AlgConf::SA(c) => Box::new(SimulatedAnnealing::new(
+                c,
                 init_pop.row(0).into_owned(),
                 opt_prob,
                 conf.opt_conf.stagnation_window,
                 seed,
             )),
-            AlgConf::DE(de_conf) => Box::new(DE::new(de_conf, init_pop, opt_prob, seed)),
-            AlgConf::CMAES(cma_es_conf) => {
-                Box::new(CMAES::new(cma_es_conf, init_pop, opt_prob, seed))
-            }
-            AlgConf::TPE(tpe_conf) => Box::new(TPE::new(
-                tpe_conf,
+            AlgConf::DE(c) => Box::new(DE::new(c, init_pop, opt_prob, seed)),
+            AlgConf::CMAES(c) => Box::new(CMAES::new(c, init_pop, opt_prob, seed)),
+            AlgConf::TPE(c) => Box::new(TPE::new(
+                c,
                 init_pop,
                 opt_prob,
                 conf.opt_conf.stagnation_window,
                 seed,
             )),
-            AlgConf::CEM(cem_conf) => Box::new(CEM::new(
-                cem_conf,
+            AlgConf::CEM(c) => Box::new(CEM::new(
+                c,
                 init_pop,
                 opt_prob,
                 conf.opt_conf.stagnation_window,
@@ -177,87 +149,69 @@ where
             alg,
             conf: conf.opt_conf,
             converged: false,
+            convergence_reason: None,
             best_fitness_history: Vec::new(),
         }
     }
 
-    fn check_convergence(&self, current_best: T, previous_best: T) -> bool {
-        let atol = T::from_f64(self.conf.atol).unwrap();
-        let rtol = T::from_f64(self.conf.rtol).unwrap();
+    fn check_convergence(&self, current: T, previous: T) -> Option<ConvergenceReason> {
+        let atol: T = T::cast(self.conf.atol);
+        let rtol: T = T::cast(self.conf.rtol);
         let min_iter_for_rtol =
             (self.conf.max_iter as f64 * self.conf.rtol_max_iter_fraction).floor() as usize;
+        let iter = self.alg.state().iter;
+        let eps: T = T::cast(1e-10);
 
-        let improvement = current_best - previous_best;
-        let abs_improvement = num_traits::Float::abs(improvement);
+        let abs_imp = num_traits::Float::abs(current - previous);
 
-        let abs_converged = abs_improvement < atol && self.alg.state().iter > min_iter_for_rtol;
-
-        let rel_converged = if num_traits::Float::abs(current_best) > T::from_f64(1e-10).unwrap() {
-            abs_improvement / num_traits::Float::abs(current_best) <= rtol
-        } else {
-            abs_improvement <= atol
-        };
-
-        // Check for stagnation: no significant improvement over a window of iterations
-        let stagnation_converged = if self.best_fitness_history.len() >= self.conf.stagnation_window
-            && self.alg.state().iter > min_iter_for_rtol
-        {
-            let window_start = self.best_fitness_history.len() - self.conf.stagnation_window;
-            let oldest_in_window = self.best_fitness_history[window_start];
-            let stagnation_improvement = current_best - oldest_in_window;
-            let abs_stagnation_improvement = num_traits::Float::abs(stagnation_improvement);
-
-            abs_stagnation_improvement < atol
-                || (num_traits::Float::abs(current_best) > T::from_f64(1e-10).unwrap()
-                    && abs_stagnation_improvement / num_traits::Float::abs(current_best) <= rtol)
-        } else {
-            false
-        };
-
-        let converged = abs_converged
-            || (rel_converged && self.alg.state().iter > min_iter_for_rtol)
-            || stagnation_converged;
-
-        if converged {
-            let reason = if abs_converged {
-                "absolute tolerance"
-            } else if rel_converged && self.alg.state().iter > min_iter_for_rtol {
-                "relative tolerance"
-            } else if stagnation_converged {
-                "stagnation"
-            } else {
-                "unknown"
-            };
-
-            println!(
-                "Converged in {} iterations due to {} (improvement: {:.2e})",
-                self.alg.state().iter,
-                reason,
-                improvement.to_f64().unwrap_or(0.0)
-            );
+        if abs_imp < atol && iter > min_iter_for_rtol {
+            return Some(ConvergenceReason::AbsoluteTolerance);
         }
 
-        converged
+        let cur_abs = num_traits::Float::abs(current);
+        let rel_converged = if cur_abs > eps {
+            abs_imp / cur_abs <= rtol
+        } else {
+            abs_imp <= atol
+        };
+        if rel_converged && iter > min_iter_for_rtol {
+            return Some(ConvergenceReason::RelativeTolerance);
+        }
+
+        if self.best_fitness_history.len() >= self.conf.stagnation_window
+            && iter > min_iter_for_rtol
+        {
+            let oldest = self.best_fitness_history
+                [self.best_fitness_history.len() - self.conf.stagnation_window];
+            let stag_imp = num_traits::Float::abs(current - oldest);
+            let stagnant = stag_imp < atol || (cur_abs > eps && stag_imp / cur_abs <= rtol);
+            if stagnant {
+                return Some(ConvergenceReason::Stagnation);
+            }
+        }
+
+        None
     }
 
     pub fn step(&mut self) {
         if self.converged {
             return;
         }
-
-        let previous_best_fitness = self.alg.state().best_f;
+        let prev = self.alg.state().best_f;
         self.alg.step();
-        let current_best_fitness = self.alg.state().best_f;
-        self.best_fitness_history.push(current_best_fitness);
+        let cur = self.alg.state().best_f;
+        self.best_fitness_history.push(cur);
 
-        // Avoid unbounded memory growth
         let max_history = self.conf.stagnation_window * 2;
         if self.best_fitness_history.len() > max_history {
             let excess = self.best_fitness_history.len() - max_history;
             self.best_fitness_history.drain(0..excess);
         }
 
-        self.converged = self.check_convergence(current_best_fitness, previous_best_fitness);
+        if let Some(reason) = self.check_convergence(cur, prev) {
+            self.convergence_reason = Some(reason);
+            self.converged = true;
+        }
     }
 
     pub fn run(&mut self) -> &State<T, N, D> {

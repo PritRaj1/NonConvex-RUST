@@ -4,6 +4,7 @@ use rand_distr::{Normal, StandardNormal};
 use rayon::prelude::*;
 
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::rng;
 
 #[derive(Clone)]
 pub enum MoveType {
@@ -80,9 +81,9 @@ where
                 || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
                     // Note: iteration would need to be passed in, using a counter for now
-                    StdRng::seed_from_u64(self.seed + thread_id as u64)
+                    rng::split(self.seed, [thread_id as u64])
                 },
-                |rng, _| T::from_f64(rng.sample(Normal::new(0.0, step_size).unwrap())).unwrap(),
+                |rng, _| T::cast(rng.sample(Normal::new(0.0, step_size).unwrap())),
             )
             .collect();
 
@@ -116,8 +117,8 @@ where
         let drift = grad * step;
 
         let noise = OVector::<T, D>::from_fn_generic(D::from_usize(current.len()), U1, |_, _| {
-            T::from_f64(self.rng.sample::<f64, _>(StandardNormal)).unwrap()
-        }) * (step * T::from_f64(2.0).unwrap()).sqrt();
+            T::cast(self.rng.sample::<f64, _>(StandardNormal))
+        }) * (step * T::cast(2.0)).sqrt();
 
         let mut new_pos = current + drift + noise;
 

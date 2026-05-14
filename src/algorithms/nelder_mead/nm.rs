@@ -120,7 +120,7 @@ where
                 centroid += vertex;
             }
         }
-        let scale = T::from_f64((self.simplex.len() - 1) as f64).unwrap();
+        let scale = T::cast((self.simplex.len() - 1) as f64);
         &centroid * (T::one() / scale)
     }
 
@@ -150,14 +150,13 @@ where
         best_idx: usize,
         centroid: &OVector<T, D>,
     ) -> bool {
-        let reflected = centroid
-            + (centroid - &self.simplex[worst_idx]) * T::from_f64(self.current_alpha).unwrap();
+        let reflected =
+            centroid + (centroid - &self.simplex[worst_idx]) * T::cast(self.current_alpha);
         let reflected_fitness = self.evaluate_point(&reflected);
 
         if reflected_fitness > self.st.fitness[worst_idx] {
             if reflected_fitness > self.st.fitness[best_idx] {
-                let expanded =
-                    centroid + (&reflected - centroid) * T::from_f64(self.current_gamma).unwrap();
+                let expanded = centroid + (&reflected - centroid) * T::cast(self.current_gamma);
                 let expanded_fitness = self.evaluate_point(&expanded);
 
                 if expanded_fitness > reflected_fitness {
@@ -185,8 +184,8 @@ where
         _best_idx: usize,
         centroid: &OVector<T, D>,
     ) -> bool {
-        let contracted = centroid
-            + (&self.simplex[worst_idx] - centroid) * T::from_f64(self.current_rho).unwrap();
+        let contracted =
+            centroid + (&self.simplex[worst_idx] - centroid) * T::cast(self.current_rho);
         let contracted_fitness = self.evaluate_point(&contracted);
 
         if contracted_fitness > self.st.fitness[worst_idx] {
@@ -205,8 +204,7 @@ where
             .into_par_iter()
             .filter(|&i| i != best_idx)
             .map(|i| {
-                let new_vertex =
-                    &best + (&self.simplex[i] - &best) * T::from_f64(self.current_sigma).unwrap();
+                let new_vertex = &best + (&self.simplex[i] - &best) * T::cast(self.current_sigma);
                 let new_fitness = self.opt_prob.evaluate(&new_vertex);
                 (i, new_vertex, new_fitness)
             })
@@ -401,7 +399,7 @@ where
             let mut new_vertex = current_best.clone();
 
             for j in 0..dim {
-                let perturbation = T::from_f64(self.rng.random_range(-0.1..0.1)).unwrap();
+                let perturbation = T::cast(self.rng.random_range(-0.1..0.1));
                 new_vertex[j] += perturbation;
             }
 

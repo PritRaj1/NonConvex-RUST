@@ -86,8 +86,7 @@ where
         let upper_bounds = opt_prob.objective.x_upper_bound(&init_x);
         let has_bounds = lower_bounds.is_some() || upper_bounds.is_some();
         let current_memory_size = conf.common.memory_size;
-        let current_scaling_factor =
-            T::from_f64(conf.advanced.numerical_safeguards.scaling_factor).unwrap();
+        let current_scaling_factor = T::cast(conf.advanced.numerical_safeguards.scaling_factor);
 
         Self {
             conf: conf.clone(),
@@ -220,13 +219,12 @@ where
 
             // Check conditioning
             if s_dot_y.abs()
-                < T::from_f64(
+                < T::cast(
                     self.conf
                         .advanced
                         .numerical_safeguards
                         .conditioning_threshold,
                 )
-                .unwrap()
             {
                 continue; // Skip ill-conditioned pairs
             }
@@ -276,13 +274,12 @@ where
 
                 // Check conditioning
                 if s_dot_y.abs()
-                    < T::from_f64(
+                    < T::cast(
                         self.conf
                             .advanced
                             .numerical_safeguards
                             .conditioning_threshold,
                     )
-                    .unwrap()
                 {
                     continue;
                 }
@@ -318,9 +315,7 @@ where
 
         // Check curvature
         let curvature = s_new.dot(&y_new);
-        if curvature
-            > T::from_f64(self.conf.advanced.numerical_safeguards.curvature_threshold).unwrap()
-        {
+        if curvature > T::cast(self.conf.advanced.numerical_safeguards.curvature_threshold) {
             if self.s.len() == self.current_memory_size {
                 self.s.remove(0);
                 self.y.remove(0);
@@ -383,7 +378,7 @@ where
         let success_rate = self.success_history.iter().filter(|&&x| x).count() as f64
             / self.success_history.len() as f64;
 
-        let adaptation_rate = T::from_f64(self.conf.advanced.adaptation_rate).unwrap();
+        let adaptation_rate = T::cast(self.conf.advanced.adaptation_rate);
 
         if self.conf.advanced.memory_adaptation.adaptive_memory {
             if success_rate < 0.2 {
@@ -399,8 +394,7 @@ where
             if success_rate < 0.2 {
                 self.current_scaling_factor *= T::one() + adaptation_rate;
             } else if success_rate > 0.6 {
-                self.current_scaling_factor *=
-                    T::one() - adaptation_rate * T::from_f64(0.3).unwrap();
+                self.current_scaling_factor *= T::one() - adaptation_rate * T::cast(0.3);
             }
         }
     }
@@ -482,7 +476,7 @@ where
 
         self.current_memory_size = self.conf.common.memory_size;
         self.current_scaling_factor =
-            T::from_f64(self.conf.advanced.numerical_safeguards.scaling_factor).unwrap();
+            T::cast(self.conf.advanced.numerical_safeguards.scaling_factor);
 
         self.stagnation_counter = 0;
         self.last_improvement = current_best_f;

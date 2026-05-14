@@ -14,8 +14,8 @@ fn test_cem() {
     {
         "opt_conf": {
             "max_iter": 10,
-            "rtol": "1e-6",
-            "atol": "1e-6"
+            "rtol": 1e-6,
+            "atol": 1e-6
         },
         "alg_conf": {
             "CEM": {
@@ -66,8 +66,8 @@ fn test_cem_convergence() {
     {
         "opt_conf": {
             "max_iter": 50,
-            "rtol": "1e-6",
-            "atol": "1e-6"
+            "rtol": 1e-6,
+            "atol": 1e-6
         },
         "alg_conf": {
             "CEM": {

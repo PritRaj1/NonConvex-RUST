@@ -49,7 +49,7 @@ where
     let b_trans_y = params.b_mat.transpose() * params.y;
     let bdinvy = params.b_mat * &d_inv.component_mul(&b_trans_y);
 
-    let cs_factor = T::sqrt(params.cs * (T::from_f64(2.0).unwrap() - params.cs) * params.mueff);
+    let cs_factor = T::sqrt(params.cs * (T::cast(2.0) - params.cs) * params.mueff);
 
     // Update ps
     let mut ps_new = OVector::zeros_generic(D::from_usize(params.n), U1);
@@ -62,7 +62,7 @@ where
     let decay = T::one() - params.cs;
     let decay_pow = decay.powi(2 * params.generation as i32);
     let ps_norm = params.ps.dot(params.ps).sqrt();
-    ps_norm / (T::sqrt(T::one() - decay_pow) * params.chi_n) < T::from_f64(1.4).unwrap()
+    ps_norm / (T::sqrt(T::one() - decay_pow) * params.chi_n) < T::cast(1.4)
 }
 
 #[derive(Debug)]
@@ -117,8 +117,7 @@ pub fn update_covariance<T: FloatNum + RealField, N: Dim, D>(
     }
 
     // Update pc
-    let cc_factor =
-        num_traits::Float::sqrt(params.cc * (T::from_f64(2.0).unwrap() - params.cc) * params.mueff);
+    let cc_factor = num_traits::Float::sqrt(params.cc * (T::cast(2.0) - params.cc) * params.mueff);
     let hsig_t = if params.hsig { T::one() } else { T::zero() };
 
     // Update pc with single loop
@@ -207,10 +206,8 @@ pub fn update_covariance<T: FloatNum + RealField, N: Dim, D>(
     let eigenvectors = eigen.eigenvectors;
 
     for i in 0..params.n {
-        params.d_vec[i] = nalgebra::ComplexField::sqrt(nalgebra::RealField::max(
-            eigenvalues[i],
-            T::from_f64(1e-20).unwrap(),
-        ));
+        params.d_vec[i] =
+            nalgebra::ComplexField::sqrt(nalgebra::RealField::max(eigenvalues[i], T::cast(1e-20)));
     }
 
     *params.b_mat = eigenvectors;
@@ -223,7 +220,7 @@ pub fn update_covariance<T: FloatNum + RealField, N: Dim, D>(
     // Enforce symmetry (could be lost due to numerical errors)
     for i in 0..params.n {
         for j in i + 1..params.n {
-            let avg = (params.c_mat[(i, j)] + params.c_mat[(j, i)]) * T::from_f64(0.5).unwrap();
+            let avg = (params.c_mat[(i, j)] + params.c_mat[(j, i)]) * T::cast(0.5);
             params.c_mat[(i, j)] = avg;
             params.c_mat[(j, i)] = avg;
         }

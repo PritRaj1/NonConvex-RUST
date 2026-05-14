@@ -5,12 +5,11 @@ use simba::scalar::{
     ClosedSub, ClosedSubAssign, SubsetOf,
 };
 
-// More general trait for float numbers
 pub trait FloatNumber:
     Copy
     + Float
-    + NumCast // Convert from other types to float
-    + FromPrimitive // Convert from primitive types to float
+    + NumCast
+    + FromPrimitive
     + SubsetOf<f64>
     + Scalar
     + ClosedAdd
@@ -25,12 +24,15 @@ pub trait FloatNumber:
     + Zero
     + One
     + std::fmt::Debug
-    + std::marker::Send
-    + std::marker::Sync
-    + 'static
-    + Send // Send/sync for safe concurrency
+    + Send
     + Sync
+    + 'static
 {
+    // method-call form so inference resolves at the call site
+    #[inline]
+    fn cast(x: f64) -> Self {
+        <Self as FromPrimitive>::from_f64(x).expect("f64 -> Self cast failed")
+    }
 }
 
 impl FloatNumber for f64 {}

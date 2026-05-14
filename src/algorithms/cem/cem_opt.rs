@@ -74,7 +74,7 @@ where
             OVector::<T, D>::zeros_generic(D::from_usize(n), U1)
         };
 
-        let initial_std = T::from_f64(conf.common.initial_std).unwrap();
+        let initial_std = T::cast(conf.common.initial_std);
         let std_dev = OVector::<T, D>::from_element_generic(D::from_usize(n), U1, initial_std);
         let mut covariance = OMatrix::<T, D, D>::zeros_generic(D::from_usize(n), D::from_usize(n));
 
@@ -151,7 +151,7 @@ where
                 OVector::<T, D>::from_element_generic(
                     D::from_usize(candidate.len()),
                     U1,
-                    T::from_f64(-10.0).unwrap(),
+                    T::cast(-10.0),
                 )
             });
         let upper_bounds = self
@@ -162,7 +162,7 @@ where
                 OVector::<T, D>::from_element_generic(
                     D::from_usize(candidate.len()),
                     U1,
-                    T::from_f64(10.0).unwrap(),
+                    T::cast(10.0),
                 )
             });
 
@@ -189,9 +189,9 @@ where
                 .rev()
                 .take(5)
                 .fold(T::zero(), |acc, &x| acc + x)
-                / T::from_f64(5.0).unwrap();
+                / T::cast(5.0);
 
-            let diversity_threshold = T::from_f64(1e-4).unwrap();
+            let diversity_threshold = T::cast(1e-4);
             let diversity_restart = recent_diversity < diversity_threshold;
 
             return basic_restart || diversity_restart;
@@ -216,7 +216,7 @@ where
             let avg_improvement: T = recent_improvements.iter().cloned().sum::<T>()
                 / T::from_usize(recent_improvements.len()).unwrap();
 
-            if avg_improvement < T::from_f64(1e-8).unwrap() {
+            if avg_improvement < T::cast(1e-8) {
                 return true;
             }
         }
@@ -231,15 +231,15 @@ where
         let (lb, ub) = self.get_bounds(&mean_copy);
         for i in 0..n {
             let range = ub[i] - lb[i];
-            self.mean[i] = lb[i] + T::from_f64(self.rng.random::<f64>()).unwrap() * range;
+            self.mean[i] = lb[i] + T::cast(self.rng.random::<f64>()) * range;
         }
 
-        let initial_std = T::from_f64(self.conf.common.initial_std).unwrap();
+        let initial_std = T::cast(self.conf.common.initial_std);
         self.std_dev = OVector::<T, D>::from_element_generic(D::from_usize(n), U1, initial_std);
 
         // Inject diversity into std
         for i in 0..n {
-            let noise = T::from_f64(self.rng.random_range(0.5..1.5)).unwrap();
+            let noise = T::cast(self.rng.random_range(0.5..1.5));
             self.std_dev[i] *= noise;
         }
 
@@ -325,12 +325,12 @@ where
         let mut z = OVector::<T, D>::zeros_generic(D::from_usize(n), U1);
         let normal = Normal::new(0.0, 1.0).unwrap();
         for i in 0..n {
-            z[i] = T::from_f64(normal.sample(&mut self.rng)).unwrap();
+            z[i] = T::cast(normal.sample(&mut self.rng));
         }
 
         if self.cached_cholesky.is_none() || self.covariance_changed {
             let mut cov_matrix = self.covariance.clone();
-            let reg_factor = T::from_f64(1e-6).unwrap();
+            let reg_factor = T::cast(1e-6);
             for i in 0..n {
                 cov_matrix[(i, i)] += reg_factor;
             }
@@ -380,7 +380,7 @@ where
 
         // Ensure positive definiteness in cov
         if self.conf.advanced.use_covariance_adaptation {
-            let reg = T::from_f64(self.conf.advanced.covariance_regularization).unwrap();
+            let reg = T::cast(self.conf.advanced.covariance_regularization);
             for i in 0..n {
                 new_covariance[(i, i)] += reg;
             }
@@ -399,7 +399,7 @@ where
         }
 
         // Smooth updates with EMA
-        let alpha = T::from_f64(self.conf.adaptation.smoothing_factor).unwrap();
+        let alpha = T::cast(self.conf.adaptation.smoothing_factor);
 
         // Update mean with EMA
         let one_minus_alpha = T::one() - alpha;
@@ -419,8 +419,8 @@ where
         // Update std from diagonal of cov
         for i in 0..n {
             let new_std = Float::sqrt(self.covariance[(i, i)]);
-            let min_std = T::from_f64(self.conf.common.min_std).unwrap();
-            let max_std = T::from_f64(self.conf.common.max_std).unwrap();
+            let min_std = T::cast(self.conf.common.min_std);
+            let max_std = T::cast(self.conf.common.max_std);
             self.std_dev[i] = Float::min(Float::max(new_std, min_std), max_std);
         }
     }

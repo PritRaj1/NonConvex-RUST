@@ -4,6 +4,7 @@ use rayon::prelude::*;
 
 use crate::utils::alg_conf::tpe_conf::{BandwidthMethod, SamplingStrategy, TPEConf};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 use crate::algorithms::tpe::{
     acquisition::{get_acquisition_function, AcquisitionFunctionPtr},
@@ -166,7 +167,7 @@ where
             worst_observations,
             iteration: 1,
             n_initial_random: conf.n_initial_random,
-            prior_weight: T::from_f64(conf.prior_weight).unwrap(),
+            prior_weight: T::cast(conf.prior_weight),
             stagnation_counter: 0,
             last_improvement: T::zero(),
             last_improvement_iter: 0,
@@ -175,9 +176,9 @@ where
             improvement_history: Vec::new(),
             diversity_history: Vec::new(),
             convergence_history: Vec::new(),
-            current_gamma: T::from_f64(conf.gamma).unwrap(),
+            current_gamma: T::cast(conf.gamma),
             gamma_history: Vec::new(),
-            adaptive_noise_scale: T::from_f64(conf.sampling.noise_scale).unwrap(),
+            adaptive_noise_scale: T::cast(conf.sampling.noise_scale),
             noise_scale_history: Vec::new(),
             bounds_cached: false,
             cached_lower_bounds: OVector::<T, D>::zeros_generic(D::from_usize(n), U1),
@@ -215,7 +216,7 @@ where
                     OVector::<T, D>::from_element_generic(
                         D::from_usize(candidate.len()),
                         U1,
-                        T::from_f64(-10.0).unwrap(),
+                        T::cast(-10.0),
                     )
                 });
             let upper_bounds = self
@@ -226,7 +227,7 @@ where
                     OVector::<T, D>::from_element_generic(
                         D::from_usize(candidate.len()),
                         U1,
-                        T::from_f64(10.0).unwrap(),
+                        T::cast(10.0),
                     )
                 });
 
@@ -252,16 +253,14 @@ where
             .map_init(
                 || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
-                    StdRng::seed_from_u64(
-                        self.seed + self.iteration as u64 * 1000 + thread_id as u64,
-                    )
+                    rng::split(self.seed, [self.iteration as u64, thread_id as u64])
                 },
                 |rng, _| {
                     let mut candidate = OVector::<T, D>::zeros_generic(D::from_usize(n), U1);
 
                     for j in 0..n {
                         let range = ub[j] - lb[j];
-                        candidate[j] = lb[j] + T::from_f64(rng.random::<f64>()).unwrap() * range;
+                        candidate[j] = lb[j] + T::cast(rng.random::<f64>()) * range;
                     }
                     candidate
                 },
@@ -343,8 +342,8 @@ where
                 let base_point = &self.best_observations[random_idx].0;
 
                 for j in 0..n {
-                    let noise = T::from_f64((self.rng.random::<f64>() * 2.0) - 1.0).unwrap()
-                        * self.adaptive_noise_scale;
+                    let noise =
+                        T::cast((self.rng.random::<f64>() * 2.0) - 1.0) * self.adaptive_noise_scale;
                     candidate[j] = base_point[j] + noise;
                 }
 
@@ -356,7 +355,7 @@ where
                 let (lb, ub) = self.get_bounds(&candidate);
                 for j in 0..n {
                     let range = ub[j] - lb[j];
-                    candidate[j] = lb[j] + T::from_f64(self.rng.random::<f64>()).unwrap() * range;
+                    candidate[j] = lb[j] + T::cast(self.rng.random::<f64>()) * range;
                 }
             }
 
@@ -400,7 +399,7 @@ where
                     &candidate,
                     &self.kde_l,
                     &self.kde_g,
-                    T::from_f64(self.conf.acquisition.kappa).unwrap(),
+                    T::cast(self.conf.acquisition.kappa),
                 );
 
                 if acquisition_value > best_acquisition {
@@ -412,7 +411,7 @@ where
             let (lb, ub) = self.get_bounds(&OVector::<T, D>::zeros_generic(D::from_usize(n), U1));
             for j in 0..n {
                 let range = ub[j] - lb[j];
-                best_candidate[j] = lb[j] + T::from_f64(self.rng.random::<f64>()).unwrap() * range;
+                best_candidate[j] = lb[j] + T::cast(self.rng.random::<f64>()) * range;
             }
         }
 
@@ -433,9 +432,9 @@ where
             let mut new_candidate = best_candidate.clone();
 
             for j in 0..n {
-                let perturbation = T::from_f64((self.rng.random::<f64>() * 2.0) - 1.0).unwrap()
+                let perturbation = T::cast((self.rng.random::<f64>() * 2.0) - 1.0)
                     * self.adaptive_noise_scale
-                    * T::from_f64(0.1).unwrap();
+                    * T::cast(0.1);
                 new_candidate[j] += perturbation;
 
                 new_candidate[j] = new_candidate[j].max(lb[j]).min(ub[j]);
@@ -464,8 +463,8 @@ where
             let base_point = &self.best_observations[random_idx].0;
 
             for j in 0..n {
-                let noise = T::from_f64((self.rng.random::<f64>() * 2.0) - 1.0).unwrap()
-                    * self.adaptive_noise_scale;
+                let noise =
+                    T::cast((self.rng.random::<f64>() * 2.0) - 1.0) * self.adaptive_noise_scale;
                 candidate[j] = base_point[j] + noise;
             }
 
@@ -488,7 +487,7 @@ where
 
             for j in 0..n {
                 let range = ub[j] - lb[j];
-                candidate[j] = lb[j] + T::from_f64(self.rng.random::<f64>()).unwrap() * range;
+                candidate[j] = lb[j] + T::cast(self.rng.random::<f64>()) * range;
             }
 
             if self.opt_prob.is_feasible(&candidate) {
@@ -501,7 +500,7 @@ where
         let (lb, ub) = self.get_bounds(&candidate);
         for j in 0..n {
             let range = ub[j] - lb[j];
-            candidate[j] = lb[j] + T::from_f64(self.rng.random::<f64>()).unwrap() * range;
+            candidate[j] = lb[j] + T::cast(self.rng.random::<f64>()) * range;
         }
         candidate
     }
@@ -541,8 +540,8 @@ where
         for i in 0..population_size {
             let mut x = self.st.pop.row(i).transpose();
             for j in 0..x.len() {
-                let perturbation = T::from_f64((self.rng.random::<f64>() * 2.0) - 1.0).unwrap()
-                    * self.adaptive_noise_scale;
+                let perturbation =
+                    T::cast((self.rng.random::<f64>() * 2.0) - 1.0) * self.adaptive_noise_scale;
                 x[j] += perturbation;
             }
 
@@ -583,7 +582,7 @@ where
         let avg_improvement: T = recent_improvements.iter().cloned().sum::<T>()
             / T::from_usize(recent_improvements.len()).unwrap();
 
-        avg_improvement < T::from_f64(1e-6).unwrap()
+        avg_improvement < T::cast(1e-6)
     }
 
     fn update_adaptive_parameters(&mut self) {
@@ -614,12 +613,12 @@ where
             let avg_improvement: T = recent_improvements.iter().cloned().sum::<T>()
                 / T::from_usize(recent_improvements.len()).unwrap();
 
-            if avg_improvement > T::from_f64(1e-3).unwrap() {
-                self.current_gamma = (self.current_gamma * T::from_f64(0.95).unwrap())
-                    .max(T::from_f64(0.1).unwrap()); // increase exploitation (decrease gamma)
+            if avg_improvement > T::cast(1e-3) {
+                self.current_gamma = (self.current_gamma * T::cast(0.95)).max(T::cast(0.1));
+            // increase exploitation (decrease gamma)
             } else {
-                self.current_gamma = (self.current_gamma * T::from_f64(1.05).unwrap())
-                    .min(T::from_f64(0.5).unwrap()); // increase exploration (increase gamma)
+                self.current_gamma = (self.current_gamma * T::cast(1.05)).min(T::cast(0.5));
+                // increase exploration (increase gamma)
             }
         }
 
@@ -639,16 +638,16 @@ where
             let avg_diversity: T = recent_diversity.iter().cloned().sum::<T>()
                 / T::from_usize(recent_diversity.len()).unwrap();
 
-            if avg_diversity < T::from_f64(0.1).unwrap() {
-                self.adaptive_noise_scale *= T::from_f64(1.1).unwrap(); // increase exploration
-            } else if avg_diversity > T::from_f64(1.0).unwrap() {
-                self.adaptive_noise_scale *= T::from_f64(0.9).unwrap(); // decrease exploration
+            if avg_diversity < T::cast(0.1) {
+                self.adaptive_noise_scale *= T::cast(1.1); // increase exploration
+            } else if avg_diversity > T::cast(1.0) {
+                self.adaptive_noise_scale *= T::cast(0.9); // decrease exploration
             }
 
             self.adaptive_noise_scale = self
                 .adaptive_noise_scale
-                .max(T::from_f64(0.01).unwrap())
-                .min(T::from_f64(1.0).unwrap());
+                .max(T::cast(0.01))
+                .min(T::cast(1.0));
         }
 
         self.noise_scale_history.push(self.adaptive_noise_scale);
@@ -660,15 +659,18 @@ where
         }
 
         // Meta-optimize gamma
-        if self.iteration % self.conf.advanced.meta_optimization_frequency == 0 {
+        if self
+            .iteration
+            .is_multiple_of(self.conf.advanced.meta_optimization_frequency)
+        {
             let current_performance = self.compute_performance_metric();
             self.meta_optimization_history
                 .push((self.current_gamma, current_performance));
 
             // Simple hill climbing on gamma
             let gamma_candidates = [
-                self.current_gamma * T::from_f64(0.9).unwrap(),
-                self.current_gamma * T::from_f64(1.1).unwrap(),
+                self.current_gamma * T::cast(0.9),
+                self.current_gamma * T::cast(1.1),
                 self.current_gamma,
             ];
 
@@ -676,7 +678,7 @@ where
             let mut best_performance = current_performance;
 
             for &gamma in &gamma_candidates {
-                if gamma >= T::from_f64(0.1).unwrap() && gamma <= T::from_f64(0.5).unwrap() {
+                if gamma >= T::cast(0.1) && gamma <= T::cast(0.5) {
                     let old_gamma = self.current_gamma;
                     self.current_gamma = gamma;
 
@@ -727,7 +729,7 @@ where
         };
 
         // Weighted combination
-        avg_improvement * T::from_f64(0.7).unwrap() + avg_diversity * T::from_f64(0.3).unwrap()
+        avg_improvement * T::cast(0.7) + avg_diversity * T::cast(0.3)
     }
 
     fn compute_diversity(&self) -> T {
@@ -791,10 +793,10 @@ where
             let avg_improvement: T = recent_improvements.iter().cloned().sum::<T>()
                 / T::from_usize(recent_improvements.len()).unwrap();
 
-            let convergence_metric = if avg_improvement > T::from_f64(1e-3).unwrap() {
+            let convergence_metric = if avg_improvement > T::cast(1e-3) {
                 T::one() // Good progress
-            } else if avg_improvement > T::from_f64(1e-6).unwrap() {
-                T::from_f64(0.5).unwrap() // Moderate progress
+            } else if avg_improvement > T::cast(1e-6) {
+                T::cast(0.5) // Moderate progress
             } else {
                 T::zero() // Stagnated
             };

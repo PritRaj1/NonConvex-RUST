@@ -49,9 +49,8 @@ where
         let mut x_new = x + p * alpha;
 
         // Repeat until the Armijo condition is satisfied (for maximization)
-        while opt_prob.evaluate(&x_new) < f + T::from_f64(self.conf.c1).unwrap() * alpha * g.dot(p)
-        {
-            alpha *= T::from_f64(self.conf.rho).unwrap();
+        while opt_prob.evaluate(&x_new) < f + T::cast(self.conf.c1) * alpha * g.dot(p) {
+            alpha *= T::cast(self.conf.rho);
             x_new = x + p * alpha;
         }
 
@@ -83,11 +82,11 @@ where
         g: &OVector<T, D>,
         opt_prob: &OptProb<T, D>,
     ) -> T {
-        let c1 = T::from_f64(self.conf.c1).unwrap();
-        let c2 = T::from_f64(self.conf.c2).unwrap();
+        let c1 = T::cast(self.conf.c1);
+        let c2 = T::cast(self.conf.c2);
         let mut alpha = T::one();
         let mut alpha_low = T::zero();
-        let mut alpha_high = T::from_f64(10.0).unwrap();
+        let mut alpha_high = T::cast(10.0);
         let initial_gp = g.dot(p);
 
         for _ in 0..self.conf.max_iters {
@@ -107,10 +106,10 @@ where
                 return alpha; // Both conditions satisfied
             }
 
-            if alpha_high < T::from_f64(10.0).unwrap() {
-                alpha = (alpha_low + alpha_high) / T::from_f64(2.0).unwrap();
+            if alpha_high < T::cast(10.0) {
+                alpha = (alpha_low + alpha_high) / T::cast(2.0);
             } else {
-                alpha *= T::from_f64(2.0).unwrap();
+                alpha *= T::cast(2.0);
             }
         }
         alpha
@@ -141,10 +140,10 @@ where
         g: &OVector<T, D>,
         opt_prob: &OptProb<T, D>,
     ) -> T {
-        let c1 = T::from_f64(self.conf.c1).unwrap();
-        let c2 = T::from_f64(self.conf.c2).unwrap();
-        let theta = T::from_f64(self.conf.theta).unwrap();
-        let gamma = T::from_f64(self.conf.gamma).unwrap();
+        let c1 = T::cast(self.conf.c1);
+        let c2 = T::cast(self.conf.c2);
+        let theta = T::cast(self.conf.theta);
+        let gamma = T::cast(self.conf.gamma);
         let mut alpha = T::one();
         let initial_gp = g.dot(p);
 
@@ -198,12 +197,12 @@ where
         g: &OVector<T, D>,
         opt_prob: &OptProb<T, D>,
     ) -> T {
-        let ftol = T::from_f64(self.conf.ftol).unwrap();
-        let gtol = T::from_f64(self.conf.gtol).unwrap();
+        let ftol = T::cast(self.conf.ftol);
+        let gtol = T::cast(self.conf.gtol);
 
         let mut alpha = T::one();
         let mut alpha_low = T::zero();
-        let mut alpha_high = T::from_f64(10.0).unwrap();
+        let mut alpha_high = T::cast(10.0);
         let initial_gp = g.dot(p);
 
         for _ in 0..self.conf.max_iters {
@@ -221,7 +220,7 @@ where
                 return alpha;
             }
 
-            alpha = (alpha_low + alpha_high) / T::from_f64(2.0).unwrap();
+            alpha = (alpha_low + alpha_high) / T::cast(2.0);
         }
         alpha
     }
@@ -246,8 +245,8 @@ impl GoldenSectionLineSearch {
     where
         DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
     {
-        let golden_ratio: T = T::from_f64((5.0_f64).sqrt() * 0.5 + 0.5).unwrap();
-        let bracket_factor = T::from_f64(self.conf.bracket_factor).unwrap();
+        let golden_ratio: T = T::cast((5.0_f64).sqrt() * 0.5 + 0.5);
+        let bracket_factor = T::cast(self.conf.bracket_factor);
 
         let mut a = T::zero();
         let mut b = T::one();
@@ -294,8 +293,8 @@ where
         _g: &OVector<T, D>,
         opt_prob: &OptProb<T, D>,
     ) -> T {
-        let resphi = T::from_f64((3.0_f64 - (5.0_f64).sqrt()) / 2.0).unwrap();
-        let tol = T::from_f64(self.conf.tol).unwrap();
+        let resphi = T::cast((3.0_f64 - (5.0_f64).sqrt()) / 2.0);
+        let tol = T::cast(self.conf.tol);
 
         let (mut a, b, mut c) = self.bracket_maximum(x, p, opt_prob);
         let mut x0 = b - resphi * (c - a);
@@ -305,7 +304,7 @@ where
 
         loop {
             if (c - a).abs() < tol {
-                break (a + c) / T::from_f64(2.0).unwrap();
+                break (a + c) / T::cast(2.0);
             }
 
             if f0 > f1 {

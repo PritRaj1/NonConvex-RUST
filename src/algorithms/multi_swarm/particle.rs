@@ -45,15 +45,15 @@ where
         bounds: (T, T),
     ) {
         for i in 0..self.velocity.len() {
-            let r1 = T::from_f64(self.rng.random::<f64>()).unwrap();
-            let r2 = T::from_f64(self.rng.random::<f64>()).unwrap();
+            let r1 = T::cast(self.rng.random::<f64>());
+            let r2 = T::cast(self.rng.random::<f64>());
 
             let cognitive = c1 * r1 * (self.best_position[i] - self.position[i]);
             let social = c2 * r2 * (global_best[i] - self.position[i]);
 
             // Clamp based on search space size
             let search_space_size = bounds.1 - bounds.0;
-            let v_max = search_space_size * T::from_f64(0.2).unwrap(); // More aggressive clamping
+            let v_max = search_space_size * T::cast(0.2); // More aggressive clamping
 
             self.velocity[i] = (w * self.velocity[i] + cognitive + social).clamp(-v_max, v_max);
         }

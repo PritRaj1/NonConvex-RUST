@@ -6,6 +6,7 @@ use std::collections::VecDeque;
 use crate::utils::alg_conf::tabu_conf::RestartStrategy;
 use crate::utils::config::TabuConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 use crate::algorithms::tabu_search::{
     neighborhood::{create_neighborhood_generator, NeighborhoodGenerator},
@@ -107,10 +108,9 @@ where
 
     fn evaluate_neighbor(&self, neighbor: &OVector<T, D>) -> Option<T> {
         if self.opt_prob.is_feasible(neighbor) {
-            let is_tabu = self.tabu_list.is_tabu(
-                neighbor,
-                T::from_f64(self.conf.common.tabu_threshold).unwrap(),
-            );
+            let is_tabu = self
+                .tabu_list
+                .is_tabu(neighbor, T::cast(self.conf.common.tabu_threshold));
 
             if !is_tabu {
                 Some(self.opt_prob.evaluate(neighbor))
@@ -191,7 +191,7 @@ where
         match &self.conf.advanced.restart_strategy {
             RestartStrategy::None => false,
             RestartStrategy::Periodic { frequency } => {
-                self.st.iter > 0 && self.st.iter % frequency == 0
+                self.st.iter > 0 && self.st.iter.is_multiple_of(*frequency)
             }
             RestartStrategy::Stagnation {
                 max_iterations,
@@ -211,7 +211,7 @@ where
                 let adaptive_frequency = (*base_frequency as f64
                     * (1.0 + self.iterations_since_improvement as f64 * adaptation_rate))
                     as usize;
-                self.st.iter > 0 && self.st.iter % adaptive_frequency == 0
+                self.st.iter > 0 && self.st.iter.is_multiple_of(adaptive_frequency)
             }
         }
     }
@@ -289,7 +289,7 @@ where
             .map_init(
                 || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
-                    StdRng::seed_from_u64(self.seed + self.st.iter as u64 * 1000 + thread_id as u64)
+                    rng::split(self.seed, [self.st.iter as u64, thread_id as u64])
                 },
                 |rng, _| {
                     let neighbor = self.generate_neighbor(rng);

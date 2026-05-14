@@ -84,7 +84,7 @@ where
 
         // Grad clip
         if self.conf.gradient_clip > 0.0 {
-            let clip_norm = T::from_f64(self.conf.gradient_clip).unwrap();
+            let clip_norm = T::cast(self.conf.gradient_clip);
             let grad_norm = gradient.dot(&gradient).sqrt();
             if grad_norm > clip_norm {
                 gradient *= clip_norm / grad_norm;
@@ -103,15 +103,14 @@ where
         let noise = OVector::<T, D>::from_iterator_generic(
             D::from_usize(self.x.len()),
             U1,
-            (0..self.x.len()).map(|_| {
-                T::from_f64(Normal::new(0.0, noise_std).unwrap().sample(&mut self.rng)).unwrap()
-            }),
+            (0..self.x.len())
+                .map(|_| T::cast(Normal::new(0.0, noise_std).unwrap().sample(&mut self.rng))),
         );
 
         let noisy_gradient = gradient + noise;
 
-        self.velocity = &self.velocity * T::from_f64(self.conf.momentum).unwrap()
-            + &noisy_gradient * T::from_f64(self.conf.learning_rate).unwrap();
+        self.velocity = &self.velocity * T::cast(self.conf.momentum)
+            + &noisy_gradient * T::cast(self.conf.learning_rate);
 
         self.x += &self.velocity;
 

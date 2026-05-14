@@ -112,8 +112,8 @@ let config = Config::new(include_str!("config.json")).unwrap();
 let config_json = r#"{
     "opt_conf": {
         "max_iter": 1000,
-        "rtol": "1e-6", 
-        "atol": "1e-6",
+        "rtol": 1e-6, 
+        "atol": 1e-6,
         "rtol_max_iter_fraction": 1.0
     },
     "alg_conf": {
