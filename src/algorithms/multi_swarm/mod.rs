@@ -1,6 +1,12 @@
-pub mod information_exchange;
-pub mod mspo;
-pub mod particle;
-pub mod population;
-pub mod stagnation_monitor;
-pub mod swarm;
+mod algo;
+mod config;
+mod information_exchange;
+mod particle;
+mod population;
+mod stagnation_monitor;
+mod swarm;
+
+pub use algo::MSPO;
+pub use config::*;
+pub use particle::Particle;
+pub use swarm::{Swarm, SwarmConfig};

@@ -56,8 +56,4 @@ where
 
         (self.lower_bounds[0], self.upper_bounds[0])
     }
-
-    pub fn reset(&mut self) {
-        self.cached = false;
-    }
 }

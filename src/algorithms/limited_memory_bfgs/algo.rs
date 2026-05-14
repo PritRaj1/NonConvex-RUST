@@ -444,18 +444,18 @@ where
 
     fn check_restart(&mut self) -> bool {
         match &self.conf.advanced.restart_strategy {
-            crate::utils::alg_conf::lbfgs_conf::RestartStrategy::None => false,
-            crate::utils::alg_conf::lbfgs_conf::RestartStrategy::Periodic { frequency } => {
+            super::config::RestartStrategy::None => false,
+            super::config::RestartStrategy::Periodic { frequency } => {
                 self.st.iter - self.last_restart_iter >= *frequency
             }
-            crate::utils::alg_conf::lbfgs_conf::RestartStrategy::Stagnation {
+            super::config::RestartStrategy::Stagnation {
                 max_iterations,
                 threshold,
             } => {
                 self.stagnation_counter >= *max_iterations
                     || self.last_improvement.to_f64().unwrap_or(0.0) < *threshold
             }
-            crate::utils::alg_conf::lbfgs_conf::RestartStrategy::Adaptive {
+            super::config::RestartStrategy::Adaptive {
                 base_frequency,
                 adaptation_rate,
             } => {

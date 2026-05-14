@@ -1,4 +1,4 @@
-use crate::utils::alg_conf::tpe_conf::{BandwidthConf, BandwidthMethod};
+use super::config::{BandwidthConf, BandwidthMethod};
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector};
 use serde::{Deserialize, Serialize};

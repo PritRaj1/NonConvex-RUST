@@ -1,11 +1,12 @@
 use nalgebra::{
     allocator::Allocator, DefaultAllocator, Dim, DimSub, Dyn, OMatrix, OVector, RealField, U1,
 };
-use rand::{rngs::StdRng, SeedableRng};
+use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal};
 
 use crate::utils::config::CMAESConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 use crate::algorithms::cma_es::{
     evolution::{
@@ -87,17 +88,17 @@ where
         let n = init_x.len();
         let params = Parameters::new(&conf, &init_x, init_pop.nrows());
 
-        let mut rng = StdRng::seed_from_u64(seed);
+        let mut rng = rng::seeded(seed);
         let normal = Normal::new(0.0, 1.0).unwrap();
-        let mut samples = Vec::with_capacity(params.lambda);
-
-        for _ in 0..params.lambda {
-            let mut z = init_x.clone() * T::cast(0.0);
-            for j in 0..n {
-                z[j] = T::cast(normal.sample(&mut rng));
-            }
-            samples.push(z);
-        }
+        let samples: Vec<_> = (0..params.lambda)
+            .map(|_| {
+                OVector::<T, D>::from_iterator_generic(
+                    D::from_usize(n),
+                    U1,
+                    (0..n).map(|_| T::cast(normal.sample(&mut rng))),
+                )
+            })
+            .collect();
 
         let b_mat = OMatrix::<T, D, D>::identity_generic(D::from_usize(n), D::from_usize(n));
         let d_vec: OVector<T, D> = OVector::from_element_generic(D::from_usize(n), U1, T::one());
@@ -105,8 +106,8 @@ where
         let results = evaluate_samples(
             &samples,
             &init_x,
-            &b_mat.clone(),
-            &d_vec.clone(),
+            &b_mat,
+            &d_vec,
             &opt_prob,
             T::cast(conf.initial_sigma),
         );

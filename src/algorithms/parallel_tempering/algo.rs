@@ -7,6 +7,7 @@ use std::iter::Sum;
 
 use rayon::prelude::*;
 
+use super::config::UpdateConf;
 use crate::algorithms::parallel_tempering::{
     metropolis_hastings::MetropolisHastings,
     preconditioners::{Preconditioner, SampleCovariance},
@@ -16,7 +17,6 @@ use crate::algorithms::parallel_tempering::{
     swap_manager::SwapManager,
     temperature::PowerLawScheduler,
 };
-use crate::utils::alg_conf::pt_conf::UpdateConf;
 use crate::utils::config::{PTConf, SwapConf};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
 

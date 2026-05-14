@@ -1,8 +1,8 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 use rayon::prelude::*;
 
-use crate::utils::alg_conf::tpe_conf::{BandwidthMethod, SamplingStrategy, TPEConf};
+use super::config::{BandwidthMethod, SamplingStrategy, TPEConf};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
 
@@ -193,7 +193,7 @@ where
             observations_changed: false,
             last_kde_fit_iter: 0,
             last_observation_count: observation_count,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
             seed,
         }
     }

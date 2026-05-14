@@ -3,8 +3,8 @@ mod common;
 use common::fcns::{QuadraticConstraints, QuadraticObjective};
 use nalgebra::{DMatrix, DVector};
 
-use non_convex_opt::algorithms::nelder_mead::nm::NelderMead;
-use non_convex_opt::utils::alg_conf::nm_conf::{
+use non_convex_opt::algorithms::nelder_mead::NelderMead;
+use non_convex_opt::algorithms::nelder_mead::{
     AdvancedConf, CoefficientBounds, CommonConf, NelderMeadConf, RestartStrategy,
     StagnationDetection,
 };

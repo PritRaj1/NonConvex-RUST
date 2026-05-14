@@ -1,5 +1,8 @@
-pub mod cma_es_opt;
-pub use cma_es_opt::*;
+mod algo;
+mod config;
 mod evolution;
 mod parameters;
 mod population;
+
+pub use algo::CMAES;
+pub use config::*;

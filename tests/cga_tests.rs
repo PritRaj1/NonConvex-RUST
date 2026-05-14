@@ -9,9 +9,8 @@ use non_convex_opt::utils::{
 };
 
 use non_convex_opt::algorithms::continuous_genetic::{
-    cga::CGA,
-    crossover::{CrossoverOperator, Heuristic, Random, SimulatedBinary},
-    selection::{Residual, RouletteWheel, SelectionOperator, Tournament},
+    CrossoverOperator, Heuristic, Random, Residual, RouletteWheel, SelectionOperator,
+    SimulatedBinary, Tournament, CGA,
 };
 
 #[test]

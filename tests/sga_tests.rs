@@ -3,7 +3,7 @@ mod common;
 use common::fcns::{QuadraticConstraints, QuadraticObjective};
 use nalgebra::{SMatrix, U1, U2};
 
-use non_convex_opt::algorithms::sg_ascent::sga::SGAscent;
+use non_convex_opt::algorithms::sg_ascent::SGAscent;
 use non_convex_opt::utils::{
     config::SGAConf,
     opt_prob::{OptProb, OptimizationAlgorithm},

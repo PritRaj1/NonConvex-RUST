@@ -1,3 +1,7 @@
-pub mod neighborhood;
-pub mod tabu;
-pub mod tabu_list;
+mod algo;
+mod config;
+mod neighborhood;
+mod tabu_list;
+
+pub use algo::TabuSearch;
+pub use config::*;

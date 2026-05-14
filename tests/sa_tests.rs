@@ -3,12 +3,10 @@ mod common;
 use common::fcns::{RosenbrockConstraints, RosenbrockObjective};
 use nalgebra::{SMatrix, U1, U2};
 
-use non_convex_opt::algorithms::simulated_annealing::sa::SimulatedAnnealing;
-use non_convex_opt::utils::{
-    alg_conf::sa_conf::{AdvancedConf, CoolingScheduleType, RestartStrategy},
-    config::SAConf,
-    opt_prob::{OptProb, OptimizationAlgorithm},
+use non_convex_opt::algorithms::simulated_annealing::{
+    AdvancedConf, CoolingScheduleType, RestartStrategy, SAConf, SimulatedAnnealing,
 };
+use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
 
 #[test]
 fn test_sa() {

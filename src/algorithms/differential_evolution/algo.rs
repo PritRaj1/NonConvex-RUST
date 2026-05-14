@@ -2,7 +2,7 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1
 use rayon::prelude::*;
 use std::collections::VecDeque;
 
-use crate::utils::alg_conf::de_conf::{DEConf, DEStrategy, MutationType};
+use super::config::{DEConf, DEStrategy, MutationType};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
 
@@ -85,32 +85,17 @@ where
         let success_history_size = conf.common.success_history_size;
 
         let parameter_adaptation = match &conf.mutation_type {
-            MutationType::Standard(standard) => {
-                ParameterAdaptationType::Standard(StandardParameterAdaptation::new(
-                    standard.f,
-                    standard.cr,
-                    standard.f * 0.5,  // f_min
-                    standard.f * 1.5,  // f_max
-                    standard.cr * 0.5, // cr_min
-                    standard.cr * 1.5, // cr_max
-                ))
+            MutationType::Standard(s) => {
+                ParameterAdaptationType::Standard(StandardParameterAdaptation::new(s.f, s.cr))
             }
-            MutationType::Adaptive(adaptive) => {
-                if adaptive.use_jade {
-                    ParameterAdaptationType::JADE(Box::new(JADEParameterAdaptation::new(
-                        adaptive.memory_size,
-                        seed,
-                    )))
-                } else {
-                    ParameterAdaptationType::Standard(StandardParameterAdaptation::new(
-                        (adaptive.f_min + adaptive.f_max) / 2.0,
-                        (adaptive.cr_min + adaptive.cr_max) / 2.0,
-                        adaptive.f_min,
-                        adaptive.f_max,
-                        adaptive.cr_min,
-                        adaptive.cr_max,
-                    ))
-                }
+            MutationType::Adaptive(a) if a.use_jade => ParameterAdaptationType::JADE(Box::new(
+                JADEParameterAdaptation::new(a.memory_size, seed),
+            )),
+            MutationType::Adaptive(a) => {
+                ParameterAdaptationType::Standard(StandardParameterAdaptation::new(
+                    (a.f_min + a.f_max) / 2.0,
+                    (a.cr_min + a.cr_max) / 2.0,
+                ))
             }
         };
 

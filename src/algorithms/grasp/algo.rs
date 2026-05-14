@@ -1,5 +1,5 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 use rayon::prelude::*;
 
 use crate::utils::config::GRASPConf;
@@ -78,7 +78,7 @@ where
             cached_upper_bounds,
             stagnation_count: 0,
             last_improvement: 0,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
             seed,
         }
     }

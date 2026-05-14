@@ -3,15 +3,11 @@ mod common;
 use common::fcns::{RosenbrockConstraints, RosenbrockObjective};
 use nalgebra::{SMatrix, U2, U5};
 
-use non_convex_opt::algorithms::tpe::tpe_opt::TPE;
-use non_convex_opt::utils::{
-    alg_conf::tpe_conf::{
-        AcquisitionConf, AcquisitionType, AdvancedConf, BandwidthConf, BandwidthMethod, KernelType,
-        SamplingConf, SamplingStrategy,
-    },
-    config::TPEConf,
-    opt_prob::{OptProb, OptimizationAlgorithm},
+use non_convex_opt::algorithms::tpe::{
+    AcquisitionConf, AcquisitionType, AdvancedConf, BandwidthConf, BandwidthMethod, KernelType,
+    SamplingConf, SamplingStrategy, TPEConf, TPE,
 };
+use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
 
 fn create_test_conf(
     n_initial_random: usize,

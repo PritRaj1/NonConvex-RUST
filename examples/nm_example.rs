@@ -10,7 +10,7 @@ use common::img::{
     create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams,
 };
 
-use non_convex_opt::utils::alg_conf::nm_conf::{
+use non_convex_opt::algorithms::nelder_mead::{
     AdvancedConf, CoefficientBounds, CommonConf, NelderMeadConf, RestartStrategy,
     StagnationDetection,
 };

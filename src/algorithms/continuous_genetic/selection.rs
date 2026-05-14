@@ -1,5 +1,5 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, Dyn, OMatrix, OVector, U1};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 use rayon::prelude::*;
 
 use crate::utils::opt_prob::FloatNumber as FloatNum;
@@ -34,7 +34,7 @@ impl RouletteWheel {
         RouletteWheel {
             population_size,
             num_parents,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 }
@@ -211,7 +211,7 @@ impl Residual {
         Residual {
             population_size,
             num_parents,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 }

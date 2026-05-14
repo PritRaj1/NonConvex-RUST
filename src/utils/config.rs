@@ -1,23 +1,23 @@
 use serde::{Deserialize, Serialize};
 
-pub use crate::utils::alg_conf::{
-    adam_conf::AdamConf,
-    cem_conf::CEMConf,
-    cga_conf::{CGAConf, CommonConf, CrossoverConf, MutationConf, SelectionConf},
-    cmaes_conf::CMAESConf,
-    de_conf::{DEConf, DEStrategy},
-    grasp_conf::GRASPConf,
-    lbfgs_conf::{
+pub use crate::algorithms::{
+    adam::AdamConf,
+    cem::CEMConf,
+    cma_es::CMAESConf,
+    continuous_genetic::{CGAConf, CommonConf, CrossoverConf, MutationConf, SelectionConf},
+    differential_evolution::{DEConf, DEStrategy},
+    grasp::GRASPConf,
+    limited_memory_bfgs::{
         BacktrackingConf, GoldenSectionConf, HagerZhangConf, LBFGSConf, LineSearchConf,
         MoreThuenteConf, StrongWolfeConf,
     },
-    mspo_conf::MSPOConf,
-    nm_conf::NelderMeadConf,
-    pt_conf::{PTConf, SwapConf},
-    sa_conf::SAConf,
-    sga_conf::SGAConf,
-    tabu_conf::{ListType, ReactiveConf, StandardConf, TabuConf},
-    tpe_conf::TPEConf,
+    multi_swarm::MSPOConf,
+    nelder_mead::NelderMeadConf,
+    parallel_tempering::{PTConf, SwapConf},
+    sg_ascent::SGAConf,
+    simulated_annealing::SAConf,
+    tabu_search::{ListType, ReactiveConf, StandardConf, TabuConf},
+    tpe::TPEConf,
 };
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -98,8 +98,8 @@ impl std::error::Error for ConfigError {
 }
 
 impl Config {
-    pub fn new(config: &str) -> Result<Self, ConfigError> {
-        serde_json::from_str(config).map_err(ConfigError::Deserialization)
+    pub fn new(s: &str) -> Result<Self, ConfigError> {
+        serde_json::from_str(s).map_err(ConfigError::Deserialization)
     }
 
     pub fn to_json(&self) -> Result<String, ConfigError> {
@@ -107,7 +107,7 @@ impl Config {
     }
 
     #[cfg(test)]
-    pub fn from_json_str(json: &str) -> Self {
-        serde_json::from_str(json).expect("Failed to parse config JSON")
+    pub fn from_json_str(s: &str) -> Self {
+        serde_json::from_str(s).expect("Failed to parse config JSON")
     }
 }

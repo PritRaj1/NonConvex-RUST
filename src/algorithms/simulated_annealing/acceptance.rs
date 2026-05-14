@@ -1,28 +1,13 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::rng;
 
+#[allow(clippy::upper_case_acronyms)]
 pub enum AcceptanceType {
     Metropolis,
     MALA,
-}
-
-pub trait AcceptanceCriterion<T, D>
-where
-    T: FloatNum,
-    D: Dim,
-    DefaultAllocator: Allocator<D>,
-{
-    fn accept(
-        &self,
-        current_x: &OVector<T, D>,
-        current_fitness: T,
-        new_x: &OVector<T, D>,
-        new_fitness: T,
-        temperature: T,
-        step_size: T,
-    ) -> bool;
 }
 
 pub struct MetropolisAcceptance<T, D>
@@ -54,7 +39,7 @@ where
             acceptance_type,
             prob,
             k: T::cast(1.0),
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 

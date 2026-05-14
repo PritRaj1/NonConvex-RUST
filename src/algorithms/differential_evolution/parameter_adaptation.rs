@@ -1,5 +1,7 @@
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use crate::utils::rng;
+use rand::{rngs::StdRng, Rng};
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
 pub enum ParameterAdaptationType {
     JADE(Box<JADEParameterAdaptation>),
@@ -33,6 +35,7 @@ impl ParameterAdaptationType {
     }
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
 pub struct JADEParameterAdaptation {
     pub f_memory: Vec<f64>,
@@ -40,21 +43,18 @@ pub struct JADEParameterAdaptation {
     pub memory_pointer: usize,
     pub successful_f: Vec<f64>,
     pub successful_cr: Vec<f64>,
-    pub memory_size: usize,
     rng: StdRng,
 }
 
 impl JADEParameterAdaptation {
     pub fn new(memory_size: usize, seed: u64) -> Self {
-        let mut rng = StdRng::seed_from_u64(seed);
-        let mut f_memory = vec![0.5; memory_size];
-        let mut cr_memory = vec![0.5; memory_size];
-
-        // Initialize with random values
-        for i in 0..memory_size {
-            f_memory[i] = rng.random::<f64>() * 0.5 + 0.25;
-            cr_memory[i] = rng.random::<f64>() * 0.5 + 0.25;
-        }
+        let mut rng = rng::seeded(seed);
+        let f_memory = (0..memory_size)
+            .map(|_| rng.random::<f64>() * 0.5 + 0.25)
+            .collect();
+        let cr_memory = (0..memory_size)
+            .map(|_| rng.random::<f64>() * 0.5 + 0.25)
+            .collect();
 
         Self {
             f_memory,
@@ -62,7 +62,6 @@ impl JADEParameterAdaptation {
             memory_pointer: 0,
             successful_f: Vec::new(),
             successful_cr: Vec::new(),
-            memory_size,
             rng,
         }
     }
@@ -133,27 +132,14 @@ impl JADEParameterAdaptation {
 pub struct StandardParameterAdaptation {
     pub current_f: f64,
     pub current_cr: f64,
-    pub f_min: f64,
-    pub f_max: f64,
-    pub cr_min: f64,
-    pub cr_max: f64,
 }
 
 impl StandardParameterAdaptation {
-    pub fn new(f: f64, cr: f64, f_min: f64, f_max: f64, cr_min: f64, cr_max: f64) -> Self {
+    pub fn new(f: f64, cr: f64) -> Self {
         Self {
             current_f: f,
             current_cr: cr,
-            f_min,
-            f_max,
-            cr_min,
-            cr_max,
         }
-    }
-
-    pub fn update_parameters(&mut self, success_rate: f64) {
-        self.current_f = self.f_min + success_rate * (self.f_max - self.f_min);
-        self.current_cr = self.cr_min + success_rate * (self.cr_max - self.cr_min);
     }
 
     pub fn get_parameters(&self) -> (f64, f64) {

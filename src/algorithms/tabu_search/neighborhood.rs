@@ -3,7 +3,7 @@ use rand::Rng;
 use rand_distr::{Cauchy, Distribution, Normal};
 use std::marker::PhantomData;
 
-use crate::utils::alg_conf::tabu_conf::NeighborhoodStrategy;
+use super::config::NeighborhoodStrategy;
 use crate::utils::opt_prob::FloatNumber as FloatNum;
 
 pub enum NeighborhoodGenerator<T, D>

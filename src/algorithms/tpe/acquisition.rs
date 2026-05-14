@@ -1,5 +1,5 @@
+use super::config::AcquisitionType;
 use crate::algorithms::tpe::kernels::KernelDensityEstimator;
-use crate::utils::alg_conf::tpe_conf::AcquisitionType;
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector};
 
 /// EI(x) = E[max(0, f(x) - f(x_best))], analytically simpler to use ratio

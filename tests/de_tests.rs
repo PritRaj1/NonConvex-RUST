@@ -4,9 +4,9 @@ use common::fcns::{RosenbrockConstraints, RosenbrockObjective};
 use nalgebra::DMatrix;
 use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
 
-use non_convex_opt::{algorithms::differential_evolution::de::DE, utils::config::DEConf};
+use non_convex_opt::{algorithms::differential_evolution::DE, utils::config::DEConf};
 
-use non_convex_opt::utils::alg_conf::de_conf::{
+use non_convex_opt::algorithms::differential_evolution::{
     AdaptiveConf, CommonConf, DEStrategy, MutationType, StandardConf,
 };
 

@@ -5,15 +5,11 @@ use crate::common::fcns::{
 };
 use nalgebra::{DMatrix, DVector};
 use non_convex_opt::algorithms::parallel_tempering::{
-    metropolis_hastings::MetropolisHastings,
-    preconditioners::{
-        AdaptiveCovariance, FitnessWeightedCovariance, Preconditioner, SampleCovariance,
-        ShrinkageCovariance,
-    },
-    pt::PT,
+    AdaptiveCovariance, AutoConf, FitnessWeightedCovariance, MALAConf, MetropolisHastings,
+    MetropolisHastingsConf, PCNConf, Preconditioner, SampleCovariance, ShrinkageCovariance,
+    UpdateConf, PT,
 };
 use non_convex_opt::utils::{
-    alg_conf::pt_conf::{AutoConf, MALAConf, MetropolisHastingsConf, PCNConf, UpdateConf},
     config::{AlgConf, Config},
     opt_prob::{OptProb, OptimizationAlgorithm},
 };

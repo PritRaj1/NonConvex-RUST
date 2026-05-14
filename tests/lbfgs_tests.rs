@@ -3,15 +3,12 @@ mod common;
 use common::fcns::{QuadraticConstraints, QuadraticObjective};
 use nalgebra::{SMatrix, U1, U2};
 
-use non_convex_opt::algorithms::limited_memory_bfgs::lbfgs::LBFGS;
-use non_convex_opt::utils::{
-    alg_conf::lbfgs_conf::{
-        AdvancedConf, BacktrackingConf, CommonConf, GoldenSectionConf, HagerZhangConf, LBFGSConf,
-        LineSearchConf, MemoryAdaptation, MoreThuenteConf, NumericalSafeguards, RestartStrategy,
-        StagnationDetection, StrongWolfeConf,
-    },
-    opt_prob::{OptProb, OptimizationAlgorithm},
+use non_convex_opt::algorithms::limited_memory_bfgs::{
+    AdvancedConf, BacktrackingConf, CommonConf, GoldenSectionConf, HagerZhangConf, LBFGSConf,
+    LineSearchConf, MemoryAdaptation, MoreThuenteConf, NumericalSafeguards, RestartStrategy,
+    StagnationDetection, StrongWolfeConf, LBFGS,
 };
+use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
 
 #[test]
 fn test_lbfgs() {

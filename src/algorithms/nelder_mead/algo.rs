@@ -1,12 +1,13 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 use rayon::prelude::*;
 use std::cmp::Ordering::{Equal, Greater, Less};
 use std::collections::VecDeque;
 
-use crate::utils::alg_conf::nm_conf::RestartStrategy;
+use super::config::RestartStrategy;
 use crate::utils::config::NelderMeadConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 pub struct NelderMead<T, N, D>
 where
@@ -109,7 +110,7 @@ where
             last_improvement: fitness_values[best_idx],
             restart_counter: 0,
             last_restart_iter: 0,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 

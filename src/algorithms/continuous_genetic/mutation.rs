@@ -1,9 +1,10 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 use rand_distr::{Distribution, Normal};
 use std::marker::PhantomData;
 
 use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::rng;
 
 pub trait MutationOperator<T: FloatNum, D: Dim>
 where
@@ -60,7 +61,7 @@ impl Gaussian {
         Self {
             mutation_rate,
             sigma,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 }
@@ -101,7 +102,7 @@ impl Uniform {
     pub fn new(mutation_rate: f64, seed: u64) -> Self {
         Self {
             mutation_rate,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 }
@@ -147,7 +148,7 @@ impl NonUniform {
             mutation_rate,
             b,
             max_generations,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 }
@@ -205,7 +206,7 @@ impl Polynomial {
         Self {
             mutation_rate,
             eta_m,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 }

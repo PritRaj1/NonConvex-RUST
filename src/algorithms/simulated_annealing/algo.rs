@@ -1,10 +1,11 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 use rayon::prelude::*;
 use std::collections::VecDeque;
 
-use crate::utils::alg_conf::sa_conf::{CoolingScheduleType, RestartStrategy, SAConf};
+use super::config::{CoolingScheduleType, RestartStrategy, SAConf};
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 use crate::algorithms::simulated_annealing::{
     acceptance::MetropolisAcceptance,
@@ -115,7 +116,7 @@ where
             cooling_schedule,
             acceptance: MetropolisAcceptance::new(opt_prob, init_x, seed),
             stagnation_window,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 

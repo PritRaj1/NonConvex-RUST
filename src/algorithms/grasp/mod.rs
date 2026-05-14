@@ -1,2 +1,5 @@
-pub mod grasp_opt;
-pub use grasp_opt::*;
+mod algo;
+mod config;
+
+pub use algo::GRASP;
+pub use config::*;

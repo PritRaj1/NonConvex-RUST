@@ -1,5 +1,9 @@
-pub mod archive;
-pub mod bounds;
-pub mod de;
-pub mod mutation;
-pub mod parameter_adaptation;
+mod algo;
+mod archive;
+mod bounds;
+mod config;
+mod mutation;
+mod parameter_adaptation;
+
+pub use algo::DE;
+pub use config::*;

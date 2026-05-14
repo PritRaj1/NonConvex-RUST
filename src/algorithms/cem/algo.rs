@@ -1,12 +1,13 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, RealField, U1};
 use num_traits::Float;
-use rand::{self, rngs::StdRng, Rng, SeedableRng};
+use rand::{self, rngs::StdRng, Rng};
 use rand_distr::{Distribution, Normal};
 use rayon::prelude::*;
 use std::iter::Sum;
 
 use crate::utils::config::CEMConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 pub struct CEM<T, N, D>
 where
@@ -138,7 +139,7 @@ where
             restart_counter: 0,
             last_restart_iter: 0,
             stagnation_window,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 

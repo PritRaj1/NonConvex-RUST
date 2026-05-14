@@ -1,6 +1,7 @@
 use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::rng;
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 
 pub struct Archive<T, D>
 where
@@ -25,7 +26,7 @@ where
             solutions: Vec::with_capacity(max_size),
             fitness: Vec::with_capacity(max_size),
             max_size,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 

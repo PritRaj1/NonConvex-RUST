@@ -169,21 +169,6 @@ where
         }
     }
 
-    pub fn get_frequency(&self, x: &OVector<T, D>) -> usize {
-        let key = self.solution_key(x);
-        *self.frequency_map.get(&key).unwrap_or(&0)
-    }
-
-    pub fn get_quality_score(&self, x: &OVector<T, D>) -> Option<T> {
-        self.quality_memory
-            .iter()
-            .find(|(stored_x, _)| {
-                let diff = x - stored_x;
-                diff.dot(&diff).sqrt() < T::cast(1e-6)
-            })
-            .map(|(_, fitness)| *fitness)
-    }
-
     fn solution_key(&self, x: &OVector<T, D>) -> String {
         let precision = 6;
         let rounded: Vec<String> = x

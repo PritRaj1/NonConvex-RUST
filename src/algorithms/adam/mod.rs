@@ -1,2 +1,5 @@
-pub mod adam_opt;
-pub use adam_opt::*;
+mod algo;
+mod config;
+
+pub use algo::Adam;
+pub use config::*;

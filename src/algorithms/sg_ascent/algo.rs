@@ -1,9 +1,10 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
-use rand::{rngs::StdRng, SeedableRng};
+use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal};
 
 use crate::utils::config::SGAConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::rng;
 
 pub struct SGAscent<T, N, D>
 where
@@ -65,7 +66,7 @@ where
             },
             velocity: OVector::zeros_generic(D::from_usize(n), U1),
             current_noise_std: learning_rate,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 }

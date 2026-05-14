@@ -4,11 +4,7 @@ use common::fcns::{RosenbrockConstraints, RosenbrockObjective};
 use nalgebra::{DMatrix, DVector};
 use rand::{rngs::StdRng, SeedableRng};
 
-use non_convex_opt::algorithms::multi_swarm::{
-    mspo::MSPO,
-    particle::Particle,
-    swarm::{Swarm, SwarmConfig},
-};
+use non_convex_opt::algorithms::multi_swarm::{Particle, Swarm, SwarmConfig, MSPO};
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
     opt_prob::{OptProb, OptimizationAlgorithm},

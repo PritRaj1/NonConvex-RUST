@@ -1,9 +1,9 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 use rayon::prelude::*;
 use std::collections::VecDeque;
 
-use crate::utils::alg_conf::tabu_conf::RestartStrategy;
+use super::config::RestartStrategy;
 use crate::utils::config::TabuConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
@@ -97,7 +97,7 @@ where
             current_perturbation_prob: conf.common.perturbation_prob,
             phase: SearchPhase::Intensification,
             phase_iterations: 0,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
             seed,
         }
     }

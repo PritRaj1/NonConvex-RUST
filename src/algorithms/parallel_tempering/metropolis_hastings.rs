@@ -2,12 +2,14 @@ use nalgebra::{
     allocator::Allocator, ComplexField, DefaultAllocator, Dim, DimSub, OMatrix, OVector, RealField,
     U1,
 };
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 use rand_distr::StandardNormal;
 
-use crate::utils::alg_conf::pt_conf::UpdateConf;
+use super::config::UpdateConf;
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::rng;
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
 pub enum MoveType {
     RandomDrift,
@@ -15,7 +17,6 @@ pub enum MoveType {
     PCN,
 }
 
-/// Poorly names struct for all update types
 #[derive(Clone)]
 pub struct MetropolisHastings<T, D>
 where
@@ -134,7 +135,7 @@ where
             mala_use_preconditioning,
             pcn_step_size,
             pcn_preconditioner,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
         }
     }
 

@@ -2,20 +2,28 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1
 
 pub mod algorithms;
 pub mod utils;
-use crate::utils::config::{AlgConf, Config, OptConf};
 
-use crate::algorithms::{
-    adam::adam_opt::Adam, cem::cem_opt::CEM, cma_es::cma_es_opt::CMAES,
-    continuous_genetic::cga::CGA, differential_evolution::de::DE, grasp::grasp_opt::GRASP,
-    limited_memory_bfgs::lbfgs::LBFGS, multi_swarm::mspo::MSPO, nelder_mead::nm::NelderMead,
-    parallel_tempering::pt::PT, sg_ascent::sga::SGAscent,
-    simulated_annealing::sa::SimulatedAnnealing, tabu_search::tabu::TabuSearch, tpe::tpe_opt::TPE,
+pub use algorithms::adam::{Adam, AdamConf};
+pub use algorithms::cem::{CEMConf, CEM};
+pub use algorithms::cma_es::{CMAESConf, CMAES};
+pub use algorithms::continuous_genetic::{CGAConf, CGA};
+pub use algorithms::differential_evolution::{DEConf, DE};
+pub use algorithms::grasp::{GRASPConf, GRASP};
+pub use algorithms::limited_memory_bfgs::{LBFGSConf, LBFGS};
+pub use algorithms::multi_swarm::{MSPOConf, MSPO};
+pub use algorithms::nelder_mead::{NelderMead, NelderMeadConf};
+pub use algorithms::parallel_tempering::{PTConf, PT};
+pub use algorithms::sg_ascent::{SGAConf, SGAscent};
+pub use algorithms::simulated_annealing::{SAConf, SimulatedAnnealing};
+pub use algorithms::tabu_search::{TabuConf, TabuSearch};
+pub use algorithms::tpe::{TPEConf, TPE};
+pub use utils::config::{AlgConf, Config, OptConf};
+pub use utils::opt_prob::{
+    BooleanConstraintFunction, FloatNumber, ObjectiveFunction, OptProb, OptimizationAlgorithm,
+    State,
 };
 
-use crate::utils::opt_prob::{
-    BooleanConstraintFunction, FloatNumber as FloatNum, ObjectiveFunction, OptProb,
-    OptimizationAlgorithm, State,
-};
+use FloatNumber as FloatNum;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConvergenceReason {

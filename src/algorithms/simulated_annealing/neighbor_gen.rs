@@ -1,11 +1,12 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector, U1};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng};
 use rand_distr::{Normal, StandardNormal};
 use rayon::prelude::*;
 
 use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
 use crate::utils::rng;
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
 pub enum MoveType {
     RandomDrift,
@@ -49,7 +50,7 @@ where
             move_type,
             prob,
             mala_step_size,
-            rng: StdRng::seed_from_u64(seed),
+            rng: rng::seeded(seed),
             seed,
         }
     }

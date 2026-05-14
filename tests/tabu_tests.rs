@@ -3,7 +3,7 @@ mod common;
 use common::fcns::{RosenbrockConstraints, RosenbrockObjective};
 use nalgebra::{SMatrix, U1, U2};
 
-use non_convex_opt::algorithms::tabu_search::tabu::TabuSearch;
+use non_convex_opt::algorithms::tabu_search::TabuSearch;
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
     opt_prob::{OptProb, OptimizationAlgorithm},
