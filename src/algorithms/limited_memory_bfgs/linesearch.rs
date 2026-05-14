@@ -1,8 +1,6 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector, U1};
 
-use crate::utils::config::{
-    BacktrackingConf, GoldenSectionConf, HagerZhangConf, MoreThuenteConf, StrongWolfeConf,
-};
+use crate::utils::config::{BacktrackingConf, GoldenSectionConf, StrongWolfeConf};
 use crate::utils::opt_prob::{FloatNumber, OptProb};
 
 pub trait LineSearch<T, D>
@@ -31,6 +29,7 @@ impl BacktrackingLineSearch {
     }
 }
 
+// Armijo-only (sufficient-increase) backtracking
 impl<T, D> LineSearch<T, D> for BacktrackingLineSearch
 where
     T: FloatNumber,
@@ -45,15 +44,18 @@ where
         g: &OVector<T, D>,
         opt_prob: &OptProb<T, D>,
     ) -> T {
+        let c1 = T::cast(self.conf.c1);
+        let rho = T::cast(self.conf.rho);
+        let gp = g.dot(p);
         let mut alpha = T::one();
-        let mut x_new = x + p * alpha;
-
-        // Repeat until the Armijo condition is satisfied (for maximization)
-        while opt_prob.evaluate(&x_new) < f + T::cast(self.conf.c1) * alpha * g.dot(p) {
-            alpha *= T::cast(self.conf.rho);
-            x_new = x + p * alpha;
+        // cap to avoid pathological shrinking
+        for _ in 0..64 {
+            let x_new = x + p * alpha;
+            if opt_prob.evaluate(&x_new) >= f + c1 * alpha * gp {
+                return alpha;
+            }
+            alpha *= rho;
         }
-
         alpha
     }
 }
@@ -68,6 +70,9 @@ impl StrongWolfeLineSearch {
     }
 }
 
+// Strong-Wolfe for ascent: ∇f·p > 0
+//   sufficient increase : f(x+αp) ≥ f + c1 α ∇f·p
+//   strong curvature    : |∇f(x+αp)·p| ≤ c2 |∇f·p|
 impl<T, D> LineSearch<T, D> for StrongWolfeLineSearch
 where
     T: FloatNumber,
@@ -84,143 +89,46 @@ where
     ) -> T {
         let c1 = T::cast(self.conf.c1);
         let c2 = T::cast(self.conf.c2);
-        let mut alpha = T::one();
-        let mut alpha_low = T::zero();
-        let mut alpha_high = T::cast(10.0);
         let initial_gp = g.dot(p);
-
-        for _ in 0..self.conf.max_iters {
-            let x_new = x + p * alpha;
-            let f_new = opt_prob.evaluate(&x_new);
-            let g_new = opt_prob.objective.gradient(&x_new).unwrap();
-            let g_new_p = g_new.dot(p);
-
-            // For maximization:
-            if f_new < f + c1 * alpha * initial_gp {
-                // Armijo condition
-                alpha_high = alpha;
-            } else if g_new_p.abs() < -c2 * initial_gp {
-                // Wolfe condition for maximization
-                alpha_low = alpha;
-            } else {
-                return alpha; // Both conditions satisfied
-            }
-
-            if alpha_high < T::cast(10.0) {
-                alpha = (alpha_low + alpha_high) / T::cast(2.0);
-            } else {
-                alpha *= T::cast(2.0);
-            }
+        // bad direction: not ascent → fall back to zero step
+        if initial_gp <= T::zero() {
+            return T::zero();
         }
-        alpha
-    }
-}
+        let curvature_rhs = c2 * initial_gp;
 
-pub struct HagerZhangLineSearch {
-    conf: HagerZhangConf,
-}
-
-impl HagerZhangLineSearch {
-    pub fn new(conf: &HagerZhangConf) -> Self {
-        Self { conf: conf.clone() }
-    }
-}
-
-impl<T, D> LineSearch<T, D> for HagerZhangLineSearch
-where
-    T: FloatNumber,
-    D: Dim,
-    DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
-{
-    fn search(
-        &self,
-        x: &OVector<T, D>,
-        p: &OVector<T, D>,
-        f: T,
-        g: &OVector<T, D>,
-        opt_prob: &OptProb<T, D>,
-    ) -> T {
-        let c1 = T::cast(self.conf.c1);
-        let c2 = T::cast(self.conf.c2);
-        let theta = T::cast(self.conf.theta);
-        let gamma = T::cast(self.conf.gamma);
         let mut alpha = T::one();
-        let initial_gp = g.dot(p);
+        let mut alpha_lo = T::zero();
+        let mut alpha_hi: Option<T> = None;
+        let alpha_max = T::cast(1024.0);
 
         for _ in 0..self.conf.max_iters {
             let x_new = x + p * alpha;
             let f_new = opt_prob.evaluate(&x_new);
-            let g_new = opt_prob.objective.gradient(&x_new).unwrap();
-            let g_new_p = g_new.dot(p);
+            let g_new_p = opt_prob.objective.gradient(&x_new).unwrap().dot(p);
+            let abs_g_new_p =
+                if g_new_p >= T::zero() { g_new_p } else { T::zero() - g_new_p };
 
-            // For maximization:
-            if f_new < f + c1 * alpha * initial_gp {
-                alpha *= gamma; // Reduce step size
-                continue;
-            }
-
-            if g_new_p < -c2 * initial_gp {
-                // Modified for maximization
-                let delta =
-                    theta * alpha * (initial_gp - g_new_p) / (f_new - f - alpha * initial_gp);
-                alpha += delta;
-                continue;
-            }
-
-            return alpha;
-        }
-        alpha
-    }
-}
-
-pub struct MoreThuenteLineSearch {
-    conf: MoreThuenteConf,
-}
-
-impl MoreThuenteLineSearch {
-    pub fn new(conf: &MoreThuenteConf) -> Self {
-        Self { conf: conf.clone() }
-    }
-}
-
-impl<T, D> LineSearch<T, D> for MoreThuenteLineSearch
-where
-    T: FloatNumber,
-    D: Dim,
-    DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
-{
-    fn search(
-        &self,
-        x: &OVector<T, D>,
-        p: &OVector<T, D>,
-        f: T,
-        g: &OVector<T, D>,
-        opt_prob: &OptProb<T, D>,
-    ) -> T {
-        let ftol = T::cast(self.conf.ftol);
-        let gtol = T::cast(self.conf.gtol);
-
-        let mut alpha = T::one();
-        let mut alpha_low = T::zero();
-        let mut alpha_high = T::cast(10.0);
-        let initial_gp = g.dot(p);
-
-        for _ in 0..self.conf.max_iters {
-            let x_new = x + p * alpha;
-            let f_new = opt_prob.evaluate(&x_new);
-            let g_new = opt_prob.objective.gradient(&x_new).unwrap();
-            let g_new_p = g_new.dot(p);
-
-            // For maximization:
-            if f_new < f + ftol * alpha * initial_gp {
-                alpha_high = alpha;
-            } else if g_new_p < -gtol * initial_gp {
-                alpha_low = alpha;
-            } else {
+            if f_new < f + c1 * alpha * initial_gp || g_new_p < T::zero() {
+                // step too large or overshot peak → tighten upper bracket
+                alpha_hi = Some(alpha);
+            } else if abs_g_new_p <= curvature_rhs {
                 return alpha;
+            } else {
+                // step too small → raise lower bracket
+                alpha_lo = alpha;
             }
 
-            alpha = (alpha_low + alpha_high) / T::cast(2.0);
+            alpha = match alpha_hi {
+                Some(ah) => (alpha_lo + ah) / T::cast(2.0),
+                None => {
+                    let next = alpha * T::cast(2.0);
+                    if next > alpha_max {
+                        alpha_max
+                    } else {
+                        next
+                    }
+                }
+            };
         }
         alpha
     }
@@ -235,7 +143,6 @@ impl GoldenSectionLineSearch {
         Self { conf: conf.clone() }
     }
 
-    // Helper function to bracket the maximum
     fn bracket_maximum<T: FloatNumber, D: Dim>(
         &self,
         x: &OVector<T, D>,
@@ -245,36 +152,34 @@ impl GoldenSectionLineSearch {
     where
         DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
     {
-        let golden_ratio: T = T::cast((5.0_f64).sqrt() * 0.5 + 0.5);
         let bracket_factor = T::cast(self.conf.bracket_factor);
-
         let mut a = T::zero();
         let mut b = T::one();
-        let mut c = b * golden_ratio;
-
+        let mut c = b * bracket_factor;
         let mut fa = opt_prob.evaluate(&(x + p * a));
         let mut fb = opt_prob.evaluate(&(x + p * b));
         let mut fc = opt_prob.evaluate(&(x + p * c));
-
-        // Expand the bracket until we find a triplet where the middle point is higher
-        while fb < fa || fb < fc {
-            if fb < fa {
-                c = b;
-                b = a;
-                a = b / bracket_factor;
-                fc = fb;
-                fb = fa;
-                fa = opt_prob.evaluate(&(x + p * a));
-            } else {
+        // expand until fa < fb && fc < fb (peak straddled)
+        for _ in 0..64 {
+            if fb >= fa && fb >= fc {
+                break;
+            }
+            if fc > fb {
                 a = b;
-                b = c;
-                c = b * bracket_factor;
                 fa = fb;
+                b = c;
                 fb = fc;
+                c = b * bracket_factor;
                 fc = opt_prob.evaluate(&(x + p * c));
+            } else {
+                c = b;
+                fc = fb;
+                b = a;
+                fb = fa;
+                a = b / bracket_factor;
+                fa = opt_prob.evaluate(&(x + p * a));
             }
         }
-
         (a, b, c)
     }
 }
@@ -295,18 +200,16 @@ where
     ) -> T {
         let resphi = T::cast((3.0_f64 - (5.0_f64).sqrt()) / 2.0);
         let tol = T::cast(self.conf.tol);
-
         let (mut a, b, mut c) = self.bracket_maximum(x, p, opt_prob);
         let mut x0 = b - resphi * (c - a);
         let mut x1 = a + resphi * (c - a);
         let mut f0 = opt_prob.evaluate(&(x + p * x0));
         let mut f1 = opt_prob.evaluate(&(x + p * x1));
 
-        loop {
-            if (c - a).abs() < tol {
-                break (a + c) / T::cast(2.0);
+        for _ in 0..self.conf.max_iters {
+            if num_traits::Float::abs(c - a) < tol {
+                break;
             }
-
             if f0 > f1 {
                 c = x1;
                 x1 = x0;
@@ -321,5 +224,6 @@ where
                 f1 = opt_prob.evaluate(&(x + p * x1));
             }
         }
+        (a + c) / T::cast(2.0)
     }
 }

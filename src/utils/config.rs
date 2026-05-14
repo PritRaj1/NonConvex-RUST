@@ -8,8 +8,7 @@ pub use crate::algorithms::{
     differential_evolution::{DEConf, DEStrategy},
     grasp::GRASPConf,
     limited_memory_bfgs::{
-        BacktrackingConf, GoldenSectionConf, HagerZhangConf, LBFGSConf, LineSearchConf,
-        MoreThuenteConf, StrongWolfeConf,
+        BacktrackingConf, GoldenSectionConf, LBFGSConf, LineSearchConf, StrongWolfeConf,
     },
     multi_swarm::MSPOConf,
     nelder_mead::NelderMeadConf,

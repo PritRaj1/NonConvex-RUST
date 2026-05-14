@@ -5,8 +5,7 @@ use crate::utils::config::{LBFGSConf, LineSearchConf, OptConf};
 use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 
 use crate::algorithms::limited_memory_bfgs::linesearch::{
-    BacktrackingLineSearch, GoldenSectionLineSearch, HagerZhangLineSearch, LineSearch,
-    MoreThuenteLineSearch, StrongWolfeLineSearch,
+    BacktrackingLineSearch, GoldenSectionLineSearch, LineSearch, StrongWolfeLineSearch,
 };
 
 pub struct LBFGS<T, N, D>
@@ -24,29 +23,20 @@ where
     pub st: State<T, N, D>,
     linesearch: Box<dyn LineSearch<T, D> + Send + Sync>,
 
-    // L-BFGS vectors
-    s: Vec<OVector<T, D>>,
-    y: Vec<OVector<T, D>>,
+    s: VecDeque<OVector<T, D>>,
+    y: VecDeque<OVector<T, D>>,
 
-    // Bounds handling
     has_bounds: bool,
     lower_bounds: Option<OVector<T, D>>,
     upper_bounds: Option<OVector<T, D>>,
 
-    // Adaptive parameters
     current_memory_size: usize,
-    current_scaling_factor: T,
 
-    // Stagnation
     stagnation_counter: usize,
-    restart_counter: usize,
     last_restart_iter: usize,
     last_improvement: T,
     success_history: VecDeque<bool>,
     improvement_history: VecDeque<f64>,
-    gradient_history: VecDeque<f64>,
-    function_evaluations: usize,
-    gradient_evaluations: usize,
 }
 
 impl<T, N, D> LBFGS<T, N, D>
@@ -71,8 +61,6 @@ where
         let linesearch: Box<dyn LineSearch<T, D> + Send + Sync> = match &conf.line_search {
             LineSearchConf::Backtracking(c) => Box::new(BacktrackingLineSearch::new(c)),
             LineSearchConf::StrongWolfe(c) => Box::new(StrongWolfeLineSearch::new(c)),
-            LineSearchConf::HagerZhang(c) => Box::new(HagerZhangLineSearch::new(c)),
-            LineSearchConf::MoreThuente(c) => Box::new(MoreThuenteLineSearch::new(c)),
             LineSearchConf::GoldenSection(c) => Box::new(GoldenSectionLineSearch::new(c)),
         };
 
@@ -80,7 +68,6 @@ where
         let upper_bounds = opt_prob.objective.x_upper_bound(&st.best_x);
         let has_bounds = lower_bounds.is_some() || upper_bounds.is_some();
         let current_memory_size = conf.common.memory_size;
-        let current_scaling_factor = T::cast(conf.advanced.numerical_safeguards.scaling_factor);
 
         Self {
             x: st.best_x.clone(),
@@ -88,22 +75,17 @@ where
             opt_prob,
             conf: conf.clone(),
             linesearch,
-            s: Vec::with_capacity(current_memory_size),
-            y: Vec::with_capacity(current_memory_size),
+            s: VecDeque::with_capacity(current_memory_size),
+            y: VecDeque::with_capacity(current_memory_size),
             has_bounds,
             lower_bounds,
             upper_bounds,
             current_memory_size,
-            current_scaling_factor,
             stagnation_counter: 0,
-            restart_counter: 0,
             last_restart_iter: 0,
             last_improvement: best_f,
             success_history: VecDeque::with_capacity(conf.advanced.success_history_size),
             improvement_history: VecDeque::with_capacity(conf.advanced.improvement_history_size),
-            gradient_history: VecDeque::with_capacity(conf.advanced.improvement_history_size),
-            function_evaluations: 1,
-            gradient_evaluations: 0,
         }
     }
 
@@ -120,211 +102,132 @@ where
         }
     }
 
-    fn compute_cauchy_point(&self, g: &OVector<T, D>) -> OVector<T, D> {
-        let mut t = T::one();
-        let mut x_cp = self.x.clone();
-
-        for i in 0..g.len() {
-            if g[i] != T::zero() {
-                if let (Some(ref lb), Some(ref ub)) = (&self.lower_bounds, &self.upper_bounds) {
-                    if g[i] < T::zero() {
-                        t = t.min((ub[i] - self.x[i]) / g[i]);
-                    } else {
-                        t = t.min((lb[i] - self.x[i]) / g[i]);
-                    }
-                }
-            }
-        }
-
-        x_cp -= g * t;
-        self.project_onto_bounds(&mut x_cp);
-        x_cp
+    // |x - bound| < eps; exact float equality misses rounded points
+    fn is_at_bound(&self, i: usize) -> bool {
+        let eps = T::cast(1e-12);
+        let xi = self.x[i];
+        let lo = self
+            .lower_bounds
+            .as_ref()
+            .is_some_and(|lb| num_traits::Float::abs(xi - lb[i]) <= eps);
+        let hi = self
+            .upper_bounds
+            .as_ref()
+            .is_some_and(|ub| num_traits::Float::abs(xi - ub[i]) <= eps);
+        lo || hi
     }
 
-    fn step_with_bounds(&mut self, g: &OVector<T, D>) {
-        let x_cp = self.compute_cauchy_point(g);
-        let mut p = x_cp - &self.st.best_x;
-
-        let r = self.compute_reduced_gradient(g);
-        let z = self.two_loop_recursion(&r);
-
-        self.update_search_direction(&mut p, &z);
-
-        let alpha = self
-            .linesearch
-            .search(&self.st.best_x, &p, self.st.best_f, g, &self.opt_prob);
-        let mut x_new = &self.x + &p * alpha;
-        self.project_onto_bounds(&mut x_new);
-
-        self.update_s_y_vectors(&x_new, g);
-        self.update_best_solution(&x_new);
-        self.x = x_new;
-    }
-
-    fn step_without_bounds(&mut self, g: &OVector<T, D>) {
-        let p = self.compute_search_direction(g);
-
-        let alpha = self
-            .linesearch
-            .search(&self.st.best_x, &p, self.st.best_f, g, &self.opt_prob);
-
-        let x_new = &self.x + &p * alpha;
-
-        self.update_s_y_vectors(&x_new, g);
-        self.update_best_solution(&x_new);
-        self.x = x_new;
-    }
-
-    fn compute_reduced_gradient(&self, g: &OVector<T, D>) -> OVector<T, D> {
-        let mut r = OVector::<T, D>::zeros_generic(D::from_usize(self.st.best_x.len()), U1);
-        for i in 0..self.st.best_x.len() {
-            if !self.is_at_bound(i) {
-                r[i] = g[i];
-            }
-        }
-        r
-    }
-
-    // Two-loop recursion to approximate the inverse Hessian
-    fn two_loop_recursion(&self, r: &OVector<T, D>) -> OVector<T, D> {
-        let m = self.current_memory_size;
-        let mut q = r.clone();
+    // L-BFGS two-loop recursion (Nocedal & Wright Alg 7.4); returns H_k · q
+    // for ascent on max problems we use +z (no negation at the end)
+    fn two_loop_recursion(&self, q_in: &OVector<T, D>) -> OVector<T, D> {
+        let m = self.s.len();
+        let mut q = q_in.clone();
         let mut alpha = vec![T::zero(); m];
         let mut rho = vec![T::zero(); m];
+        let cond_thresh = T::cast(self.conf.advanced.numerical_safeguards.conditioning_threshold);
 
-        // First loop: backward
-        for i in (0..self.s.len()).rev() {
+        for i in (0..m).rev() {
             let s_dot_y = self.s[i].dot(&self.y[i]);
-
-            // Check conditioning
-            if s_dot_y.abs()
-                < T::cast(
-                    self.conf
-                        .advanced
-                        .numerical_safeguards
-                        .conditioning_threshold,
-                )
-            {
-                continue; // Skip ill-conditioned pairs
+            if num_traits::Float::abs(s_dot_y) < cond_thresh {
+                continue;
             }
-
             rho[i] = T::one() / s_dot_y;
             alpha[i] = rho[i] * self.s[i].dot(&q);
             q -= &self.y[i] * alpha[i];
         }
 
-        // Scale
-        let mut z = if self.conf.advanced.numerical_safeguards.use_scaling && !self.s.is_empty() {
-            let gamma = self.s.last().unwrap().dot(self.y.last().unwrap())
-                / self.y.last().unwrap().dot(self.y.last().unwrap());
-            q * gamma
+        // initial Hessian scaling γ = sᵀy / yᵀy (latest pair)
+        let mut z = if let (Some(s_last), Some(y_last)) = (self.s.back(), self.y.back()) {
+            let denom = y_last.dot(y_last);
+            if denom > T::zero() {
+                q * (s_last.dot(y_last) / denom)
+            } else {
+                q
+            }
         } else {
-            q.clone()
+            q
         };
 
-        // Second loop: forward
-        for i in 0..self.s.len() {
-            if rho[i] != T::zero() {
-                let beta = rho[i] * self.y[i].dot(&z);
-                z += &self.s[i] * (alpha[i] - beta);
+        for i in 0..m {
+            if rho[i] == T::zero() {
+                continue;
             }
+            let beta = rho[i] * self.y[i].dot(&z);
+            z += &self.s[i] * (alpha[i] - beta);
         }
         z
     }
 
-    fn update_search_direction(&self, p: &mut OVector<T, D>, z: &OVector<T, D>) {
-        for i in 0..self.st.best_x.len() {
+    // bounded path uses gradient-projection step + two-loop for the free coords
+    fn step_with_bounds(&mut self, g: &OVector<T, D>) {
+        // freeze coords already on a bound that gradient would push past
+        let mut r = OVector::<T, D>::zeros_generic(D::from_usize(self.x.len()), U1);
+        for i in 0..self.x.len() {
             if !self.is_at_bound(i) {
-                p[i] = z[i];
+                r[i] = g[i];
             }
         }
+        let z = self.two_loop_recursion(&r);
+
+        let mut p = z.clone();
+        for i in 0..p.len() {
+            if self.is_at_bound(i) {
+                p[i] = T::zero();
+            }
+        }
+
+        let alpha =
+            self.linesearch
+                .search(&self.st.best_x, &p, self.st.best_f, g, &self.opt_prob);
+        let mut x_new = &self.x + &p * alpha;
+        self.project_onto_bounds(&mut x_new);
+
+        self.update_s_y(&x_new, g);
+        self.update_best(&x_new);
+        self.x = x_new;
     }
 
-    fn compute_search_direction(&self, g: &OVector<T, D>) -> OVector<T, D> {
-        let m = self.current_memory_size;
-        let mut q = g.clone();
-        let mut alpha = vec![T::zero(); m];
-        let mut rho = vec![T::zero(); m];
-
-        // First loop: backward
-        for i in (0..m).rev() {
-            if i < self.s.len() {
-                let s_dot_y = self.y[i].dot(&self.s[i]);
-
-                // Check conditioning
-                if s_dot_y.abs()
-                    < T::cast(
-                        self.conf
-                            .advanced
-                            .numerical_safeguards
-                            .conditioning_threshold,
-                    )
-                {
-                    continue;
-                }
-
-                rho[i] = T::one() / s_dot_y;
-                alpha[i] = rho[i] * self.s[i].dot(&q);
-                q -= &self.y[i] * alpha[i];
-            }
-        }
-
-        // Scale
-        if !self.s.is_empty() {
-            let gamma = self.s.last().unwrap().dot(self.y.last().unwrap())
-                / self.y.last().unwrap().dot(self.y.last().unwrap());
-            q *= gamma;
-        }
-
-        // Second loop: forward
-        let mut p = q.clone();
-        for i in 0..m {
-            if i < self.s.len() && rho[i] != T::zero() {
-                let beta = rho[i] * self.y[i].dot(&p);
-                p += &self.s[i] * (alpha[i] - beta);
-            }
-        }
-        p
+    fn step_without_bounds(&mut self, g: &OVector<T, D>) {
+        let p = self.two_loop_recursion(g);
+        let alpha =
+            self.linesearch
+                .search(&self.st.best_x, &p, self.st.best_f, g, &self.opt_prob);
+        let x_new = &self.x + &p * alpha;
+        self.update_s_y(&x_new, g);
+        self.update_best(&x_new);
+        self.x = x_new;
     }
 
-    fn update_s_y_vectors(&mut self, x_new: &OVector<T, D>, g: &OVector<T, D>) {
+    fn update_s_y(&mut self, x_new: &OVector<T, D>, g: &OVector<T, D>) {
         let s_new = x_new - &self.st.best_x;
         let y_new = self.opt_prob.objective.gradient(x_new).unwrap() - g;
-        self.gradient_evaluations += 1;
-
-        // Check curvature
         let curvature = s_new.dot(&y_new);
         if curvature > T::cast(self.conf.advanced.numerical_safeguards.curvature_threshold) {
             if self.s.len() == self.current_memory_size {
-                self.s.remove(0);
-                self.y.remove(0);
+                self.s.pop_front();
+                self.y.pop_front();
             }
-            self.s.push(s_new);
-            self.y.push(y_new);
+            self.s.push_back(s_new);
+            self.y.push_back(y_new);
         }
     }
 
-    fn update_best_solution(&mut self, x_new: &OVector<T, D>) {
+    fn update_best(&mut self, x_new: &OVector<T, D>) {
         let f_new = self.opt_prob.evaluate(x_new);
-        self.function_evaluations += 1;
-
         if f_new > self.st.best_f {
             let improvement = f_new - self.st.best_f;
             self.last_improvement = f_new;
             self.st.best_f = f_new;
             self.st.best_x = x_new.clone();
-
             self.success_history.push_back(true);
             self.improvement_history
                 .push_back(improvement.to_f64().unwrap_or(0.0));
-
             self.stagnation_counter = 0;
         } else {
             self.success_history.push_back(false);
             self.improvement_history.push_back(0.0);
             self.stagnation_counter += 1;
         }
-
         if self.success_history.len() > self.conf.advanced.success_history_size {
             self.success_history.pop_front();
         }
@@ -333,31 +236,15 @@ where
         }
     }
 
-    fn is_at_bound(&self, i: usize) -> bool {
-        let at_lower = self
-            .lower_bounds
-            .as_ref()
-            .is_some_and(|lb| self.st.best_x[i] == lb[i]);
-        let at_upper = self
-            .upper_bounds
-            .as_ref()
-            .is_some_and(|ub| self.st.best_x[i] == ub[i]);
-        at_lower || at_upper
-    }
-
     fn adapt_parameters(&mut self) {
         if !self.conf.advanced.adaptive_parameters {
             return;
         }
-
         if self.success_history.len() < 5 {
             return;
         }
-
         let success_rate = self.success_history.iter().filter(|&&x| x).count() as f64
             / self.success_history.len() as f64;
-
-        let adaptation_rate = T::cast(self.conf.advanced.adaptation_rate);
 
         if self.conf.advanced.memory_adaptation.adaptive_memory {
             if success_rate < 0.2 {
@@ -365,60 +252,9 @@ where
                     .min(self.conf.advanced.memory_adaptation.max_memory_size);
             } else if success_rate > 0.6 {
                 self.current_memory_size = (self.current_memory_size.saturating_sub(1))
-                    .max(self.conf.advanced.memory_adaptation.min_memory_size); // Decrease memory
+                    .max(self.conf.advanced.memory_adaptation.min_memory_size);
             }
         }
-
-        if self.conf.advanced.numerical_safeguards.use_scaling {
-            if success_rate < 0.2 {
-                self.current_scaling_factor *= T::one() + adaptation_rate;
-            } else if success_rate > 0.6 {
-                self.current_scaling_factor *= T::one() - adaptation_rate * T::cast(0.3);
-            }
-        }
-    }
-
-    fn check_stagnation(&self) -> bool {
-        let stagnation_window = self.conf.advanced.stagnation_detection.stagnation_window;
-        let improvement_threshold = self
-            .conf
-            .advanced
-            .stagnation_detection
-            .improvement_threshold;
-        let gradient_threshold = self.conf.advanced.stagnation_detection.gradient_threshold;
-
-        if self.improvement_history.len() >= stagnation_window {
-            let recent_improvements: Vec<f64> = self
-                .improvement_history
-                .iter()
-                .rev()
-                .take(stagnation_window)
-                .cloned()
-                .collect();
-
-            let avg_improvement =
-                recent_improvements.iter().sum::<f64>() / recent_improvements.len() as f64;
-            if avg_improvement < improvement_threshold {
-                return true;
-            }
-        }
-
-        if self.gradient_history.len() >= stagnation_window {
-            let recent_gradients: Vec<f64> = self
-                .gradient_history
-                .iter()
-                .rev()
-                .take(stagnation_window)
-                .cloned()
-                .collect();
-
-            let avg_gradient = recent_gradients.iter().sum::<f64>() / recent_gradients.len() as f64;
-            if avg_gradient < gradient_threshold {
-                return true;
-            }
-        }
-
-        false
     }
 
     fn check_restart(&mut self) -> bool {
@@ -447,24 +283,30 @@ where
     }
 
     fn perform_restart(&mut self) {
-        let _current_best = self.st.best_x.clone();
-        let current_best_f = self.st.best_f;
-
         self.s.clear();
         self.y.clear();
-
         self.current_memory_size = self.conf.common.memory_size;
-        self.current_scaling_factor =
-            T::cast(self.conf.advanced.numerical_safeguards.scaling_factor);
-
         self.stagnation_counter = 0;
-        self.last_improvement = current_best_f;
-        self.restart_counter += 1;
+        self.last_improvement = self.st.best_f;
         self.last_restart_iter = self.st.iter;
-
         self.success_history.clear();
         self.improvement_history.clear();
-        self.gradient_history.clear();
+    }
+
+    fn check_stagnation(&self) -> bool {
+        let win = self.conf.advanced.stagnation_detection.stagnation_window;
+        if self.improvement_history.len() < win {
+            return false;
+        }
+        let avg: f64 = self
+            .improvement_history
+            .iter()
+            .rev()
+            .take(win)
+            .copied()
+            .sum::<f64>()
+            / win as f64;
+        avg < self.conf.advanced.stagnation_detection.improvement_threshold
     }
 }
 
@@ -481,42 +323,28 @@ where
         if self.check_restart() {
             self.perform_restart();
         }
-
         if self.check_stagnation() {
             self.stagnation_counter += 1;
         }
 
         let g = self.opt_prob.objective.gradient(&self.x).unwrap();
-        self.gradient_evaluations += 1;
-
-        let gradient_norm = g.dot(&g).sqrt();
-        self.gradient_history
-            .push_back(gradient_norm.to_f64().unwrap_or(0.0));
-        if self.gradient_history.len() > self.conf.advanced.improvement_history_size {
-            self.gradient_history.pop_front();
-        }
 
         if self.has_bounds {
-            self.step_with_bounds(&g); // L-BFGS-B
+            self.step_with_bounds(&g);
         } else {
-            self.step_without_bounds(&g); // L-BFGS
+            self.step_without_bounds(&g);
         }
 
         let fitness = self.opt_prob.evaluate(&self.x);
-        self.function_evaluations += 1;
-        let constraints = self.opt_prob.is_feasible(&self.x);
-
         if fitness > self.st.best_f {
             self.st.best_f = fitness;
             self.st.best_x = self.x.clone();
         }
-
         self.st.pop.row_mut(0).copy_from(&self.x.transpose());
         self.st.fitness[0] = fitness;
-        self.st.constraints[0] = constraints;
+        self.st.constraints[0] = self.opt_prob.is_feasible(&self.x);
 
         self.adapt_parameters();
-
         self.st.iter += 1;
     }
 

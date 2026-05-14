@@ -38,20 +38,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "restart_strategy": "None",
                     "stagnation_detection": {
                         "stagnation_window": 50,
-                        "improvement_threshold": 1e-6,
-                        "gradient_threshold": 1e-6
+                        "improvement_threshold": 1e-6
                     },
                     "memory_adaptation": {
                         "adaptive_memory": false,
                         "min_memory_size": 5,
-                        "max_memory_size": 20,
-                        "memory_adaptation_rate": 0.1
+                        "max_memory_size": 20
                     },
                     "numerical_safeguards": {
                         "conditioning_threshold": 1e-12,
-                        "curvature_threshold": 1e-8,
-                        "use_scaling": false,
-                        "scaling_factor": 1.0
+                        "curvature_threshold": 1e-8
                     },
                     "success_history_size": 20,
                     "improvement_history_size": 20
