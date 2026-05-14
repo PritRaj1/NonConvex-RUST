@@ -61,28 +61,14 @@ where
         _opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
-        let init_x = init_pop.row(0).transpose();
-        let best_f = opt_prob.evaluate(&init_x);
-        let feasible = opt_prob.is_feasible(&init_x);
-        let pop_n = init_pop.nrows();
+        let st = State::from_seed(init_pop, &opt_prob);
         let tabu_type = TabuType::from(&conf);
         let neighborhood_generator =
             create_neighborhood_generator(&conf.advanced.neighborhood_strategy);
 
         Self {
-            x: init_x.clone(),
-            st: State {
-                best_x: init_x,
-                best_f,
-                pop: init_pop,
-                fitness: OVector::<T, N>::from_element_generic(N::from_usize(pop_n), U1, best_f),
-                constraints: OVector::<bool, N>::from_element_generic(
-                    N::from_usize(pop_n),
-                    U1,
-                    feasible,
-                ),
-                iter: 1,
-            },
+            x: st.best_x.clone(),
+            st,
             opt_prob,
             tabu_list: TabuList::new(conf.common.tabu_list_size, tabu_type),
             neighborhood_generator,

@@ -65,10 +65,8 @@ where
         _opt_conf: &OptConf,
         _seed: u64,
     ) -> Self {
-        let init_x = init_pop.row(0).transpose();
-        let best_f = opt_prob.evaluate(&init_x);
-        let feasible = opt_prob.is_feasible(&init_x);
-        let pop_n = init_pop.nrows();
+        let st = State::from_seed(init_pop, &opt_prob);
+        let best_f = st.best_f;
 
         let linesearch: Box<dyn LineSearch<T, D> + Send + Sync> = match &conf.line_search {
             LineSearchConf::Backtracking(c) => Box::new(BacktrackingLineSearch::new(c)),
@@ -78,26 +76,15 @@ where
             LineSearchConf::GoldenSection(c) => Box::new(GoldenSectionLineSearch::new(c)),
         };
 
-        let lower_bounds = opt_prob.objective.x_lower_bound(&init_x);
-        let upper_bounds = opt_prob.objective.x_upper_bound(&init_x);
+        let lower_bounds = opt_prob.objective.x_lower_bound(&st.best_x);
+        let upper_bounds = opt_prob.objective.x_upper_bound(&st.best_x);
         let has_bounds = lower_bounds.is_some() || upper_bounds.is_some();
         let current_memory_size = conf.common.memory_size;
         let current_scaling_factor = T::cast(conf.advanced.numerical_safeguards.scaling_factor);
 
         Self {
-            x: init_x.clone(),
-            st: State {
-                best_x: init_x,
-                best_f,
-                pop: init_pop,
-                fitness: OVector::<T, N>::from_element_generic(N::from_usize(pop_n), U1, best_f),
-                constraints: OVector::<bool, N>::from_element_generic(
-                    N::from_usize(pop_n),
-                    U1,
-                    feasible,
-                ),
-                iter: 1,
-            },
+            x: st.best_x.clone(),
+            st,
             opt_prob,
             conf: conf.clone(),
             linesearch,

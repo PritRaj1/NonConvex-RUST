@@ -45,7 +45,7 @@ where
     OVector<T, N>: Send + Sync,
     OVector<bool, N>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
-    DefaultAllocator: Allocator<D> + Allocator<N> + Allocator<N, D>,
+    DefaultAllocator: Allocator<D> + Allocator<N> + Allocator<N, D> + Allocator<U1, D>,
 {
     pub fn new(
         conf: DEConf,
@@ -54,35 +54,8 @@ where
         _opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
-        let population_size = init_pop.nrows();
-        let mut fitness = OVector::<T, N>::zeros_generic(N::from_usize(population_size), U1);
-        let mut constraints =
-            OVector::<bool, N>::from_element_generic(N::from_usize(population_size), U1, true);
-
-        let evaluations: Vec<(T, bool)> = (0..population_size)
-            .into_par_iter()
-            .map(|i| {
-                let x = init_pop.row(i).transpose();
-                let fit = opt_prob.evaluate(&x);
-                let constr = opt_prob.is_feasible(&x);
-                (fit, constr)
-            })
-            .collect();
-
-        for (i, (fit, constr)) in evaluations.into_iter().enumerate() {
-            fitness[i] = fit;
-            constraints[i] = constr;
-        }
-
-        let mut best_idx = 0;
-        let mut best_fitness = fitness[0];
-        for i in 1..population_size {
-            if fitness[i] > best_fitness && constraints[i] {
-                best_idx = i;
-                best_fitness = fitness[i];
-            }
-        }
-
+        let dim = init_pop.ncols();
+        let st = State::from_population(init_pop, &opt_prob);
         let archive_size = conf.common.archive_size;
         let success_history_size = conf.common.success_history_size;
 
@@ -103,19 +76,12 @@ where
 
         Self {
             conf,
-            st: State {
-                pop: init_pop.clone(),
-                fitness,
-                constraints,
-                best_x: init_pop.row(best_idx).transpose(),
-                best_f: best_fitness,
-                iter: 1,
-            },
+            st,
             opt_prob,
             archive: Archive::new(archive_size),
             success_history: VecDeque::with_capacity(success_history_size),
             parameter_adaptation,
-            bounds_cache: BoundsCache::new(init_pop.ncols()),
+            bounds_cache: BoundsCache::new(dim),
             seed,
         }
     }

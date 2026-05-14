@@ -146,6 +146,61 @@ where
     pub iter: usize,
 }
 
+impl<T, N, D> State<T, N, D>
+where
+    T: FloatNumber,
+    N: Dim,
+    D: Dim,
+    DefaultAllocator: Allocator<D> + Allocator<N> + Allocator<N, D> + Allocator<nalgebra::U1, D>,
+{
+    // seed from row 0 of `init_pop`; broadcast its fitness/feasibility to all rows
+    pub fn from_seed(init_pop: OMatrix<T, N, D>, opt_prob: &OptProb<T, D>) -> Self {
+        let init_x = init_pop.row(0).transpose();
+        let best_f = opt_prob.evaluate(&init_x);
+        let feasible = opt_prob.is_feasible(&init_x);
+        let n = init_pop.nrows();
+        Self {
+            best_x: init_x,
+            best_f,
+            pop: init_pop,
+            fitness: OVector::from_element_generic(N::from_usize(n), nalgebra::U1, best_f),
+            constraints: OVector::from_element_generic(N::from_usize(n), nalgebra::U1, feasible),
+            iter: 1,
+        }
+    }
+
+    // evaluate every row, pick the best feasible
+    pub fn from_population(init_pop: OMatrix<T, N, D>, opt_prob: &OptProb<T, D>) -> Self {
+        let n = init_pop.nrows();
+        let fitness = OVector::from_iterator_generic(
+            N::from_usize(n),
+            nalgebra::U1,
+            (0..n).map(|i| opt_prob.evaluate(&init_pop.row(i).transpose())),
+        );
+        let constraints = OVector::from_iterator_generic(
+            N::from_usize(n),
+            nalgebra::U1,
+            (0..n).map(|i| opt_prob.is_feasible(&init_pop.row(i).transpose())),
+        );
+        let best_idx = (0..n)
+            .filter(|&i| constraints[i])
+            .max_by(|&a, &b| {
+                fitness[a]
+                    .partial_cmp(&fitness[b])
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .unwrap_or(0);
+        Self {
+            best_x: init_pop.row(best_idx).transpose(),
+            best_f: fitness[best_idx],
+            pop: init_pop,
+            fitness,
+            constraints,
+            iter: 1,
+        }
+    }
+}
+
 pub trait OptimizationAlgorithm<T: FloatNumber, N: Dim, D: Dim>
 where
     DefaultAllocator: Allocator<D> + Allocator<N> + Allocator<N, D>,

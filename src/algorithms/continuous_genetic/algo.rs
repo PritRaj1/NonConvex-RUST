@@ -111,32 +111,8 @@ where
             ),
         };
 
-        // Calculate initial fitness and constraints in parallel
-        let (fitness, constraints): (Vec<T>, Vec<bool>) = (0..init_pop.nrows())
-            .into_par_iter()
-            .map(|i| {
-                let individual = init_pop.row(i).transpose();
-                let fit = opt_prob.evaluate(&individual);
-                let constr = opt_prob.is_feasible(&individual);
-                (fit, constr)
-            })
-            .unzip();
-
-        let fitness =
-            OVector::<T, N>::from_vec_generic(N::from_usize(init_pop.nrows()), U1, fitness);
-        let constraints =
-            OVector::<bool, N>::from_vec_generic(N::from_usize(init_pop.nrows()), U1, constraints);
-
-        // Find best individual
-        let mut best_idx = 0;
-        let mut best_fitness = fitness[0];
-        for i in 1..fitness.len() {
-            if fitness[i] > best_fitness && constraints[i] {
-                best_idx = i;
-                best_fitness = fitness[i];
-            }
-        }
-        let best_individual = init_pop.row(best_idx).transpose();
+        let n = init_pop.ncols();
+        let st = State::from_population(init_pop, &opt_prob);
 
         let initial_mutation_rate = match &conf.mutation {
             MutationConf::Gaussian(g) => g.mutation_rate,
@@ -153,17 +129,9 @@ where
 
         let success_history_size = conf.common.success_history_size;
 
-        let n = init_pop.ncols();
         Self {
             conf,
-            st: State {
-                pop: init_pop,
-                fitness,
-                constraints,
-                best_x: best_individual,
-                best_f: best_fitness,
-                iter: 1,
-            },
+            st,
             opt_prob,
             selector,
             crossover,

@@ -44,15 +44,11 @@ where
         _opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
-        let init_x = init_pop.row(0).transpose();
-        let best_f = opt_prob.evaluate(&init_x);
-        let feasible = opt_prob.is_feasible(&init_x);
-        let pop_n = init_pop.nrows();
-
+        let st = State::from_seed(init_pop, &opt_prob);
         let (cached_lower_bounds, cached_upper_bounds) = if conf.cache_bounds {
             (
-                opt_prob.objective.x_lower_bound(&init_x),
-                opt_prob.objective.x_upper_bound(&init_x),
+                opt_prob.objective.x_lower_bound(&st.best_x),
+                opt_prob.objective.x_upper_bound(&st.best_x),
             )
         } else {
             (None, None)
@@ -60,18 +56,7 @@ where
 
         Self {
             conf,
-            st: State {
-                best_x: init_x,
-                best_f,
-                pop: init_pop,
-                fitness: OVector::<T, N>::from_element_generic(N::from_usize(pop_n), U1, best_f),
-                constraints: OVector::<bool, N>::from_element_generic(
-                    N::from_usize(pop_n),
-                    U1,
-                    feasible,
-                ),
-                iter: 1,
-            },
+            st,
             opt_prob,
             cached_lower_bounds,
             cached_upper_bounds,

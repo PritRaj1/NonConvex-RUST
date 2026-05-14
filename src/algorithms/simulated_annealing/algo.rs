@@ -64,12 +64,10 @@ where
         opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
-        let init_x = init_pop.row(0).transpose();
-        let best_f = opt_prob.evaluate(&init_x);
-        let feasible = opt_prob.is_feasible(&init_x);
-        let pop_n = init_pop.nrows();
+        let st = State::from_seed(init_pop, &opt_prob);
         let stagnation_window = opt_conf.stagnation_window;
-        let stagnation_monitor = SAStagnationMonitor::new(T::cast(1e-6), best_f, stagnation_window);
+        let stagnation_monitor =
+            SAStagnationMonitor::new(T::cast(1e-6), st.best_f, stagnation_window);
 
         let cooling_schedule: Box<dyn CoolingSchedule<T> + Send + Sync> =
             match conf.advanced.cooling_schedule {
@@ -80,21 +78,9 @@ where
             };
 
         Self {
-            x: init_x.clone(),
-            fitness: best_f,
-            constraints: feasible,
-            st: State {
-                best_x: init_x.clone(),
-                best_f,
-                pop: init_pop,
-                fitness: OVector::<T, N>::from_element_generic(N::from_usize(pop_n), U1, best_f),
-                constraints: OVector::<bool, N>::from_element_generic(
-                    N::from_usize(pop_n),
-                    U1,
-                    feasible,
-                ),
-                iter: 1,
-            },
+            x: st.best_x.clone(),
+            fitness: st.best_f,
+            constraints: st.constraints[0],
             temperature: T::cast(conf.initial_temp),
             stagnation_monitor,
             improvement_history: VecDeque::with_capacity(conf.advanced.improvement_history_size),
@@ -105,12 +91,13 @@ where
             current_cooling_rate: T::cast(conf.cooling_rate),
             neighbor_gen: GaussianGenerator::new(
                 opt_prob.clone(),
-                init_x.clone(),
+                st.best_x.clone(),
                 T::cast(conf.step_size),
                 seed,
             ),
             cooling_schedule,
-            acceptance: MetropolisAcceptance::new(opt_prob.clone(), init_x, seed),
+            acceptance: MetropolisAcceptance::new(opt_prob.clone(), st.best_x.clone(), seed),
+            st,
             opt_prob,
             conf,
             stagnation_window,

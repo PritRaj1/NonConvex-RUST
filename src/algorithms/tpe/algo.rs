@@ -70,7 +70,7 @@ where
     OVector<T, N>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
     OVector<bool, N>: Send + Sync,
-    DefaultAllocator: Allocator<D> + Allocator<N, D> + Allocator<N>,
+    DefaultAllocator: Allocator<D> + Allocator<N, D> + Allocator<N> + Allocator<U1, D>,
 {
     pub fn new(
         conf: TPEConf,
@@ -81,60 +81,15 @@ where
     ) -> Self {
         let stagnation_window = opt_conf.stagnation_window;
         let n = init_pop.ncols();
-        let population_size = init_pop.nrows();
-
-        let mut fitness_values = OVector::<T, N>::zeros_generic(N::from_usize(population_size), U1);
-        let mut constraint_values =
-            OVector::<bool, N>::from_element_generic(N::from_usize(population_size), U1, true);
-
-        let fitness_results: Vec<T> = (0..population_size)
-            .into_par_iter()
-            .map(|i| {
-                let x = init_pop.row(i).transpose();
-                opt_prob.evaluate(&x)
-            })
-            .collect();
-
-        let constraint_results: Vec<bool> = (0..population_size)
-            .into_par_iter()
-            .map(|i| {
-                let x = init_pop.row(i).transpose();
-                opt_prob.is_feasible(&x)
-            })
-            .collect();
-
-        for i in 0..population_size {
-            fitness_values[i] = fitness_results[i];
-            constraint_values[i] = constraint_results[i];
-        }
-
-        let best_idx = fitness_values
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| constraint_values[*i])
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-            .unwrap_or((0, &fitness_values[0]))
-            .0;
-
-        let best_x = init_pop.row(best_idx).transpose();
-        let best_f = fitness_values[best_idx];
-
-        let st = State {
-            best_x: best_x.clone(),
-            best_f,
-            pop: init_pop.clone(),
-            fitness: fitness_values.clone(),
-            constraints: constraint_values,
-            iter: 1,
-        };
+        let st = State::from_population(init_pop, &opt_prob);
 
         let kde_l = KernelDensityEstimator::new_with_config(
-            vec![], // Start with empty
+            vec![],
             conf.kernel_type.clone(),
             conf.bandwidth.clone(),
         );
         let kde_g = KernelDensityEstimator::new_with_config(
-            vec![], // Start with empty
+            vec![],
             conf.kernel_type.clone(),
             conf.bandwidth.clone(),
         );
@@ -142,16 +97,14 @@ where
         let acquisition =
             get_acquisition_function::<T, D>(conf.acquisition.acquisition_type.clone());
 
-        let mut observations = Vec::new();
-        for i in 0..population_size {
-            let x = init_pop.row(i).transpose();
-            observations.push((x, fitness_values[i]));
-        }
-
-        observations.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap()); // Descending order for maximization
+        // observations sorted descending (best first) for γ-quantile split
+        let mut observations: Vec<_> = (0..st.pop.nrows())
+            .map(|i| (st.pop.row(i).transpose(), st.fitness[i]))
+            .collect();
+        observations.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap());
         let n_best = (observations.len() as f64 * conf.gamma).floor() as usize;
-        let best_observations = observations[..n_best].to_vec(); // Top γ-quantile (best)
-        let worst_observations = observations[n_best..].to_vec(); // Bottom (1-γ)-quantile (worst)
+        let best_observations = observations[..n_best].to_vec();
+        let worst_observations = observations[n_best..].to_vec();
         let observation_count = observations.len();
 
         Self {

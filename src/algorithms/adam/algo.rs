@@ -36,30 +36,17 @@ where
         _opt_conf: &OptConf,
         _seed: u64,
     ) -> Self {
-        let init_x = init_pop.row(0).transpose();
-        let best_f = opt_prob.evaluate(&init_x);
-        let feasible = opt_prob.is_feasible(&init_x);
-        let n = init_x.len();
-        let pop_n = init_pop.nrows();
+        let n = init_pop.ncols();
+        let st = State::from_seed(init_pop, &opt_prob);
+        let zero = OVector::zeros_generic(D::from_usize(n), U1);
 
         Self {
             conf,
-            st: State {
-                best_x: init_x,
-                best_f,
-                pop: init_pop,
-                fitness: OVector::<T, N>::from_element_generic(N::from_usize(pop_n), U1, best_f),
-                constraints: OVector::<bool, N>::from_element_generic(
-                    N::from_usize(pop_n),
-                    U1,
-                    feasible,
-                ),
-                iter: 1,
-            },
+            st,
             opt_prob,
-            m: OVector::zeros_generic(D::from_usize(n), U1),
-            v: OVector::zeros_generic(D::from_usize(n), U1),
-            v_hat: OVector::zeros_generic(D::from_usize(n), U1),
+            m: zero.clone(),
+            v: zero.clone(),
+            v_hat: zero,
         }
     }
 }
@@ -101,9 +88,7 @@ where
         let v_hat = &self.v / (T::one() - T::cast(self.conf.beta2.powi(self.st.iter as i32)));
 
         if self.conf.amsgrad {
-            for i in 0..self.v_hat.len() {
-                self.v_hat[i] = self.v_hat[i].max(v_hat[i]);
-            }
+            self.v_hat = self.v_hat.zip_map(&v_hat, |a, b| a.max(b));
         }
 
         let lr = T::cast(self.conf.learning_rate);
@@ -121,9 +106,10 @@ where
                     self.opt_prob.objective.x_lower_bound(&self.st.best_x),
                     self.opt_prob.objective.x_upper_bound(&self.st.best_x),
                 ) {
-                    for i in 0..self.st.best_x.len() {
-                        self.st.best_x[i] = self.st.best_x[i].max(lb[i]).min(ub[i]);
-                    }
+                    self.st.best_x = self
+                        .st
+                        .best_x
+                        .zip_zip_map(&lb, &ub, |x, l, u| x.max(l).min(u));
                 }
             }
         }

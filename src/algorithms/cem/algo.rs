@@ -63,13 +63,14 @@ where
     ) -> Self {
         let stagnation_window = opt_conf.stagnation_window;
         let n = init_pop.ncols();
-        let population_size = init_pop.nrows();
+        let pop_size = init_pop.nrows();
 
-        let mean = if population_size > 0 {
+        // column-wise mean of init_pop
+        let mean = if pop_size > 0 {
             let mut mean_vec = OVector::<T, D>::zeros_generic(D::from_usize(n), U1);
             for i in 0..n {
-                let sum: T = (0..population_size).map(|j| init_pop[(j, i)]).sum();
-                mean_vec[i] = sum / T::from_usize(population_size).unwrap();
+                mean_vec[i] = (0..pop_size).map(|j| init_pop[(j, i)]).sum::<T>()
+                    / T::from_usize(pop_size).unwrap();
             }
             mean_vec
         } else {
@@ -78,50 +79,17 @@ where
 
         let initial_std = T::cast(conf.common.initial_std);
         let std_dev = OVector::<T, D>::from_element_generic(D::from_usize(n), U1, initial_std);
-        let mut covariance = OMatrix::<T, D, D>::zeros_generic(D::from_usize(n), D::from_usize(n));
+        let covariance =
+            OMatrix::<T, D, D>::from_fn_generic(D::from_usize(n), D::from_usize(n), |i, j| {
+                if i == j {
+                    std_dev[i] * std_dev[i]
+                } else {
+                    T::zero()
+                }
+            });
 
-        // Init cov as diagonal matrix
-        for i in 0..n {
-            covariance[(i, i)] = std_dev[i] * std_dev[i];
-        }
-
-        let mut st = State {
-            best_x: mean.clone(),
-            best_f: T::neg_infinity(),
-            pop: init_pop.clone(),
-            fitness: OVector::<T, N>::zeros_generic(N::from_usize(population_size), U1),
-            constraints: OVector::<bool, N>::from_element_generic(
-                N::from_usize(population_size),
-                U1,
-                true,
-            ),
-            iter: 0,
-        };
-
-        let (fitness, constraints): (Vec<T>, Vec<bool>) = (0..population_size)
-            .into_par_iter()
-            .map(|i| {
-                let x = init_pop.row(i).transpose();
-                let fit = opt_prob.evaluate(&x);
-                let constr = opt_prob.is_feasible(&x);
-                (fit, constr)
-            })
-            .unzip();
-
-        st.fitness = OVector::<T, N>::from_vec_generic(N::from_usize(population_size), U1, fitness);
-        st.constraints =
-            OVector::<bool, N>::from_vec_generic(N::from_usize(population_size), U1, constraints);
-
-        if let Some((best_idx, _)) = st
-            .fitness
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| st.constraints[*i])
-            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-        {
-            st.best_x = st.pop.row(best_idx).transpose();
-            st.best_f = st.fitness[best_idx];
-        }
+        let mut st = State::from_population(init_pop, &opt_prob);
+        st.iter = 0;
 
         Self {
             conf,

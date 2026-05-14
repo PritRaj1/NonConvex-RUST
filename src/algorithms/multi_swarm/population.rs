@@ -70,37 +70,3 @@ pub fn update_population_state<T, N, D>(
     state.constraints =
         OVector::<bool, N>::from_vec_generic(N::from_usize(state.pop.nrows()), U1, constraints);
 }
-
-pub fn find_best_solution<T, N, D>(
-    population: &OMatrix<T, N, D>,
-    opt_prob: &OptProb<T, D>,
-) -> (OVector<T, D>, T)
-where
-    T: FloatNumber + Send + Sync,
-    N: Dim + Send + Sync,
-    D: Dim + Send + Sync,
-    OVector<T, D>: Send + Sync,
-    OMatrix<T, N, D>: Send + Sync,
-    DefaultAllocator:
-        Allocator<D> + Allocator<N, D> + Allocator<N> + Allocator<U1, D> + Allocator<U1>,
-{
-    let feasible_solutions: Vec<_> = (0..population.nrows())
-        .into_par_iter()
-        .filter_map(|i| {
-            let x = population.row(i).transpose();
-            if opt_prob.is_feasible(&x) {
-                Some((x.clone(), opt_prob.evaluate(&x)))
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    feasible_solutions
-        .into_par_iter()
-        .max_by(|(_, f1), (_, f2)| f1.partial_cmp(f2).unwrap())
-        .unwrap_or_else(|| {
-            let x = population.row(0).transpose();
-            (x.clone(), opt_prob.evaluate(&x))
-        })
-}

@@ -2,9 +2,7 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1
 use rayon::prelude::*;
 
 use crate::algorithms::multi_swarm::information_exchange::InformationExchange;
-use crate::algorithms::multi_swarm::population::{
-    find_best_solution, get_population, update_population_state,
-};
+use crate::algorithms::multi_swarm::population::{get_population, update_population_state};
 use crate::algorithms::multi_swarm::stagnation_monitor::StagnationMonitor;
 use crate::algorithms::multi_swarm::swarm::{initialize_swarms, Swarm};
 use crate::utils::config::{MSPOConf, OptConf};
@@ -57,35 +55,11 @@ where
             "Initial population size must be at least num_swarms * swarm_size"
         );
 
-        let (best_x, best_fitness) = find_best_solution(&init_pop, &opt_prob);
-
         let swarms = initialize_swarms(&conf, dim, &init_pop, &opt_prob, max_iter, seed);
-        let (fitness, constraints): (Vec<T>, Vec<bool>) = (0..init_pop.nrows())
-            .into_par_iter()
-            .map(|i| {
-                let x = init_pop.row(i).transpose();
-                let fit = opt_prob.evaluate(&x);
-                let constr = opt_prob.is_feasible(&x);
-                (fit, constr)
-            })
-            .unzip();
-
-        let fitness =
-            OVector::<T, N>::from_vec_generic(N::from_usize(init_pop.nrows()), U1, fitness);
-        let constraints =
-            OVector::<bool, N>::from_vec_generic(N::from_usize(init_pop.nrows()), U1, constraints);
-
-        let st = State {
-            best_x,
-            best_f: best_fitness,
-            pop: init_pop,
-            fitness,
-            constraints,
-            iter: 1,
-        };
+        let st = State::from_population(init_pop, &opt_prob);
 
         let improvement_threshold = T::cast(conf.improvement_threshold);
-        let stagnation_monitor = StagnationMonitor::new(improvement_threshold, best_fitness);
+        let stagnation_monitor = StagnationMonitor::new(improvement_threshold, st.best_f);
         let information_exchange = InformationExchange::new(conf.clone(), opt_prob.clone());
 
         Self {
