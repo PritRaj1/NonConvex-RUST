@@ -1,7 +1,7 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector};
 use rand::{rngs::StdRng, Rng};
 
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber, OptProb};
 use crate::utils::rng;
 
 #[allow(clippy::upper_case_acronyms)]
@@ -12,7 +12,7 @@ pub enum AcceptanceType {
 
 pub struct MetropolisAcceptance<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D>,
 {
@@ -24,7 +24,7 @@ where
 
 impl<T, D> MetropolisAcceptance<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D>,
 {
@@ -38,7 +38,7 @@ where
         Self {
             acceptance_type,
             prob,
-            k: T::cast(1.0),
+            k: T::one(),
             rng: rng::seeded(seed),
         }
     }

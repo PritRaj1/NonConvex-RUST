@@ -1,9 +1,9 @@
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector};
 
 pub struct Archive<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D>,
 {
@@ -14,7 +14,7 @@ where
 
 impl<T, D> Archive<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D>,
 {

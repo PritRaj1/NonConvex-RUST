@@ -4,6 +4,7 @@ use common::fcns::{QuadraticConstraints, QuadraticObjective};
 use nalgebra::{OMatrix, U2, U20};
 
 use non_convex_opt::algorithms::cma_es::CMAES;
+use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::CMAESConf,
     opt_prob::{OptProb, OptimizationAlgorithm},
@@ -23,7 +24,8 @@ fn test_cmaes() {
     let constraints = QuadraticConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut cmaes: CMAES<f64, U20, U2> = CMAES::new(conf, init_x, opt_prob, 42);
+    let mut cmaes: CMAES<f64, U20, U2> =
+        CMAES::new(conf, init_x, opt_prob, &OptConf::default(), 42);
 
     for _ in 0..20 {
         cmaes.step();

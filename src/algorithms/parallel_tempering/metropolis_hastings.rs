@@ -6,7 +6,7 @@ use rand::{rngs::StdRng, Rng};
 use rand_distr::StandardNormal;
 
 use super::config::UpdateConf;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber, OptProb};
 use crate::utils::rng;
 
 #[allow(clippy::upper_case_acronyms)]
@@ -20,7 +20,7 @@ pub enum MoveType {
 #[derive(Clone)]
 pub struct MetropolisHastings<T, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
@@ -36,7 +36,7 @@ where
 
 impl<T, D> MetropolisHastings<T, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     D: Dim + DimSub<nalgebra::Const<1>>,
     DefaultAllocator:
         Allocator<D> + Allocator<D, D> + Allocator<<D as DimSub<nalgebra::Const<1>>>::Output>,
@@ -47,7 +47,7 @@ where
         generic_x: OVector<T, D>,
         seed: u64,
     ) -> Self {
-        let k = T::cast(1.0); // Boltzmann constant
+        let k = T::one(); // Boltzmann constant
 
         // MALA needs gradients, PCN and Metropolis-Hastings don't
         let (
@@ -65,17 +65,11 @@ where
                         step_size,
                         false, // No preconditioning for MH fallback to MALA
                         step_size,
-                        T::cast(1.0),
+                        T::one(),
                     )
                 } else {
                     let step_size = T::cast(conf.random_walk_step_size);
-                    (
-                        MoveType::RandomDrift,
-                        step_size,
-                        false,
-                        step_size,
-                        T::cast(1.0),
-                    )
+                    (MoveType::RandomDrift, step_size, false, step_size, T::one())
                 }
             }
             UpdateConf::MALA(conf) => {
@@ -86,24 +80,18 @@ where
                         step_size,
                         conf.use_preconditioning, // Can choose preconditioning or not for MALA
                         step_size,
-                        T::cast(1.0),
+                        T::one(),
                     )
                 } else {
                     // Fallback to Metropolis-Hastings if no gradient
                     let step_size = T::cast(0.1);
-                    (
-                        MoveType::RandomDrift,
-                        step_size,
-                        false,
-                        step_size,
-                        T::cast(1.0),
-                    )
+                    (MoveType::RandomDrift, step_size, false, step_size, T::one())
                 }
             }
             UpdateConf::PCN(conf) => {
                 if prob.objective.gradient(&generic_x).is_some() {
                     let step_size = T::cast(0.01);
-                    (MoveType::MALA, step_size, false, step_size, T::cast(1.0))
+                    (MoveType::MALA, step_size, false, step_size, T::one())
                 } else {
                     let step_size = T::cast(conf.step_size);
                     let preconditioner = T::cast(conf.preconditioner);
@@ -113,16 +101,10 @@ where
             UpdateConf::Auto(_) => {
                 if prob.objective.gradient(&generic_x).is_some() {
                     let step_size = T::cast(0.01);
-                    (MoveType::MALA, step_size, false, step_size, T::cast(1.0))
+                    (MoveType::MALA, step_size, false, step_size, T::one())
                 } else {
                     let step_size = T::cast(0.1);
-                    (
-                        MoveType::RandomDrift,
-                        step_size,
-                        false,
-                        step_size,
-                        T::cast(1.0),
-                    )
+                    (MoveType::RandomDrift, step_size, false, step_size, T::one())
                 }
             }
         };
@@ -204,7 +186,7 @@ where
         grad: &OVector<T, D>,
         t: T,
     ) -> OVector<T, D> {
-        let t_for_step = T::cast(1.0) - t;
+        let t_for_step = T::one() - t;
         let step = self.mala_step_size * RealField::max(t_for_step, T::cast(0.01));
         let drift = grad * step;
 
@@ -222,7 +204,7 @@ where
         covariance_matrix: &OMatrix<T, D, D>,
         t: T,
     ) -> OVector<T, D> {
-        let t_for_step = T::cast(1.0) - t;
+        let t_for_step = T::one() - t;
         let step = self.mala_step_size * RealField::max(t_for_step, T::cast(0.01));
 
         // Preconditioned drift: τ A ∇log π(X_k)
@@ -260,7 +242,7 @@ where
         x_old: &OVector<T, D>,
         covariance_matrix: &OMatrix<T, D, D>,
     ) -> OVector<T, D> {
-        self.local_move_pcn_with_variance(x_old, covariance_matrix, T::cast(1.0))
+        self.local_move_pcn_with_variance(x_old, covariance_matrix, T::one())
     }
 
     // Update for pCN: X'_{n+1} = √(1-β²) X_n + β ε_{n+1}
@@ -275,7 +257,7 @@ where
         let beta = RealField::min(RealField::max(beta, T::cast(0.01)), T::cast(0.99));
 
         // First term: √(1-β²) X_n
-        let sqrt_term = ComplexField::sqrt(T::cast(1.0) - beta * beta);
+        let sqrt_term = ComplexField::sqrt(T::one() - beta * beta);
         let first_term = x_old * sqrt_term;
 
         // Second term: β * ε_{n+1} where ε_{n+1} ~ N(0, C₀)
@@ -321,12 +303,12 @@ where
         let f_new = self.prob.evaluate(x_new);
         let delta_e = f_new - f_old;
 
-        if delta_e >= T::cast(0.0) {
+        if delta_e >= T::zero() {
             return true; // Always accept uphill moves
         }
 
         // Boltzmann acceptance criterion: P = min(1, exp(ΔE / (k*(1-T))))
-        let t_inverted = T::cast(1.0) - t;
+        let t_inverted = T::one() - t;
         let t_safe = RealField::max(t_inverted, T::cast(1e-10));
         let acceptance_prob = ComplexField::exp(delta_e / (self.k * t_safe));
         self.rng.random::<f64>() < acceptance_prob.to_f64().unwrap()
@@ -356,18 +338,17 @@ where
         }
 
         // Replica exchange acceptance criterion: P = min(1, exp((E_i - E_j) * (1/(k*(1-T_i)) - 1/(k*(1-T_j)))))
-        let t_i_inverted = T::cast(1.0) - t_i;
-        let t_j_inverted = T::cast(1.0) - t_j;
+        let t_i_inverted = T::one() - t_i;
+        let t_j_inverted = T::one() - t_j;
         let t_i_safe = RealField::max(t_i_inverted, T::cast(1e-10));
         let t_j_safe = RealField::max(t_j_inverted, T::cast(1e-10));
 
-        let delta_beta =
-            (T::cast(1.0) / (self.k * t_i_safe)) - (T::cast(1.0) / (self.k * t_j_safe));
+        let delta_beta = (T::one() / (self.k * t_i_safe)) - (T::one() / (self.k * t_j_safe));
         let delta_e = total_energy_i - total_energy_j;
 
         let log_acceptance = delta_beta * delta_e;
-        let acceptance_prob = if log_acceptance > T::cast(0.0) {
-            T::cast(1.0)
+        let acceptance_prob = if log_acceptance > T::zero() {
+            T::one()
         } else {
             ComplexField::exp(log_acceptance)
         };
@@ -389,7 +370,7 @@ where
         let r = OMatrix::<T, D, D>::from_diagonal(&abs_diff);
 
         // Update: (1-alpha) * current + alpha * omega * r
-        let one_minus_alpha = T::cast(1.0) - alpha;
+        let one_minus_alpha = T::one() - alpha;
         current_step_size * one_minus_alpha + r * (alpha * omega)
     }
 }

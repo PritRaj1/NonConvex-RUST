@@ -3,7 +3,8 @@ use rand::{rngs::StdRng, Rng};
 use rayon::prelude::*;
 
 use super::config::{BandwidthMethod, SamplingStrategy, TPEConf};
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::OptConf;
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
 
 use crate::algorithms::tpe::{
@@ -11,7 +12,7 @@ use crate::algorithms::tpe::{
     kernels::KernelDensityEstimator,
 };
 
-pub struct TPE<T: FloatNum, N: Dim, D: Dim>
+pub struct TPE<T: FloatNumber, N: Dim, D: Dim>
 where
     T: Send + Sync,
     N: Dim + Send + Sync,
@@ -62,7 +63,7 @@ where
 
 impl<T, N, D> TPE<T, N, D>
 where
-    T: FloatNum + std::iter::Sum + Send + Sync,
+    T: FloatNumber + std::iter::Sum + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -75,9 +76,10 @@ where
         conf: TPEConf,
         init_pop: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
-        stagnation_window: usize,
+        opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
+        let stagnation_window = opt_conf.stagnation_window;
         let n = init_pop.ncols();
         let population_size = init_pop.nrows();
 
@@ -633,14 +635,11 @@ where
 
             if avg_diversity < T::cast(0.1) {
                 self.adaptive_noise_scale *= T::cast(1.1); // increase exploration
-            } else if avg_diversity > T::cast(1.0) {
+            } else if avg_diversity > T::one() {
                 self.adaptive_noise_scale *= T::cast(0.9); // decrease exploration
             }
 
-            self.adaptive_noise_scale = self
-                .adaptive_noise_scale
-                .max(T::cast(0.01))
-                .min(T::cast(1.0));
+            self.adaptive_noise_scale = self.adaptive_noise_scale.max(T::cast(0.01)).min(T::one());
         }
 
         self.noise_scale_history.push(self.adaptive_noise_scale);
@@ -801,7 +800,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for TPE<T, N, D>
 where
-    T: FloatNum + std::iter::Sum + Send + Sync,
+    T: FloatNumber + std::iter::Sum + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -946,7 +945,7 @@ where
 
 impl<T, N, D> TPE<T, N, D>
 where
-    T: FloatNum + std::iter::Sum + Send + Sync,
+    T: FloatNumber + std::iter::Sum + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,

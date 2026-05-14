@@ -9,6 +9,7 @@ use non_convex_opt::algorithms::parallel_tempering::{
     MetropolisHastingsConf, PCNConf, Preconditioner, SampleCovariance, ShrinkageCovariance,
     UpdateConf, PT,
 };
+use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
     opt_prob::{OptProb, OptimizationAlgorithm},
@@ -144,7 +145,16 @@ fn test_pt_swap() {
     let obj_f = RosenbrockObjective { a: 1.0, b: 1.0 };
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
-    let mut pt = PT::new(pt_conf, init_pop, opt_prob, 5, 42);
+    let mut pt = PT::new(
+        pt_conf,
+        init_pop,
+        opt_prob,
+        &OptConf {
+            max_iter: 5,
+            ..OptConf::default()
+        },
+        42,
+    );
 
     pt.swap();
 
@@ -165,7 +175,16 @@ fn test_pt_step() {
     let obj_f = RosenbrockObjective { a: 1.0, b: 1.0 };
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
-    let mut pt = PT::new(pt_conf, init_pop, opt_prob, 5, 42);
+    let mut pt = PT::new(
+        pt_conf,
+        init_pop,
+        opt_prob,
+        &OptConf {
+            max_iter: 5,
+            ..OptConf::default()
+        },
+        42,
+    );
 
     for _ in 0..5 {
         pt.step();
@@ -186,7 +205,16 @@ fn test_different_update_configurations() {
     let obj_f_pcn = RosenbrockObjective { a: 1.0, b: 1.0 }; // No gradients needed
     let constraints_pcn = RosenbrockConstraints {};
     let opt_prob_pcn = OptProb::new(Box::new(obj_f_pcn), Some(Box::new(constraints_pcn)));
-    let pt_pcn = PT::new(pt_conf_pcn, init_pop.clone(), opt_prob_pcn, 5, 42);
+    let pt_pcn = PT::new(
+        pt_conf_pcn,
+        init_pop.clone(),
+        opt_prob_pcn,
+        &OptConf {
+            max_iter: 5,
+            ..OptConf::default()
+        },
+        42,
+    );
 
     let mala_conf = Config::new(include_str!("jsons/pt_mala.json")).unwrap();
     let pt_conf_mala = match mala_conf.alg_conf {
@@ -197,7 +225,16 @@ fn test_different_update_configurations() {
     let obj_f_mala = QuadraticObjective { a: 1.0, b: 1.0 }; // Has gradients
     let constraints_mala = QuadraticConstraints {};
     let opt_prob_mala = OptProb::new(Box::new(obj_f_mala), Some(Box::new(constraints_mala)));
-    let pt_mala = PT::new(pt_conf_mala, init_pop.clone(), opt_prob_mala, 5, 42);
+    let pt_mala = PT::new(
+        pt_conf_mala,
+        init_pop.clone(),
+        opt_prob_mala,
+        &OptConf {
+            max_iter: 5,
+            ..OptConf::default()
+        },
+        42,
+    );
 
     let mh_conf = Config::new(include_str!("jsons/pt_mh.json")).unwrap();
     let pt_conf_mh = match mh_conf.alg_conf {
@@ -208,7 +245,16 @@ fn test_different_update_configurations() {
     let obj_f_mala = RosenbrockObjective { a: 1.0, b: 1.0 }; // No gradients needed
     let constraints_mh = RosenbrockConstraints {};
     let opt_prob_mh = OptProb::new(Box::new(obj_f_mala), Some(Box::new(constraints_mh)));
-    let pt_mh = PT::new(pt_conf_mh, init_pop, opt_prob_mh, 5, 42);
+    let pt_mh = PT::new(
+        pt_conf_mh,
+        init_pop,
+        opt_prob_mh,
+        &OptConf {
+            max_iter: 5,
+            ..OptConf::default()
+        },
+        42,
+    );
 
     assert_eq!(pt_pcn.get_num_replicas(), 10);
     assert_eq!(pt_mala.get_num_replicas(), 10);
@@ -247,7 +293,16 @@ fn create_test_pt_pcn() -> PT<f64, nalgebra::Dyn, nalgebra::Dyn> {
     let constraints = QuadraticConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    PT::new(pt_conf, init_pop, opt_prob, 20, 42)
+    PT::new(
+        pt_conf,
+        init_pop,
+        opt_prob,
+        &OptConf {
+            max_iter: 20,
+            ..OptConf::default()
+        },
+        42,
+    )
 }
 
 #[test]

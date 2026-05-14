@@ -3,7 +3,7 @@ use rand::{rngs::StdRng, Rng};
 use rand_distr::{Normal, StandardNormal};
 use rayon::prelude::*;
 
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber, OptProb};
 use crate::utils::rng;
 
 #[allow(clippy::upper_case_acronyms)]
@@ -16,7 +16,7 @@ pub enum MoveType {
 #[derive(Clone)]
 pub struct GaussianGenerator<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D>,
 {
@@ -29,7 +29,7 @@ where
 
 impl<T, D> GaussianGenerator<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,

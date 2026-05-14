@@ -3,7 +3,8 @@ use rayon::prelude::*;
 use std::collections::VecDeque;
 
 use super::config::{DEConf, DEStrategy, MutationType};
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::OptConf;
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
 
 use crate::algorithms::differential_evolution::{
@@ -17,7 +18,7 @@ use crate::algorithms::differential_evolution::{
 
 pub struct DE<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -37,7 +38,7 @@ where
 
 impl<T, N, D> DE<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -50,6 +51,7 @@ where
         conf: DEConf,
         init_pop: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
+        _opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
         let population_size = init_pop.nrows();
@@ -141,9 +143,9 @@ where
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for DE<T, N, D>
+impl<T: FloatNumber, N: Dim, D: Dim> OptimizationAlgorithm<T, N, D> for DE<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,

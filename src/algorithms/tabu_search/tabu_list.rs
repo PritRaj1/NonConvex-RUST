@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use std::collections::{HashMap, VecDeque};
 
 use crate::utils::config::{ListType, TabuConf};
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TabuType {
@@ -48,7 +48,7 @@ impl From<&TabuConf> for TabuType {
 
 pub struct TabuList<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,
@@ -63,7 +63,7 @@ where
 
 impl<T, D> TabuList<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,

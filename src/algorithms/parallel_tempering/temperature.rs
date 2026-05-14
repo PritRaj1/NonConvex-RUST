@@ -1,9 +1,9 @@
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 use nalgebra::RealField;
 
 pub struct PowerLawScheduler<T>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
 {
     p_schedule: Vec<T>,
     num_replicas: usize,
@@ -12,7 +12,7 @@ where
 
 impl<T> PowerLawScheduler<T>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
 {
     pub fn new(
         power_law_init: f64,

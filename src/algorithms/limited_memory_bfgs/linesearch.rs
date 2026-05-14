@@ -3,11 +3,11 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector, U1};
 use crate::utils::config::{
     BacktrackingConf, GoldenSectionConf, HagerZhangConf, MoreThuenteConf, StrongWolfeConf,
 };
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber, OptProb};
 
 pub trait LineSearch<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
 {
@@ -33,7 +33,7 @@ impl BacktrackingLineSearch {
 
 impl<T, D> LineSearch<T, D> for BacktrackingLineSearch
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
 {
@@ -70,7 +70,7 @@ impl StrongWolfeLineSearch {
 
 impl<T, D> LineSearch<T, D> for StrongWolfeLineSearch
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
 {
@@ -128,7 +128,7 @@ impl HagerZhangLineSearch {
 
 impl<T, D> LineSearch<T, D> for HagerZhangLineSearch
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
 {
@@ -185,7 +185,7 @@ impl MoreThuenteLineSearch {
 
 impl<T, D> LineSearch<T, D> for MoreThuenteLineSearch
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
 {
@@ -236,7 +236,7 @@ impl GoldenSectionLineSearch {
     }
 
     // Helper function to bracket the maximum
-    fn bracket_maximum<T: FloatNum, D: Dim>(
+    fn bracket_maximum<T: FloatNumber, D: Dim>(
         &self,
         x: &OVector<T, D>,
         p: &OVector<T, D>,
@@ -281,7 +281,7 @@ impl GoldenSectionLineSearch {
 
 impl<T, D> LineSearch<T, D> for GoldenSectionLineSearch
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
 {

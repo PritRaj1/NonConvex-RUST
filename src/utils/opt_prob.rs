@@ -1,29 +1,19 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, Scalar};
-use num_traits::{Float, FromPrimitive, NumCast, One, Zero};
+use num_traits::{Float, FromPrimitive};
 use simba::scalar::{
-    ClosedAdd, ClosedAddAssign, ClosedDiv, ClosedDivAssign, ClosedMul, ClosedMulAssign, ClosedNeg,
-    ClosedSub, ClosedSubAssign, SubsetOf,
+    ClosedAddAssign, ClosedDivAssign, ClosedMulAssign, ClosedNeg, ClosedSubAssign, SubsetOf,
 };
 
 pub trait FloatNumber:
-    Copy
-    + Float
-    + NumCast
+    Float
     + FromPrimitive
     + SubsetOf<f64>
     + Scalar
-    + ClosedAdd
-    + ClosedMul
-    + ClosedDiv
-    + ClosedSub
-    + ClosedNeg
     + ClosedAddAssign
     + ClosedMulAssign
     + ClosedDivAssign
     + ClosedSubAssign
-    + Zero
-    + One
-    + std::fmt::Debug
+    + ClosedNeg
     + Send
     + Sync
     + 'static

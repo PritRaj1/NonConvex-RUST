@@ -2,8 +2,8 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, Dyn, OMatrix, OVecto
 use rayon::prelude::*;
 use std::collections::VecDeque;
 
-use crate::utils::config::{CGAConf, CrossoverConf, MutationConf, SelectionConf};
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::{CGAConf, CrossoverConf, MutationConf, OptConf, SelectionConf};
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 
 use crate::algorithms::continuous_genetic::{
     crossover::*,
@@ -13,7 +13,7 @@ use crate::algorithms::continuous_genetic::{
 
 pub struct CGA<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -39,7 +39,7 @@ where
 
 impl<T, N, D> CGA<T, N, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -52,9 +52,10 @@ where
         conf: CGAConf,
         init_pop: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
-        max_iter: usize,
+        opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
+        let max_iter = opt_conf.max_iter;
         let selector: Box<dyn SelectionOperator<T, N, D> + Send + Sync> = match &conf.selection {
             SelectionConf::RouletteWheel(_) => Box::new(RouletteWheel::new(
                 init_pop.nrows(),
@@ -250,7 +251,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for CGA<T, N, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim + Send + Sync,
     N: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,

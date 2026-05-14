@@ -3,6 +3,7 @@ mod common;
 use common::fcns::{QuadraticConstraints, QuadraticObjective};
 use nalgebra::{SMatrix, U1, U2};
 use non_convex_opt::algorithms::adam::Adam;
+use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::AdamConf,
     opt_prob::{OptProb, OptimizationAlgorithm},
@@ -25,7 +26,7 @@ fn test_adam() {
     let constraints = QuadraticConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut adam = Adam::<f64, U1, U2>::new(conf, init_x, opt_prob);
+    let mut adam = Adam::<f64, U1, U2>::new(conf, init_x, opt_prob, &OptConf::default(), 0);
 
     let initial_fitness = adam.st.best_f;
 

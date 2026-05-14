@@ -2,13 +2,13 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, DimSub, OMatrix, OVe
 use rand::{rngs::StdRng, Rng};
 
 use crate::algorithms::parallel_tempering::metropolis_hastings::MetropolisHastings;
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 use crate::utils::rng;
 
 /// Manages replica exchange (swapping) operations in parallel tempering
 pub struct SwapManager<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync,
+    T: FloatNumber + RealField + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,
@@ -33,7 +33,7 @@ where
 
 impl<T, N, D> SwapManager<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync,
+    T: FloatNumber + RealField + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,

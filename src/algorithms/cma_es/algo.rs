@@ -4,8 +4,8 @@ use nalgebra::{
 use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal};
 
-use crate::utils::config::CMAESConf;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::{CMAESConf, OptConf};
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
 
 use crate::algorithms::cma_es::{
@@ -18,7 +18,7 @@ use crate::algorithms::cma_es::{
 
 pub struct CMAES<T, N, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     N: Dim,
     D: Dim + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,
@@ -61,7 +61,7 @@ where
 
 impl<T, N, D> CMAES<T, N, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     N: Dim,
     D: Dim + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,
@@ -78,6 +78,7 @@ where
         conf: CMAESConf,
         init_pop: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
+        _opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
         let init_x: OVector<T, D> = init_pop.row(0).transpose().into_owned();
@@ -179,7 +180,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for CMAES<T, N, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     N: Dim,
     D: Dim + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,

@@ -3,7 +3,7 @@ use rand::Rng;
 use rayon::prelude::*;
 
 use crate::utils::config::MSPOConf;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber, OptProb};
 use crate::utils::rng;
 
 use crate::algorithms::multi_swarm::particle::Particle;
@@ -11,7 +11,7 @@ use crate::algorithms::multi_swarm::particle::Particle;
 #[derive(Clone)]
 pub struct SwarmConfig<'a, T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<Dyn, D>,
 {
@@ -29,7 +29,7 @@ where
 
 pub struct Swarm<T, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim + Send + Sync,
     DefaultAllocator: Allocator<D> + Allocator<U1, D>,
 {
@@ -50,7 +50,7 @@ where
 
 impl<T, D> Swarm<T, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
     OMatrix<T, Dyn, D>: Send + Sync,
@@ -265,7 +265,7 @@ pub fn initialize_swarms<T, N, D>(
     seed: u64,
 ) -> Vec<Swarm<T, D>>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,

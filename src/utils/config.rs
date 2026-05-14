@@ -58,6 +58,18 @@ pub struct OptConf {
     pub stagnation_window: usize,
 }
 
+impl Default for OptConf {
+    fn default() -> Self {
+        Self {
+            max_iter: default_max_iter(),
+            rtol: default_rtol(),
+            atol: default_atol(),
+            rtol_max_iter_fraction: default_rtol_max_iter_fraction(),
+            stagnation_window: default_stagnation_window(),
+        }
+    }
+}
+
 fn default_max_iter() -> usize {
     1000
 }

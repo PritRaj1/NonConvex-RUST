@@ -4,7 +4,8 @@ use rayon::prelude::*;
 use std::collections::VecDeque;
 
 use super::config::{CoolingScheduleType, RestartStrategy, SAConf};
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::OptConf;
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
 
 use crate::algorithms::simulated_annealing::{
@@ -18,7 +19,7 @@ use crate::algorithms::simulated_annealing::{
 
 pub struct SimulatedAnnealing<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -49,7 +50,7 @@ where
 
 impl<T, N, D> SimulatedAnnealing<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -58,17 +59,17 @@ where
 {
     pub fn new(
         conf: SAConf,
-        init_pop: OMatrix<T, U1, D>,
+        init_pop: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
-        stagnation_window: usize,
+        opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
         let init_x = init_pop.row(0).transpose();
         let best_f = opt_prob.evaluate(&init_x);
-        let n = init_x.len();
-        let improvement_threshold = T::cast(1e-6); // TODO: should this be hard-coded?
-        let stagnation_monitor =
-            SAStagnationMonitor::new(improvement_threshold, best_f, stagnation_window);
+        let feasible = opt_prob.is_feasible(&init_x);
+        let pop_n = init_pop.nrows();
+        let stagnation_window = opt_conf.stagnation_window;
+        let stagnation_monitor = SAStagnationMonitor::new(T::cast(1e-6), best_f, stagnation_window);
 
         let cooling_schedule: Box<dyn CoolingSchedule<T> + Send + Sync> =
             match conf.advanced.cooling_schedule {
@@ -79,24 +80,18 @@ where
             };
 
         Self {
-            conf: conf.clone(),
-            opt_prob: opt_prob.clone(),
             x: init_x.clone(),
             fitness: best_f,
-            constraints: opt_prob.is_feasible(&init_x),
+            constraints: feasible,
             st: State {
                 best_x: init_x.clone(),
                 best_f,
-                pop: OMatrix::<T, N, D>::from_fn_generic(
-                    N::from_usize(1),
-                    D::from_usize(n),
-                    |_, j| init_x.clone()[j],
-                ),
-                fitness: OVector::<T, N>::from_element_generic(N::from_usize(1), U1, best_f),
+                pop: init_pop,
+                fitness: OVector::<T, N>::from_element_generic(N::from_usize(pop_n), U1, best_f),
                 constraints: OVector::<bool, N>::from_element_generic(
-                    N::from_usize(1),
+                    N::from_usize(pop_n),
                     U1,
-                    opt_prob.is_feasible(&init_x.clone()),
+                    feasible,
                 ),
                 iter: 1,
             },
@@ -115,7 +110,9 @@ where
                 seed,
             ),
             cooling_schedule,
-            acceptance: MetropolisAcceptance::new(opt_prob, init_x, seed),
+            acceptance: MetropolisAcceptance::new(opt_prob.clone(), init_x, seed),
+            opt_prob,
+            conf,
             stagnation_window,
             rng: rng::seeded(seed),
         }
@@ -240,7 +237,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for SimulatedAnnealing<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,

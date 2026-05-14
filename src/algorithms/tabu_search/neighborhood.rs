@@ -4,11 +4,11 @@ use rand_distr::{Cauchy, Distribution, Normal};
 use std::marker::PhantomData;
 
 use super::config::NeighborhoodStrategy;
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 
 pub enum NeighborhoodGenerator<T, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,
@@ -22,7 +22,7 @@ where
 
 impl<T, D> NeighborhoodGenerator<T, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,
@@ -68,7 +68,7 @@ impl UniformNeighborhood {
 
     fn generate_neighbor<T, D>(&self, current: &OVector<T, D>, rng: &mut impl Rng) -> OVector<T, D>
     where
-        T: FloatNum + Send + Sync,
+        T: FloatNumber + Send + Sync,
         D: Dim,
         OVector<T, D>: Send + Sync,
         DefaultAllocator: Allocator<D>,
@@ -98,7 +98,7 @@ impl GaussianNeighborhood {
 
     fn generate_neighbor<T, D>(&self, current: &OVector<T, D>, rng: &mut impl Rng) -> OVector<T, D>
     where
-        T: FloatNum + Send + Sync,
+        T: FloatNumber + Send + Sync,
         D: Dim,
         OVector<T, D>: Send + Sync,
         DefaultAllocator: Allocator<D>,
@@ -131,7 +131,7 @@ impl CauchyNeighborhood {
 
     fn generate_neighbor<T, D>(&self, current: &OVector<T, D>, rng: &mut impl Rng) -> OVector<T, D>
     where
-        T: FloatNum + Send + Sync,
+        T: FloatNumber + Send + Sync,
         D: Dim,
         OVector<T, D>: Send + Sync,
         DefaultAllocator: Allocator<D>,
@@ -171,7 +171,7 @@ impl AdaptiveNeighborhood {
 
     fn generate_neighbor<T, D>(&self, current: &OVector<T, D>, rng: &mut impl Rng) -> OVector<T, D>
     where
-        T: FloatNum + Send + Sync,
+        T: FloatNumber + Send + Sync,
         D: Dim,
         OVector<T, D>: Send + Sync,
         DefaultAllocator: Allocator<D>,
@@ -203,7 +203,7 @@ pub fn create_neighborhood_generator<T, D>(
     strategy: &NeighborhoodStrategy,
 ) -> NeighborhoodGenerator<T, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,

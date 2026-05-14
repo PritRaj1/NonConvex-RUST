@@ -1,8 +1,8 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
 use std::collections::VecDeque;
 
-use crate::utils::config::{LBFGSConf, LineSearchConf};
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::{LBFGSConf, LineSearchConf, OptConf};
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 
 use crate::algorithms::limited_memory_bfgs::linesearch::{
     BacktrackingLineSearch, GoldenSectionLineSearch, HagerZhangLineSearch, LineSearch,
@@ -11,7 +11,7 @@ use crate::algorithms::limited_memory_bfgs::linesearch::{
 
 pub struct LBFGS<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -51,37 +51,33 @@ where
 
 impl<T, N, D> LBFGS<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
     OMatrix<T, N, D>: Send + Sync,
     DefaultAllocator: Allocator<D> + Allocator<N, D> + Allocator<U1, D> + Allocator<N>,
 {
-    pub fn new(conf: LBFGSConf, init_pop: OMatrix<T, U1, D>, opt_prob: OptProb<T, D>) -> Self {
+    pub fn new(
+        conf: LBFGSConf,
+        init_pop: OMatrix<T, N, D>,
+        opt_prob: OptProb<T, D>,
+        _opt_conf: &OptConf,
+        _seed: u64,
+    ) -> Self {
         let init_x = init_pop.row(0).transpose();
         let best_f = opt_prob.evaluate(&init_x);
-        let n = init_x.len();
+        let feasible = opt_prob.is_feasible(&init_x);
+        let pop_n = init_pop.nrows();
 
         let linesearch: Box<dyn LineSearch<T, D> + Send + Sync> = match &conf.line_search {
-            LineSearchConf::Backtracking(backtracking_conf) => {
-                Box::new(BacktrackingLineSearch::new(backtracking_conf))
-            }
-            LineSearchConf::StrongWolfe(strong_wolfe_conf) => {
-                Box::new(StrongWolfeLineSearch::new(strong_wolfe_conf))
-            }
-            LineSearchConf::HagerZhang(hager_zhang_conf) => {
-                Box::new(HagerZhangLineSearch::new(hager_zhang_conf))
-            }
-            LineSearchConf::MoreThuente(more_thuente_conf) => {
-                Box::new(MoreThuenteLineSearch::new(more_thuente_conf))
-            }
-            LineSearchConf::GoldenSection(golden_section_conf) => {
-                Box::new(GoldenSectionLineSearch::new(golden_section_conf))
-            }
+            LineSearchConf::Backtracking(c) => Box::new(BacktrackingLineSearch::new(c)),
+            LineSearchConf::StrongWolfe(c) => Box::new(StrongWolfeLineSearch::new(c)),
+            LineSearchConf::HagerZhang(c) => Box::new(HagerZhangLineSearch::new(c)),
+            LineSearchConf::MoreThuente(c) => Box::new(MoreThuenteLineSearch::new(c)),
+            LineSearchConf::GoldenSection(c) => Box::new(GoldenSectionLineSearch::new(c)),
         };
 
-        // Check if problem has bounds
         let lower_bounds = opt_prob.objective.x_lower_bound(&init_x);
         let upper_bounds = opt_prob.objective.x_upper_bound(&init_x);
         let has_bounds = lower_bounds.is_some() || upper_bounds.is_some();
@@ -89,25 +85,21 @@ where
         let current_scaling_factor = T::cast(conf.advanced.numerical_safeguards.scaling_factor);
 
         Self {
-            conf: conf.clone(),
-            opt_prob: opt_prob.clone(),
             x: init_x.clone(),
             st: State {
-                best_x: init_x.clone(),
+                best_x: init_x,
                 best_f,
-                pop: OMatrix::<T, N, D>::from_fn_generic(
-                    N::from_usize(1),
-                    D::from_usize(n),
-                    |_, j| init_x.clone()[j],
-                ),
-                fitness: OVector::<T, N>::from_element_generic(N::from_usize(1), U1, best_f),
+                pop: init_pop,
+                fitness: OVector::<T, N>::from_element_generic(N::from_usize(pop_n), U1, best_f),
                 constraints: OVector::<bool, N>::from_element_generic(
-                    N::from_usize(1),
+                    N::from_usize(pop_n),
                     U1,
-                    opt_prob.is_feasible(&init_x.clone()),
+                    feasible,
                 ),
                 iter: 1,
             },
+            opt_prob,
+            conf: conf.clone(),
             linesearch,
             s: Vec::with_capacity(current_memory_size),
             y: Vec::with_capacity(current_memory_size),
@@ -491,7 +483,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for LBFGS<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,

@@ -3,10 +3,10 @@ use rand::{rngs::StdRng, Rng};
 use rand_distr::{Distribution, Normal};
 use std::marker::PhantomData;
 
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 use crate::utils::rng;
 
-pub trait MutationOperator<T: FloatNum, D: Dim>
+pub trait MutationOperator<T: FloatNumber, D: Dim>
 where
     DefaultAllocator: Allocator<D>,
 {
@@ -19,7 +19,7 @@ where
 }
 
 #[derive(Clone)]
-pub enum MutationOperatorEnum<T: FloatNum, D: Dim>
+pub enum MutationOperatorEnum<T: FloatNumber, D: Dim>
 where
     DefaultAllocator: Allocator<D>,
 {
@@ -29,7 +29,7 @@ where
     Polynomial(Polynomial, PhantomData<(T, D)>),
 }
 
-impl<T: FloatNum, D: Dim> MutationOperator<T, D> for MutationOperatorEnum<T, D>
+impl<T: FloatNumber, D: Dim> MutationOperator<T, D> for MutationOperatorEnum<T, D>
 where
     DefaultAllocator: Allocator<D>,
     OVector<T, D>: Send + Sync,
@@ -68,7 +68,7 @@ impl Gaussian {
 
 impl<T, D> MutationOperator<T, D> for Gaussian
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,
@@ -109,7 +109,7 @@ impl Uniform {
 
 impl<T, D> MutationOperator<T, D> for Uniform
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,
@@ -155,7 +155,7 @@ impl NonUniform {
 
 impl<T, D> MutationOperator<T, D> for NonUniform
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,
@@ -213,7 +213,7 @@ impl Polynomial {
 
 impl<T, D> MutationOperator<T, D> for Polynomial
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,

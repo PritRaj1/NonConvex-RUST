@@ -5,6 +5,7 @@ use nalgebra::{DMatrix, DVector};
 use rand::{rngs::StdRng, SeedableRng};
 
 use non_convex_opt::algorithms::multi_swarm::{Particle, Swarm, SwarmConfig, MSPO};
+use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
     opt_prob::{OptProb, OptimizationAlgorithm},
@@ -153,7 +154,16 @@ fn test_mspo() {
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut mspo = MSPO::new(mspo_conf, init_pop, opt_prob, 100, 42);
+    let mut mspo = MSPO::new(
+        mspo_conf,
+        init_pop,
+        opt_prob,
+        &OptConf {
+            max_iter: 100,
+            ..OptConf::default()
+        },
+        42,
+    );
     let initial_fitness = mspo.st.best_f;
 
     for _ in 0..100 {

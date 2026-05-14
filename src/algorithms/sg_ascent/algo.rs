@@ -2,13 +2,13 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1
 use rand::rngs::StdRng;
 use rand_distr::{Distribution, Normal};
 
-use crate::utils::config::SGAConf;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::{OptConf, SGAConf};
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
 
 pub struct SGAscent<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -26,7 +26,7 @@ where
 
 impl<T, N, D> SGAscent<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -35,35 +35,34 @@ where
 {
     pub fn new(
         conf: SGAConf,
-        init_pop: OMatrix<T, U1, D>,
+        init_pop: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
+        _opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
-        let init_x: OVector<T, D> = init_pop.row(0).transpose().into_owned();
+        let init_x = init_pop.row(0).transpose();
         let best_f = opt_prob.evaluate(&init_x);
+        let feasible = opt_prob.is_feasible(&init_x);
         let learning_rate = conf.learning_rate;
         let n = init_x.len();
+        let pop_n = init_pop.nrows();
 
         Self {
-            conf: conf.clone(),
-            opt_prob: opt_prob.clone(),
+            conf,
             x: init_x.clone(),
             st: State {
-                best_x: init_x.clone(),
+                best_x: init_x,
                 best_f,
-                pop: OMatrix::<T, N, D>::from_fn_generic(
-                    N::from_usize(1),
-                    D::from_usize(n),
-                    |_, j| init_x.clone()[j],
-                ),
-                fitness: OVector::<T, N>::from_element_generic(N::from_usize(1), U1, best_f),
+                pop: init_pop,
+                fitness: OVector::<T, N>::from_element_generic(N::from_usize(pop_n), U1, best_f),
                 constraints: OVector::<bool, N>::from_element_generic(
-                    N::from_usize(1),
+                    N::from_usize(pop_n),
                     U1,
-                    opt_prob.is_feasible(&init_x.clone()),
+                    feasible,
                 ),
                 iter: 1,
             },
+            opt_prob,
             velocity: OVector::zeros_generic(D::from_usize(n), U1),
             current_noise_std: learning_rate,
             rng: rng::seeded(seed),
@@ -73,7 +72,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for SGAscent<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,

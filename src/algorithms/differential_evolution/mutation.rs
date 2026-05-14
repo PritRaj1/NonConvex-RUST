@@ -1,11 +1,11 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector};
 use rand::{rngs::StdRng, Rng};
 
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 
 pub trait MutationStrategy<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -53,7 +53,7 @@ fn crossover<T, D>(
     rng: &mut StdRng,
 ) -> OVector<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,
@@ -72,7 +72,7 @@ where
 
 impl<T, N, D> MutationStrategy<T, N, D> for Rand1Bin
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -101,7 +101,7 @@ where
 
 impl<T, N, D> MutationStrategy<T, N, D> for Best1Bin
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -130,7 +130,7 @@ where
 
 impl<T, N, D> MutationStrategy<T, N, D> for RandToBest1Bin
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -160,7 +160,7 @@ where
 
 impl<T, N, D> MutationStrategy<T, N, D> for Best2Bin
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -191,7 +191,7 @@ where
 
 impl<T, N, D> MutationStrategy<T, N, D> for Rand2Bin
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,

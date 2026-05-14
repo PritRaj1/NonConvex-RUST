@@ -8,6 +8,7 @@ use non_convex_opt::algorithms::nelder_mead::{
     AdvancedConf, CoefficientBounds, CommonConf, NelderMeadConf, RestartStrategy,
     StagnationDetection,
 };
+use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::opt_prob::OptProb;
 
 #[test]
@@ -53,7 +54,13 @@ fn test_nm_new() {
     let constraints = QuadraticConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let nm = NelderMead::new(conf, init_simplex.clone(), opt_prob, 42);
+    let nm = NelderMead::new(
+        conf,
+        init_simplex.clone(),
+        opt_prob,
+        &OptConf::default(),
+        42,
+    );
 
     assert_eq!(nm.simplex.len(), 3);
     for i in 0..3 {
@@ -104,7 +111,7 @@ fn test_nm_centroid() {
     let constraints = QuadraticConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let nm = NelderMead::new(conf, init_simplex, opt_prob, 42);
+    let nm = NelderMead::new(conf, init_simplex, opt_prob, &OptConf::default(), 42);
 
     // Calculate centroid manually for comparison
     let mut expected_centroid = DVector::zeros(2);

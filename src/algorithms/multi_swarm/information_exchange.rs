@@ -1,12 +1,12 @@
 use crate::algorithms::multi_swarm::swarm::Swarm;
 use crate::utils::config::MSPOConf;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber, OptProb};
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, U1};
 use std::cmp::Ordering::Equal;
 
 pub struct InformationExchange<T, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim + Send + Sync,
     DefaultAllocator: Allocator<D> + Allocator<U1, D>,
 {
@@ -16,7 +16,7 @@ where
 
 impl<T, D> InformationExchange<T, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim + Send + Sync,
     DefaultAllocator: Allocator<D> + Allocator<U1, D>,
 {

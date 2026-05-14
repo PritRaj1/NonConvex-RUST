@@ -1,6 +1,6 @@
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 
-pub trait CoolingSchedule<T: FloatNum> {
+pub trait CoolingSchedule<T: FloatNumber> {
     fn temperature(&self, initial_temp: T, iteration: usize, cooling_rate: T) -> T;
     fn reheat(&self, initial_temp: T) -> T;
     fn adaptive_temperature(
@@ -14,7 +14,7 @@ pub trait CoolingSchedule<T: FloatNum> {
 
 pub struct ExponentialCooling;
 
-impl<T: FloatNum> CoolingSchedule<T> for ExponentialCooling {
+impl<T: FloatNumber> CoolingSchedule<T> for ExponentialCooling {
     fn temperature(&self, initial_temp: T, iteration: usize, cooling_rate: T) -> T {
         initial_temp * cooling_rate.powi(iteration as i32)
     }
@@ -43,7 +43,7 @@ impl<T: FloatNum> CoolingSchedule<T> for ExponentialCooling {
 
 pub struct LogarithmicCooling;
 
-impl<T: FloatNum> CoolingSchedule<T> for LogarithmicCooling {
+impl<T: FloatNumber> CoolingSchedule<T> for LogarithmicCooling {
     fn temperature(&self, initial_temp: T, iteration: usize, _cooling_rate: T) -> T {
         initial_temp / T::cast(1.0 + (iteration as f64).ln())
     }
@@ -72,7 +72,7 @@ impl<T: FloatNum> CoolingSchedule<T> for LogarithmicCooling {
 
 pub struct CauchyCooling;
 
-impl<T: FloatNum> CoolingSchedule<T> for CauchyCooling {
+impl<T: FloatNumber> CoolingSchedule<T> for CauchyCooling {
     fn temperature(&self, initial_temp: T, iteration: usize, _cooling_rate: T) -> T {
         initial_temp / T::cast(1.0 + iteration as f64)
     }
@@ -102,7 +102,7 @@ impl<T: FloatNum> CoolingSchedule<T> for CauchyCooling {
 pub struct AdaptiveCooling;
 
 // Start with exponential, then adapt based on iter
-impl<T: FloatNum> CoolingSchedule<T> for AdaptiveCooling {
+impl<T: FloatNumber> CoolingSchedule<T> for AdaptiveCooling {
     fn temperature(&self, initial_temp: T, iteration: usize, cooling_rate: T) -> T {
         if iteration < 100 {
             initial_temp * cooling_rate.powi(iteration as i32)

@@ -1,4 +1,4 @@
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber, OptProb};
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
 use rayon::prelude::*;
 
@@ -11,7 +11,7 @@ pub fn evaluate_samples<T, D>(
     sigma: T,
 ) -> Vec<(OVector<T, D>, T, bool)>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     OMatrix<T, D, D>: Send + Sync,
@@ -42,7 +42,7 @@ where
         .collect()
 }
 
-pub fn update_arrays<T: FloatNum, N: Dim, D: Dim>(
+pub fn update_arrays<T: FloatNumber, N: Dim, D: Dim>(
     population: &mut OMatrix<T, N, D>,
     fitness: &mut OVector<T, N>,
     constraints: &mut OVector<bool, N>,
@@ -63,7 +63,7 @@ pub fn sort<T, N>(
     lambda: usize,
 ) -> Vec<usize>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     OVector<T, N>: Send + Sync,
     DefaultAllocator: Allocator<N>,

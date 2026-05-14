@@ -17,12 +17,12 @@ use crate::algorithms::parallel_tempering::{
     swap_manager::SwapManager,
     temperature::PowerLawScheduler,
 };
-use crate::utils::config::{PTConf, SwapConf};
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::{OptConf, PTConf, SwapConf};
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 
 pub struct PT<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync + Sum,
+    T: FloatNumber + RealField + Send + Sync + Sum,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,
@@ -55,7 +55,7 @@ where
 
 impl<T, N, D> PT<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync + Sum,
+    T: FloatNumber + RealField + Send + Sync + Sum,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,
@@ -74,9 +74,10 @@ where
         conf: PTConf,
         init_pop: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
-        max_iter: usize,
+        opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
+        let max_iter = opt_conf.max_iter;
         assert!(
             conf.common.num_replicas > 0,
             "Number of replicas must be positive"
@@ -305,7 +306,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for PT<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync + Sum,
+    T: FloatNumber + RealField + Send + Sync + Sum,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,
@@ -340,7 +341,7 @@ where
                         let x_old = self.replicas[replica_idx].population.row(j).transpose();
                         let mut local_mh = self.metropolis_hastings.clone();
                         let x_new = if matches!(local_mh.move_type, crate::algorithms::parallel_tempering::metropolis_hastings::MoveType::PCN) {
-                            let variance_param = T::cast(1.0) / ComplexField::sqrt(T::from_usize(self.st.iter).unwrap() + T::cast(1.0));
+                            let variance_param = T::one() / ComplexField::sqrt(T::from_usize(self.st.iter).unwrap() + T::one());
                             local_mh.local_move_pcn_with_variance(
                                 &x_old,
                                 &self.covariance_matrices[replica_idx],

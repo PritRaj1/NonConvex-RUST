@@ -5,13 +5,13 @@ use rand_distr::{Distribution, Normal};
 use rayon::prelude::*;
 use std::iter::Sum;
 
-use crate::utils::config::CEMConf;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::{CEMConf, OptConf};
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
 
 pub struct CEM<T, N, D>
 where
-    T: FloatNum + Send + Sync + nalgebra::ComplexField,
+    T: FloatNumber + Send + Sync + nalgebra::ComplexField,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -44,7 +44,7 @@ where
 
 impl<T, N, D> CEM<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync + Sum,
+    T: FloatNumber + RealField + Send + Sync + Sum,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -58,9 +58,10 @@ where
         conf: CEMConf,
         init_pop: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
-        stagnation_window: usize,
+        opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
+        let stagnation_window = opt_conf.stagnation_window;
         let n = init_pop.ncols();
         let population_size = init_pop.nrows();
 
@@ -453,7 +454,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for CEM<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync + Sum,
+    T: FloatNumber + RealField + Send + Sync + Sum,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,

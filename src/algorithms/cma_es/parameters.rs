@@ -1,12 +1,12 @@
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, Dyn, OVector, U1};
 
 use crate::utils::config::CMAESConf;
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 
 #[derive(Clone)]
 pub struct Parameters<T>
 where
-    T: FloatNum,
+    T: FloatNumber,
     OVector<T, Dyn>: Send + Sync,
     DefaultAllocator: Allocator<Dyn>,
 {
@@ -25,7 +25,7 @@ where
     pub chi_n: T,
 }
 
-impl<T: FloatNum> Parameters<T> {
+impl<T: FloatNumber> Parameters<T> {
     pub fn new<D: Dim>(conf: &CMAESConf, init_x: &OVector<T, D>, pop_size: usize) -> Self
     where
         T: Send + Sync,

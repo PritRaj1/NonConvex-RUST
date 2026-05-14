@@ -2,11 +2,11 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, Re
 
 use std::iter::Sum;
 
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 
 pub trait Preconditioner<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync + Sum,
+    T: FloatNumber + RealField + Send + Sync + Sum,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     DefaultAllocator: Allocator<D> + Allocator<N, D> + Allocator<D, D> + Allocator<N>,
@@ -24,7 +24,7 @@ where
 /// Uses empirical covariance of the population
 pub struct SampleCovariance<T, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
@@ -34,7 +34,7 @@ where
 
 impl<T, D> SampleCovariance<T, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
@@ -48,7 +48,7 @@ where
 
 impl<T, N, D> Preconditioner<T, N, D> for SampleCovariance<T, D>
 where
-    T: FloatNum + RealField + Send + Sync + Sum,
+    T: FloatNumber + RealField + Send + Sync + Sum,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     DefaultAllocator:
@@ -106,7 +106,7 @@ where
 /// Weights individuals by their fitness
 pub struct FitnessWeightedCovariance<T, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
@@ -117,17 +117,14 @@ where
 
 impl<T, D> FitnessWeightedCovariance<T, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
     pub fn new(regularization: T, elite_fraction: T) -> Self {
         Self {
             regularization,
-            elite_fraction: RealField::max(
-                RealField::min(elite_fraction, T::cast(1.0)),
-                T::cast(0.1),
-            ),
+            elite_fraction: RealField::max(RealField::min(elite_fraction, T::one()), T::cast(0.1)),
             _phantom: std::marker::PhantomData,
         }
     }
@@ -135,7 +132,7 @@ where
 
 impl<T, N, D> Preconditioner<T, N, D> for FitnessWeightedCovariance<T, D>
 where
-    T: FloatNum + RealField + Send + Sync + Sum,
+    T: FloatNumber + RealField + Send + Sync + Sum,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     DefaultAllocator:
@@ -203,7 +200,7 @@ where
 /// Adapts based on acceptance rates and iteration
 pub struct AdaptiveCovariance<T, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
@@ -217,7 +214,7 @@ where
 
 impl<T, D> AdaptiveCovariance<T, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
@@ -234,7 +231,7 @@ where
 
     pub fn update_regularization(&mut self, acceptance_rate: T) {
         let rate_diff = acceptance_rate - self.target_acceptance_rate;
-        let adaptation = T::cast(1.0) + self.adaptation_rate * rate_diff;
+        let adaptation = T::one() + self.adaptation_rate * rate_diff;
 
         self.regularization *= adaptation;
         self.regularization = RealField::min(
@@ -246,7 +243,7 @@ where
 
 impl<T, N, D> Preconditioner<T, N, D> for AdaptiveCovariance<T, D>
 where
-    T: FloatNum + RealField + Send + Sync + Sum,
+    T: FloatNumber + RealField + Send + Sync + Sum,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     DefaultAllocator:
@@ -272,7 +269,7 @@ where
 /// Uses Ledoit-Wolf shrinkage estimation
 pub struct ShrinkageCovariance<T, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
@@ -282,15 +279,15 @@ where
 
 impl<T, D> ShrinkageCovariance<T, D>
 where
-    T: FloatNum + RealField,
+    T: FloatNumber + RealField,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
     pub fn new(shrinkage_intensity: T) -> Self {
         Self {
             shrinkage_intensity: RealField::max(
-                RealField::min(shrinkage_intensity, T::cast(1.0)),
-                T::cast(0.0),
+                RealField::min(shrinkage_intensity, T::one()),
+                T::zero(),
             ),
             _phantom: std::marker::PhantomData,
         }
@@ -299,7 +296,7 @@ where
 
 impl<T, N, D> Preconditioner<T, N, D> for ShrinkageCovariance<T, D>
 where
-    T: FloatNum + RealField + Send + Sync + Sum,
+    T: FloatNumber + RealField + Send + Sync + Sum,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     DefaultAllocator:
@@ -324,7 +321,7 @@ where
         let identity = OMatrix::<T, D, D>::identity_generic(D::from_usize(dim), D::from_usize(dim))
             * target_variance;
 
-        let one_minus_shrinkage = T::cast(1.0) - self.shrinkage_intensity;
+        let one_minus_shrinkage = T::one() - self.shrinkage_intensity;
         sample_cov * one_minus_shrinkage + identity * self.shrinkage_intensity
     }
 

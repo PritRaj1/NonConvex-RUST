@@ -4,6 +4,7 @@ use common::fcns::{QuadraticConstraints, QuadraticObjective};
 use nalgebra::{SMatrix, U1, U2};
 
 use non_convex_opt::algorithms::sg_ascent::SGAscent;
+use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::SGAConf,
     opt_prob::{OptProb, OptimizationAlgorithm},
@@ -24,7 +25,8 @@ fn test_sga() {
     let constraints = QuadraticConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut sga: SGAscent<f64, U1, U2> = SGAscent::new(conf, init_x, opt_prob, 42);
+    let mut sga: SGAscent<f64, U1, U2> =
+        SGAscent::new(conf, init_x, opt_prob, &OptConf::default(), 42);
     let initial_fitness = sga.st.best_f;
 
     for _ in 0..50 {

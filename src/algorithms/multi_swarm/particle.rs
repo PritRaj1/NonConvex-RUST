@@ -1,10 +1,10 @@
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber, OptProb};
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector, U1};
 use rand::{rngs::StdRng, Rng};
 
 pub struct Particle<T, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim + Send + Sync,
     DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
 {
@@ -19,7 +19,7 @@ where
 
 impl<T, D> Particle<T, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim + Send + Sync,
     DefaultAllocator: Allocator<D> + Allocator<U1, D> + Allocator<U1>,
 {

@@ -1,9 +1,9 @@
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, DimSub, OMatrix, OVector, RealField};
 
 pub struct Statistics<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync,
+    T: FloatNumber + RealField + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,
@@ -22,7 +22,7 @@ where
 
 impl<T, N, D> Statistics<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync,
+    T: FloatNumber + RealField + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,

@@ -5,13 +5,13 @@ use std::cmp::Ordering::{Equal, Greater, Less};
 use std::collections::VecDeque;
 
 use super::config::RestartStrategy;
-use crate::utils::config::NelderMeadConf;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::{NelderMeadConf, OptConf};
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
 
 pub struct NelderMead<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<N, D> + Allocator<N>,
@@ -36,7 +36,7 @@ where
 
 impl<T, N, D> NelderMead<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -46,6 +46,7 @@ where
         conf: NelderMeadConf,
         init_x: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
+        _opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
         let n: usize = init_x.ncols();
@@ -453,7 +454,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for NelderMead<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,

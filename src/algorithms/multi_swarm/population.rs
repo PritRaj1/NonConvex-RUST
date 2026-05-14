@@ -1,11 +1,11 @@
 use crate::algorithms::multi_swarm::swarm::Swarm;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, State};
+use crate::utils::opt_prob::{FloatNumber, OptProb, State};
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1};
 use rayon::prelude::*;
 
 pub fn get_population<T, N, D>(swarms: &[Swarm<T, D>]) -> OMatrix<T, N, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -45,7 +45,7 @@ pub fn update_population_state<T, N, D>(
     swarms: &[Swarm<T, D>],
     opt_prob: &OptProb<T, D>,
 ) where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -76,7 +76,7 @@ pub fn find_best_solution<T, N, D>(
     opt_prob: &OptProb<T, D>,
 ) -> (OVector<T, D>, T)
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,

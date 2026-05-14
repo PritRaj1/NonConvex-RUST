@@ -6,6 +6,7 @@ use nalgebra::{SMatrix, U1, U2};
 use non_convex_opt::algorithms::simulated_annealing::{
     AdvancedConf, CoolingScheduleType, RestartStrategy, SAConf, SimulatedAnnealing,
 };
+use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
 
 #[test]
@@ -36,8 +37,16 @@ fn test_sa() {
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut sa: SimulatedAnnealing<f64, U1, U2> =
-        SimulatedAnnealing::new(conf, init_x, opt_prob, 50, 42);
+    let mut sa: SimulatedAnnealing<f64, U1, U2> = SimulatedAnnealing::new(
+        conf,
+        init_x,
+        opt_prob,
+        &OptConf {
+            stagnation_window: 50,
+            ..OptConf::default()
+        },
+        42,
+    );
     let initial_fitness = sa.st.best_f;
 
     for _ in 0..100 {
@@ -76,8 +85,16 @@ fn test_sa_cooling() {
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut sa: SimulatedAnnealing<f64, U1, U2> =
-        SimulatedAnnealing::new(conf, init_x, opt_prob, 50, 42);
+    let mut sa: SimulatedAnnealing<f64, U1, U2> = SimulatedAnnealing::new(
+        conf,
+        init_x,
+        opt_prob,
+        &OptConf {
+            stagnation_window: 50,
+            ..OptConf::default()
+        },
+        42,
+    );
     let initial_temp = sa.temperature;
 
     for _ in 0..5 {
@@ -119,8 +136,16 @@ fn test_sa_neighbor_generation() {
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut sa: SimulatedAnnealing<f64, U1, U2> =
-        SimulatedAnnealing::new(conf, init_x, opt_prob, 50, 42);
+    let mut sa: SimulatedAnnealing<f64, U1, U2> = SimulatedAnnealing::new(
+        conf,
+        init_x,
+        opt_prob,
+        &OptConf {
+            stagnation_window: 50,
+            ..OptConf::default()
+        },
+        42,
+    );
 
     sa.step();
     assert!(sa.st.best_x.iter().all(|&x| (-5.0..=5.0).contains(&x)));
@@ -154,8 +179,16 @@ fn test_sa_with_constraints() {
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut sa: SimulatedAnnealing<f64, U1, U2> =
-        SimulatedAnnealing::new(conf, init_x, opt_prob, 50, 42);
+    let mut sa: SimulatedAnnealing<f64, U1, U2> = SimulatedAnnealing::new(
+        conf,
+        init_x,
+        opt_prob,
+        &OptConf {
+            stagnation_window: 50,
+            ..OptConf::default()
+        },
+        42,
+    );
 
     for _ in 0..10 {
         sa.step();
@@ -191,8 +224,16 @@ fn test_sa_acceptance() {
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut sa: SimulatedAnnealing<f64, U1, U2> =
-        SimulatedAnnealing::new(conf, init_x, opt_prob, 50, 42);
+    let mut sa: SimulatedAnnealing<f64, U1, U2> = SimulatedAnnealing::new(
+        conf,
+        init_x,
+        opt_prob,
+        &OptConf {
+            stagnation_window: 50,
+            ..OptConf::default()
+        },
+        42,
+    );
     let initial_x = sa.st.best_x;
 
     sa.step();

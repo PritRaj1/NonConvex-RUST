@@ -3,6 +3,7 @@ mod common;
 use common::fcns::{RosenbrockConstraints, RosenbrockObjective};
 use nalgebra::{OMatrix, OVector, U1, U10, U2, U5};
 
+use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
     opt_prob::{OptProb, OptimizationAlgorithm},
@@ -106,7 +107,16 @@ fn test_adaptive_parameters() {
     let obj_f = RosenbrockObjective { a: 1.0, b: 1.0 };
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
-    let mut cga = CGA::new(cga_conf, init_pop, opt_prob, 10, 42);
+    let mut cga = CGA::new(
+        cga_conf,
+        init_pop,
+        opt_prob,
+        &OptConf {
+            max_iter: 10,
+            ..OptConf::default()
+        },
+        42,
+    );
 
     // Run some steps to trigger adaptation
     for _ in 0..10 {
@@ -143,7 +153,16 @@ fn test_cga() {
     let obj_f = RosenbrockObjective { a: 1.0, b: 1.0 };
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
-    let mut cga = CGA::new(cga_conf, init_pop, opt_prob, 5, 42);
+    let mut cga = CGA::new(
+        cga_conf,
+        init_pop,
+        opt_prob,
+        &OptConf {
+            max_iter: 5,
+            ..OptConf::default()
+        },
+        42,
+    );
 
     for _ in 0..5 {
         cga.step();

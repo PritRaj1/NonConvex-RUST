@@ -1,9 +1,9 @@
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber, OptProb};
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector, U1};
 
 pub struct BoundsCache<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D>,
 {
@@ -14,7 +14,7 @@ where
 
 impl<T, D> BoundsCache<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D>,
 {

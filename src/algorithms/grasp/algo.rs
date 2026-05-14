@@ -2,13 +2,13 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OMatrix, OVector, U1
 use rand::{rngs::StdRng, Rng};
 use rayon::prelude::*;
 
-use crate::utils::config::GRASPConf;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::{GRASPConf, OptConf};
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 use crate::utils::rng;
 
 pub struct GRASP<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, D>: Send + Sync,
@@ -28,7 +28,7 @@ where
 
 impl<T, N, D> GRASP<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<bool, N>: Send + Sync,
@@ -39,18 +39,21 @@ where
 {
     pub fn new(
         conf: GRASPConf,
-        init_pop: OMatrix<T, U1, D>,
+        init_pop: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
+        _opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
         let init_x = init_pop.row(0).transpose();
         let best_f = opt_prob.evaluate(&init_x);
-        let n = init_x.len();
+        let feasible = opt_prob.is_feasible(&init_x);
+        let pop_n = init_pop.nrows();
 
         let (cached_lower_bounds, cached_upper_bounds) = if conf.cache_bounds {
-            let lb = opt_prob.objective.x_lower_bound(&init_x);
-            let ub = opt_prob.objective.x_upper_bound(&init_x);
-            (lb, ub)
+            (
+                opt_prob.objective.x_lower_bound(&init_x),
+                opt_prob.objective.x_upper_bound(&init_x),
+            )
         } else {
             (None, None)
         };
@@ -58,18 +61,14 @@ where
         Self {
             conf,
             st: State {
-                best_x: init_x.clone(),
+                best_x: init_x,
                 best_f,
-                pop: OMatrix::<T, N, D>::from_fn_generic(
-                    N::from_usize(1),
-                    D::from_usize(n),
-                    |_, j| init_x.clone()[j],
-                ),
-                fitness: OVector::<T, N>::from_element_generic(N::from_usize(1), U1, best_f),
+                pop: init_pop,
+                fitness: OVector::<T, N>::from_element_generic(N::from_usize(pop_n), U1, best_f),
                 constraints: OVector::<bool, N>::from_element_generic(
-                    N::from_usize(1),
+                    N::from_usize(pop_n),
                     U1,
-                    opt_prob.is_feasible(&init_x.clone()),
+                    feasible,
                 ),
                 iter: 1,
             },
@@ -307,7 +306,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for GRASP<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<bool, N>: Send + Sync,

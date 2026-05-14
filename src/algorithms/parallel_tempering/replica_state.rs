@@ -1,4 +1,4 @@
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb};
+use crate::utils::opt_prob::{FloatNumber, OptProb};
 use nalgebra::{
     allocator::Allocator, DefaultAllocator, Dim, DimSub, OMatrix, OVector, RealField, U1,
 };
@@ -7,7 +7,7 @@ use rayon::prelude::*;
 /// Manages the state of a single replica in parallel tempering
 pub struct ReplicaState<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync,
+    T: FloatNumber + RealField + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,
@@ -31,7 +31,7 @@ where
 
 impl<T, N, D> ReplicaState<T, N, D>
 where
-    T: FloatNum + RealField + Send + Sync,
+    T: FloatNumber + RealField + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync + DimSub<nalgebra::Const<1>>,
     OVector<T, D>: Send + Sync,

@@ -23,8 +23,6 @@ pub use utils::opt_prob::{
     State,
 };
 
-use FloatNumber as FloatNum;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConvergenceReason {
     AbsoluteTolerance,
@@ -34,7 +32,7 @@ pub enum ConvergenceReason {
 
 pub struct NonConvexOpt<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<bool, N>: Send + Sync,
@@ -61,7 +59,7 @@ where
 
 impl<T, N, D> NonConvexOpt<T, N, D>
 where
-    T: FloatNum + nalgebra::RealField + std::iter::Sum,
+    T: FloatNumber + nalgebra::RealField + std::iter::Sum,
     N: Dim,
     D: Dim + nalgebra::DimSub<nalgebra::Const<1>>,
     OVector<bool, N>: Send + Sync,
@@ -92,65 +90,22 @@ where
     ) -> Self {
         let opt_prob = OptProb::new(Box::new(obj_f), constr_f.map(|c| Box::new(c) as _));
 
+        let oc = &conf.opt_conf;
         let alg: Box<dyn OptimizationAlgorithm<T, N, D>> = match conf.alg_conf {
-            AlgConf::CGA(c) => Box::new(CGA::new(
-                c,
-                init_pop,
-                opt_prob,
-                conf.opt_conf.max_iter,
-                seed,
-            )),
-            AlgConf::PT(c) => {
-                Box::new(PT::new(c, init_pop, opt_prob, conf.opt_conf.max_iter, seed))
-            }
-            AlgConf::TS(c) => Box::new(TabuSearch::new(
-                c,
-                init_pop.row(0).into_owned(),
-                opt_prob,
-                seed,
-            )),
-            AlgConf::Adam(c) => Box::new(Adam::new(c, init_pop.row(0).into_owned(), opt_prob)),
-            AlgConf::GRASP(c) => {
-                Box::new(GRASP::new(c, init_pop.row(0).into_owned(), opt_prob, seed))
-            }
-            AlgConf::SGA(c) => Box::new(SGAscent::new(
-                c,
-                init_pop.row(0).into_owned(),
-                opt_prob,
-                seed,
-            )),
-            AlgConf::NM(c) => Box::new(NelderMead::new(c, init_pop, opt_prob, seed)),
-            AlgConf::LBFGS(c) => Box::new(LBFGS::new(c, init_pop.row(0).into_owned(), opt_prob)),
-            AlgConf::MSPO(c) => Box::new(MSPO::new(
-                c,
-                init_pop,
-                opt_prob,
-                conf.opt_conf.max_iter,
-                seed,
-            )),
-            AlgConf::SA(c) => Box::new(SimulatedAnnealing::new(
-                c,
-                init_pop.row(0).into_owned(),
-                opt_prob,
-                conf.opt_conf.stagnation_window,
-                seed,
-            )),
-            AlgConf::DE(c) => Box::new(DE::new(c, init_pop, opt_prob, seed)),
-            AlgConf::CMAES(c) => Box::new(CMAES::new(c, init_pop, opt_prob, seed)),
-            AlgConf::TPE(c) => Box::new(TPE::new(
-                c,
-                init_pop,
-                opt_prob,
-                conf.opt_conf.stagnation_window,
-                seed,
-            )),
-            AlgConf::CEM(c) => Box::new(CEM::new(
-                c,
-                init_pop,
-                opt_prob,
-                conf.opt_conf.stagnation_window,
-                seed,
-            )),
+            AlgConf::Adam(c) => Box::new(Adam::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::CEM(c) => Box::new(CEM::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::CGA(c) => Box::new(CGA::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::CMAES(c) => Box::new(CMAES::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::DE(c) => Box::new(DE::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::GRASP(c) => Box::new(GRASP::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::LBFGS(c) => Box::new(LBFGS::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::MSPO(c) => Box::new(MSPO::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::NM(c) => Box::new(NelderMead::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::PT(c) => Box::new(PT::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::SA(c) => Box::new(SimulatedAnnealing::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::SGA(c) => Box::new(SGAscent::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::TPE(c) => Box::new(TPE::new(c, init_pop, opt_prob, oc, seed)),
+            AlgConf::TS(c) => Box::new(TabuSearch::new(c, init_pop, opt_prob, oc, seed)),
         };
 
         Self {

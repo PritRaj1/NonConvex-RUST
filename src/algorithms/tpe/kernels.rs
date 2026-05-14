@@ -1,5 +1,5 @@
 use super::config::{BandwidthConf, BandwidthMethod};
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, OVector};
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +11,7 @@ pub enum KernelType {
 }
 
 impl KernelType {
-    pub fn evaluate<T: FloatNum>(&self, x: T, bandwidth: T) -> T {
+    pub fn evaluate<T: FloatNumber>(&self, x: T, bandwidth: T) -> T {
         match self {
             KernelType::Gaussian => {
                 let z = x / bandwidth;
@@ -49,7 +49,7 @@ pub fn create_kernel(kernel_type: &str) -> KernelType {
     }
 }
 
-pub struct KernelDensityEstimator<T: FloatNum, D: Dim>
+pub struct KernelDensityEstimator<T: FloatNumber, D: Dim>
 where
     DefaultAllocator: Allocator<D>,
 {
@@ -59,7 +59,7 @@ where
     bandwidth_conf: BandwidthConf,
 }
 
-impl<T: FloatNum, D: Dim> KernelDensityEstimator<T, D>
+impl<T: FloatNumber, D: Dim> KernelDensityEstimator<T, D>
 where
     DefaultAllocator: Allocator<D>,
 {
@@ -126,7 +126,7 @@ where
                 let default_bandwidth = if !self.bandwidths.is_empty() {
                     self.bandwidths[0]
                 } else {
-                    T::cast(1.0)
+                    T::one()
                 };
                 self.bandwidths.extend(vec![default_bandwidth; new_count]);
             }

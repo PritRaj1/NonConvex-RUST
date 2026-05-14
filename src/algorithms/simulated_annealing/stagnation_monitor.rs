@@ -1,9 +1,9 @@
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 use std::collections::VecDeque;
 
 pub struct SAStagnationMonitor<T>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
 {
     stagnation_counter: usize,
     last_best_fitness: T,
@@ -17,7 +17,7 @@ where
 
 impl<T> SAStagnationMonitor<T>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
 {
     pub fn new(improvement_threshold: T, initial_fitness: T, window_size: usize) -> Self {
         Self {

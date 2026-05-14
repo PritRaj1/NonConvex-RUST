@@ -2,13 +2,13 @@ use nalgebra::{
     allocator::Allocator, DefaultAllocator, Dim, DimSub, Dyn, OMatrix, OVector, RealField, U1,
 };
 
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 
 // Immutable parameters
 #[derive(Debug)]
 pub struct PathUpdateParams<'a, T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     DefaultAllocator: Allocator<D> + Allocator<D, D>,
 {
@@ -25,7 +25,7 @@ where
 
 pub fn compute_y<T, D>(mean: &OVector<T, D>, old_mean: &OVector<T, D>, sigma: T) -> OVector<T, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     DefaultAllocator: Allocator<D>,
@@ -39,7 +39,7 @@ where
 
 pub fn update_paths<T, D>(params: &mut PathUpdateParams<T, D>) -> bool
 where
-    T: FloatNum,
+    T: FloatNumber,
     D: Dim,
     OVector<T, D>: Send + Sync,
     OMatrix<T, D, D>: Send + Sync,
@@ -68,7 +68,7 @@ where
 #[derive(Debug)]
 pub struct CovarianceUpdateParams<'a, T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     DefaultAllocator: Allocator<D, D> + Allocator<D> + Allocator<N, D> + Allocator<U1, D>,
@@ -95,7 +95,7 @@ where
     pub n: usize,
 }
 
-pub fn update_covariance<T: FloatNum + RealField, N: Dim, D>(
+pub fn update_covariance<T: FloatNumber + RealField, N: Dim, D>(
     params: &mut CovarianceUpdateParams<T, N, D>,
 ) where
     D: Dim + DimSub<nalgebra::Const<1>>,

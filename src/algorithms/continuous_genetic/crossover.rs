@@ -2,12 +2,12 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, Dyn, OMatrix, OVecto
 use rand::Rng;
 use rayon::prelude::*;
 
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 use crate::utils::rng;
 
 pub trait CrossoverOperator<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, N>: Send + Sync,
@@ -34,9 +34,9 @@ impl Random {
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> CrossoverOperator<T, N, D> for Random
+impl<T: FloatNumber, N: Dim, D: Dim> CrossoverOperator<T, N, D> for Random
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -119,9 +119,9 @@ impl Heuristic {
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> CrossoverOperator<T, N, D> for Heuristic
+impl<T: FloatNumber, N: Dim, D: Dim> CrossoverOperator<T, N, D> for Heuristic
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -206,9 +206,9 @@ impl SimulatedBinary {
     }
 }
 
-impl<T: FloatNum, N: Dim, D: Dim> CrossoverOperator<T, N, D> for SimulatedBinary
+impl<T: FloatNumber, N: Dim, D: Dim> CrossoverOperator<T, N, D> for SimulatedBinary
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,

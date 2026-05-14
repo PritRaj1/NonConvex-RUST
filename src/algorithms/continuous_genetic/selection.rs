@@ -2,12 +2,12 @@ use nalgebra::{allocator::Allocator, DefaultAllocator, Dim, Dyn, OMatrix, OVecto
 use rand::{rngs::StdRng, Rng};
 use rayon::prelude::*;
 
-use crate::utils::opt_prob::FloatNumber as FloatNum;
+use crate::utils::opt_prob::FloatNumber;
 use crate::utils::rng;
 
 pub trait SelectionOperator<T, N, D>
 where
-    T: FloatNum,
+    T: FloatNumber,
     N: Dim,
     D: Dim,
     OVector<T, N>: Send + Sync,
@@ -41,7 +41,7 @@ impl RouletteWheel {
 
 impl<T, N, D> SelectionOperator<T, N, D> for RouletteWheel
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, N>: Send + Sync,
@@ -131,7 +131,7 @@ impl Tournament {
 
 impl<T, N, D> SelectionOperator<T, N, D> for Tournament
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, N>: Send + Sync,
@@ -218,7 +218,7 @@ impl Residual {
 
 impl<T, N, D> SelectionOperator<T, N, D> for Residual
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, N>: Send + Sync,

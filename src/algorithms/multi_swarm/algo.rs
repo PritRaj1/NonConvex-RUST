@@ -7,12 +7,12 @@ use crate::algorithms::multi_swarm::population::{
 };
 use crate::algorithms::multi_swarm::stagnation_monitor::StagnationMonitor;
 use crate::algorithms::multi_swarm::swarm::{initialize_swarms, Swarm};
-use crate::utils::config::MSPOConf;
-use crate::utils::opt_prob::{FloatNumber as FloatNum, OptProb, OptimizationAlgorithm, State};
+use crate::utils::config::{MSPOConf, OptConf};
+use crate::utils::opt_prob::{FloatNumber, OptProb, OptimizationAlgorithm, State};
 
 pub struct MSPO<T, N, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim + Send + Sync,
     N: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -30,7 +30,7 @@ where
 
 impl<T, N, D> MSPO<T, N, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     D: Dim + Send + Sync,
     N: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,
@@ -46,9 +46,10 @@ where
         conf: MSPOConf,
         init_pop: OMatrix<T, N, D>,
         opt_prob: OptProb<T, D>,
-        max_iter: usize,
+        opt_conf: &OptConf,
         seed: u64,
     ) -> Self {
+        let max_iter = opt_conf.max_iter;
         let dim = init_pop.ncols();
         let total_particles = init_pop.nrows();
         assert!(
@@ -127,7 +128,7 @@ where
 
 impl<T, N, D> OptimizationAlgorithm<T, N, D> for MSPO<T, N, D>
 where
-    T: FloatNum + Send + Sync,
+    T: FloatNumber + Send + Sync,
     N: Dim + Send + Sync,
     D: Dim + Send + Sync,
     OVector<T, D>: Send + Sync,

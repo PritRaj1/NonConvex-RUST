@@ -2,6 +2,7 @@ mod common;
 
 use common::fcns::{RosenbrockConstraints, RosenbrockObjective};
 use nalgebra::DMatrix;
+use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
 
 use non_convex_opt::{algorithms::differential_evolution::DE, utils::config::DEConf};
@@ -35,7 +36,7 @@ fn test_de_basic() {
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut de = DE::new(conf, init_pop.clone(), opt_prob, 42);
+    let mut de = DE::new(conf, init_pop.clone(), opt_prob, &OptConf::default(), 42);
     let initial_fitness = de.st.best_f;
 
     for _ in 0..50 {
@@ -75,7 +76,7 @@ fn test_adaptive_de() {
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
 
-    let mut de = DE::new(conf, init_pop.clone(), opt_prob, 42);
+    let mut de = DE::new(conf, init_pop.clone(), opt_prob, &OptConf::default(), 42);
     let initial_fitness = de.st.best_f;
 
     // Run for more iterations to ensure improvement
