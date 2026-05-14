@@ -24,7 +24,7 @@ where
 {
     pub conf: TabuConf,
     pub opt_prob: OptProb<T, D>,
-    pub x: OVector<T, D>,
+    x: OVector<T, D>,
     pub st: State<T, N, D>,
     tabu_list: TabuList<T, D>,
     neighborhood_generator: NeighborhoodGenerator<T, D>,

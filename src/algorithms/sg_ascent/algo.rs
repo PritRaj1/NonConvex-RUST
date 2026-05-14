@@ -17,7 +17,7 @@ where
 {
     pub conf: SGAConf,
     pub opt_prob: OptProb<T, D>,
-    pub x: OVector<T, D>,
+    x: OVector<T, D>,
     pub st: State<T, N, D>,
     velocity: OVector<T, D>,
     current_noise_std: f64,

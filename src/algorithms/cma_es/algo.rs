@@ -34,30 +34,27 @@ where
     pub opt_prob: OptProb<T, D>,
     pub st: State<T, N, D>,
 
-    // Strategy parameters
-    pub mean: OVector<T, D>,
-    pub pc: OVector<T, D>,        // Evolution path for c_mat
-    pub ps: OVector<T, D>,        // Evolution path for sigma
-    pub c_mat: OMatrix<T, D, D>,  // Covariance matrix
-    pub b_mat: OMatrix<T, D, D>,  // Eigenvectors of c_mat
-    pub d_vec: OVector<T, D>,     // Eigenvalues of c_mat
-    pub sigma: T,                 // Step size
-    pub weights: OVector<T, Dyn>, // Recombination weights
+    mean: OVector<T, D>,
+    pc: OVector<T, D>,
+    ps: OVector<T, D>,
+    c_mat: OMatrix<T, D, D>,
+    b_mat: OMatrix<T, D, D>,
+    d_vec: OVector<T, D>,
+    sigma: T,
+    weights: OVector<T, Dyn>,
+    weights_negative: Option<OVector<T, Dyn>>,
 
-    // Derived values
-    pub mu: usize,                                 // Number of parents < λ
-    pub lambda: usize,                             // Population size
-    pub mu_neg: usize,                             // Number of negative weights for Active CMA-ES
-    pub mueff: T,                                  // Variance effective selection mass
-    pub mueff_neg: T,                              // Effective mass for negative weights
-    pub cc: T,                                     // Time constant for cumulation for c_mat
-    pub cs: T,                                     // Time constant for cumulation for sigma
-    pub c1: T,                                     // Learning rate for rank-one update
-    pub cmu: T,                                    // Learning rate for rank-mu update
-    pub cmu_neg: T,                                // Learning rate for negative weights
-    pub damps: T,                                  // Damping for sigma
-    pub chi_n: T,                                  // Expected norm of N(0,I)
-    pub weights_negative: Option<OVector<T, Dyn>>, // Negative weights for Active CMA-ES
+    mu: usize,
+    lambda: usize,
+    mu_neg: usize,
+    mueff: T,
+    cc: T,
+    cs: T,
+    c1: T,
+    cmu: T,
+    cmu_neg: T,
+    damps: T,
+    chi_n: T,
 
     rng: StdRng,
 }
@@ -157,7 +154,6 @@ where
             lambda: params.lambda,
             mu_neg: params.mu_neg,
             mueff: params.mueff,
-            mueff_neg: params.mueff_neg,
             cc: params.cc,
             cs: params.cs,
             c1: params.c1,

@@ -60,8 +60,4 @@ where
     pub fn update_iteration(&mut self, iter: usize) {
         self.current_iter = iter;
     }
-
-    pub fn num_replicas(&self) -> usize {
-        self.num_replicas
-    }
 }

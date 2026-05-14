@@ -20,9 +20,9 @@ where
 {
     pub conf: LBFGSConf,
     pub opt_prob: OptProb<T, D>,
-    pub x: OVector<T, D>,
+    x: OVector<T, D>,
     pub st: State<T, N, D>,
-    pub linesearch: Box<dyn LineSearch<T, D> + Send + Sync>,
+    linesearch: Box<dyn LineSearch<T, D> + Send + Sync>,
 
     // L-BFGS vectors
     s: Vec<OVector<T, D>>,

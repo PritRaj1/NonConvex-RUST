@@ -38,17 +38,18 @@ where
         + Allocator<<D as DimSub<nalgebra::Const<1>>>::Output>,
 {
     pub conf: PTConf,
-    pub metropolis_hastings: MetropolisHastings<T, D>,
-    pub swap_check: SwapCheck,
-    pub temperature_manager: PowerLawScheduler<T>,
-    pub swap_manager: SwapManager<T, N, D>,
-    pub replicas: Vec<ReplicaState<T, N, D>>,
     pub opt_prob: OptProb<T, D>,
-    pub best_individual: OVector<T, D>,
-    pub best_fitness: T,
-    pub preconditioner: Box<dyn Preconditioner<T, N, D> + Send + Sync>,
-    pub covariance_matrices: Vec<OMatrix<T, D, D>>,
     pub st: State<T, N, D>,
+    pub replicas: Vec<ReplicaState<T, N, D>>,
+    pub covariance_matrices: Vec<OMatrix<T, D, D>>,
+
+    metropolis_hastings: MetropolisHastings<T, D>,
+    swap_check: SwapCheck,
+    temperature_manager: PowerLawScheduler<T>,
+    swap_manager: SwapManager<T, N, D>,
+    best_individual: OVector<T, D>,
+    best_fitness: T,
+    preconditioner: Box<dyn Preconditioner<T, N, D> + Send + Sync>,
     last_covariance_update: usize,
 }
 

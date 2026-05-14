@@ -72,44 +72,6 @@ where
         self.stagnation_counter
     }
 
-    pub fn is_stagnated(&self) -> bool {
-        self.stagnation_counter > self.window_size
-    }
-
-    pub fn get_performance_stats(&self) -> (f64, f64, f64, f64) {
-        let avg_improvement = if self.improvement_history.len() > 5 {
-            self.improvement_history.iter().sum::<f64>() / self.improvement_history.len() as f64
-        } else {
-            0.0
-        };
-
-        let success_rate = if !self.success_history.is_empty() {
-            self.success_history.iter().filter(|&&x| x).count() as f64
-                / self.success_history.len() as f64
-        } else {
-            0.0
-        };
-
-        let stagnation_level = self.stagnation_counter as f64;
-
-        let avg_temperature = if !self.temperature_history.is_empty() {
-            self.temperature_history.iter().sum::<f64>() / self.temperature_history.len() as f64
-        } else {
-            0.0
-        };
-
-        (
-            avg_improvement,
-            success_rate,
-            stagnation_level,
-            avg_temperature,
-        )
-    }
-
-    pub fn should_restart(&self, restart_threshold: usize) -> bool {
-        self.stagnation_counter > restart_threshold
-    }
-
     pub fn get_adaptation_suggestions(&self) -> (f64, f64) {
         let success_rate = if !self.success_history.is_empty() {
             self.success_history.iter().filter(|&&x| x).count() as f64
@@ -141,9 +103,5 @@ where
         };
 
         (temp_factor, step_factor)
-    }
-
-    pub fn last_improvement(&self) -> T {
-        self.last_best_fitness
     }
 }

@@ -22,7 +22,7 @@ where
 {
     pub conf: MSPOConf,
     pub st: State<T, N, D>,
-    pub swarms: Vec<Swarm<T, D>>,
+    swarms: Vec<Swarm<T, D>>,
     pub opt_prob: OptProb<T, D>,
     stagnation_monitor: StagnationMonitor<T>,
     information_exchange: InformationExchange<T, D>,

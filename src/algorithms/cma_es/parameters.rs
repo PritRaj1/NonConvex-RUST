@@ -16,7 +16,6 @@ where
     pub lambda: usize,
     pub mu_neg: usize,
     pub mueff: T,
-    pub mueff_neg: T,
     pub cc: T,
     pub cs: T,
     pub c1: T,
@@ -42,7 +41,7 @@ impl<T: FloatNum> Parameters<T> {
         let mueff = T::one() / weights.map(|w| w * w).sum();
         let n_f = T::cast(n as f64);
 
-        let (weights_negative, mu_neg, mueff_neg, cmu_neg) = if conf.use_active_cma {
+        let (weights_negative, mu_neg, cmu_neg) = if conf.use_active_cma {
             let mu_neg = (T::cast(conf.active_cma_ratio) * T::cast(lambda as f64))
                 .floor()
                 .to_usize()
@@ -52,12 +51,12 @@ impl<T: FloatNum> Parameters<T> {
                 let weights_neg = Self::compute_negative_weights(mu, mu_neg, lambda);
                 let mueff_neg = T::one() / weights_neg.map(|w| w * w).sum();
                 let cmu_neg = Self::compute_negative_learning_rate(mueff_neg, n_f);
-                (Some(weights_neg), mu_neg, mueff_neg, cmu_neg)
+                (Some(weights_neg), mu_neg, cmu_neg)
             } else {
-                (None, 0, T::zero(), T::zero())
+                (None, 0, T::zero())
             }
         } else {
-            (None, 0, T::zero(), T::zero())
+            (None, 0, T::zero())
         };
 
         let (cc, cs) = Self::compute_time_constants(mueff, n_f);
@@ -72,7 +71,6 @@ impl<T: FloatNum> Parameters<T> {
             lambda,
             mu_neg,
             mueff,
-            mueff_neg,
             cc,
             cs,
             c1,
