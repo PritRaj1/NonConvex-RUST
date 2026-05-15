@@ -130,9 +130,7 @@ where
                         let epsilon = T::cast(1e-6);
                         (rcl_min - epsilon, rcl_max + epsilon)
                     } else {
-                        // If rcl_min > rcl_max, use full bounds
-                        eprintln!("Warning: Invalid RCL bounds for dimension {}: lb[{}]={:?}, ub[{}]={:?}, alpha={}, rcl_min={:?}, rcl_max={:?}", 
-                                 i, i, lb[i], i, ub[i], adaptive_alpha, rcl_min, rcl_max);
+                        // rcl_min > rcl_max → fall back to the full bound
                         (lb[i], ub[i])
                     };
 
@@ -151,7 +149,7 @@ where
             .max_by(|a, b| {
                 let fa = self.opt_prob.evaluate(a);
                 let fb = self.opt_prob.evaluate(b);
-                fa.partial_cmp(&fb).unwrap()
+                fa.partial_cmp(&fb).unwrap_or(std::cmp::Ordering::Equal)
             })
             .unwrap_or(self.st.best_x.clone())
     }
@@ -216,7 +214,7 @@ where
                 .max_by(|a, b| {
                     let fa = self.opt_prob.evaluate(a);
                     let fb = self.opt_prob.evaluate(b);
-                    fa.partial_cmp(&fb).unwrap()
+                    fa.partial_cmp(&fb).unwrap_or(std::cmp::Ordering::Equal)
                 })
             {
                 let neighbor_fitness = self.opt_prob.evaluate(&best_neighbor);
@@ -281,11 +279,6 @@ where
         self.st.constraints[0] = self.opt_prob.is_feasible(&new_solution);
 
         self.stagnation_count = 0;
-
-        eprintln!(
-            "GRASP restart triggered after {} iterations without improvement",
-            self.st.iter - self.last_improvement
-        );
     }
 }
 

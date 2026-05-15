@@ -73,10 +73,10 @@ where
         let feasible_i = constraints[i];
         let feasible_j = constraints[j];
         match (feasible_i, feasible_j) {
-            (true, true) => fitness[j].partial_cmp(&fitness[i]).unwrap(),
+            (true, true) => fitness[j].partial_cmp(&fitness[i]).unwrap_or(std::cmp::Ordering::Equal),
             (true, false) => std::cmp::Ordering::Less,
             (false, true) => std::cmp::Ordering::Greater,
-            (false, false) => fitness[j].partial_cmp(&fitness[i]).unwrap(),
+            (false, false) => fitness[j].partial_cmp(&fitness[i]).unwrap_or(std::cmp::Ordering::Equal),
         }
     });
     indices
