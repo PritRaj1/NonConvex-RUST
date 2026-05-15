@@ -57,6 +57,17 @@ pub fn update_arrays<T: FloatNumber, N: Dim, D: Dim>(
     }
 }
 
+// descending by fitness, NaN goes last
+fn cmp_desc<T: FloatNumber>(a: T, b: T) -> std::cmp::Ordering {
+    use std::cmp::Ordering;
+    match (a.is_nan(), b.is_nan()) {
+        (true, true) => Ordering::Equal,
+        (true, _) => Ordering::Greater,
+        (_, true) => Ordering::Less,
+        _ => b.partial_cmp(&a).unwrap_or(Ordering::Equal),
+    }
+}
+
 pub fn sort<T, N>(
     fitness: &OVector<T, N>,
     constraints: &OVector<bool, N>,
@@ -69,15 +80,10 @@ where
     DefaultAllocator: Allocator<N>,
 {
     let mut indices: Vec<usize> = (0..lambda).collect();
-    indices.sort_by(|&i, &j| {
-        let feasible_i = constraints[i];
-        let feasible_j = constraints[j];
-        match (feasible_i, feasible_j) {
-            (true, true) => fitness[j].partial_cmp(&fitness[i]).unwrap_or(std::cmp::Ordering::Equal),
-            (true, false) => std::cmp::Ordering::Less,
-            (false, true) => std::cmp::Ordering::Greater,
-            (false, false) => fitness[j].partial_cmp(&fitness[i]).unwrap_or(std::cmp::Ordering::Equal),
-        }
+    indices.sort_by(|&i, &j| match (constraints[i], constraints[j]) {
+        (true, true) | (false, false) => cmp_desc(fitness[i], fitness[j]),
+        (true, false) => std::cmp::Ordering::Less,
+        (false, true) => std::cmp::Ordering::Greater,
     });
     indices
 }
