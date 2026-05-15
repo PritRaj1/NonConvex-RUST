@@ -11,7 +11,7 @@ use super::config::UpdateConf;
 use crate::algorithms::parallel_tempering::{
     metropolis_hastings::MetropolisHastings,
     preconditioners::{Preconditioner, SampleCovariance},
-    replica_exchange::{Periodic, Stochastic, SwapCheck},
+    replica_exchange::{Periodic, SwapCheck},
     replica_state::ReplicaState,
     statistics::Statistics,
     swap_manager::SwapManager,
@@ -94,10 +94,9 @@ where
 
         let swap_check = match &conf.swap_conf {
             SwapConf::Periodic(p) => SwapCheck::Periodic(Periodic::new(p.swap_frequency, max_iter)),
-            SwapConf::Stochastic(s) => SwapCheck::Stochastic(Stochastic::new(
-                s.swap_probability,
-                rng::mix([seed, 0x5AAFu64]),
-            )),
+            SwapConf::Stochastic(s) => {
+                SwapCheck::stochastic(s.swap_probability, rng::mix([seed, 0x5AAFu64]))
+            }
             SwapConf::Always(_) => SwapCheck::Always,
         };
 

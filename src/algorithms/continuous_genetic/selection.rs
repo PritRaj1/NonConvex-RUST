@@ -269,7 +269,7 @@ where
             .filter(|(_, &v)| v)
             .fold(T::zero(), |acc, (&x, _)| acc + (x - shift));
 
-        if !(sum > T::zero()) {
+        if sum <= T::zero() {
             for i in 0..self.num_parents {
                 selected.set_row(i, &population.row(0));
             }

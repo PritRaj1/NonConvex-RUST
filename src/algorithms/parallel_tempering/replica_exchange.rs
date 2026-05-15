@@ -4,7 +4,7 @@ use crate::utils::rng;
 
 pub enum SwapCheck {
     Periodic(Periodic),
-    Stochastic(Stochastic),
+    Stochastic(Box<Stochastic>),
     Always,
 }
 
@@ -15,6 +15,12 @@ impl SwapCheck {
             SwapCheck::Stochastic(s) => s.should_swap(),
             SwapCheck::Always => true,
         }
+    }
+}
+
+impl SwapCheck {
+    pub fn stochastic(swap_probability: f64, seed: u64) -> Self {
+        SwapCheck::Stochastic(Box::new(Stochastic::new(swap_probability, seed)))
     }
 }
 
