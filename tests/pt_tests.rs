@@ -11,7 +11,7 @@ use non_convex_opt::algorithms::parallel_tempering::{
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
-    opt_prob::{OptProb, OptimizationAlgorithm}
+    opt_prob::{OptProb, OptimizationAlgorithm},
 };
 
 #[test]
@@ -40,7 +40,7 @@ fn test_pt_step_runs() {
     let conf = Config::new(include_str!("jsons/pt.json")).unwrap();
     let pt_conf = match conf.alg_conf {
         AlgConf::PT(pt_conf) => pt_conf,
-        _ => panic!("Expected PTConf")
+        _ => panic!("Expected PTConf"),
     };
 
     let init_pop = DMatrix::from_vec(2, 2, vec![0.5, 0.5, 0.5, 0.5]);
@@ -69,7 +69,7 @@ fn create_test_pt_pcn() -> PT<f64, nalgebra::Dyn, nalgebra::Dyn> {
     let conf = Config::new(include_str!("jsons/pt_pcn.json")).unwrap();
     let pt_conf = match conf.alg_conf {
         AlgConf::PT(pt_conf) => pt_conf,
-        _ => panic!("Expected PTConf")
+        _ => panic!("Expected PTConf"),
     };
 
     // Need fairly large pop for covariance to change

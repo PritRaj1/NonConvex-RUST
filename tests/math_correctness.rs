@@ -41,17 +41,14 @@ impl BooleanConstraintFunction<f64, U2> for AlwaysFeasible {
 // ---------------------------------------------------------------------------
 #[test]
 fn pt_swap_accepts_when_hot_has_higher_fitness() {
-    let opt_prob = OptProb::new(
-        Box::new(UnitGrad),
-        Some(Box::new(AlwaysFeasible)),
-    );
+    let opt_prob = OptProb::new(Box::new(UnitGrad), Some(Box::new(AlwaysFeasible)));
     let x0 = nalgebra::Vector2::new(0.0, 0.0);
     let mut mh =
         MetropolisHastings::<f64, U2>::new(opt_prob, &UpdateConf::Auto(AutoConf {}), x0, 42);
 
     let t_i: f64 = 0.0; // hot (t_eff = 1, β = 1)
     let t_j: f64 = 0.5; // cold (t_eff = 0.5, β = 2)
-    // hot replica found higher fitness — should accept
+                        // hot replica found higher fitness — should accept
     let f_hot = DVector::from_vec(vec![10.0, 10.0]); // sum = 20
     let f_cold = DVector::from_vec(vec![1.0, 1.0]); // sum = 2
     let mut accepts = 0;
@@ -61,22 +58,23 @@ fn pt_swap_accepts_when_hot_has_higher_fitness() {
         }
     }
     // log α = (1 − 2)(2 − 20) = 18 → α ≫ 1 → ~100%
-    assert!(accepts > 195, "expected near-100% accept, got {}/200", accepts);
+    assert!(
+        accepts > 195,
+        "expected near-100% accept, got {}/200",
+        accepts
+    );
 }
 
 #[test]
 fn pt_swap_rejects_when_hot_has_lower_fitness() {
-    let opt_prob = OptProb::new(
-        Box::new(UnitGrad),
-        Some(Box::new(AlwaysFeasible)),
-    );
+    let opt_prob = OptProb::new(Box::new(UnitGrad), Some(Box::new(AlwaysFeasible)));
     let x0 = nalgebra::Vector2::new(0.0, 0.0);
     let mut mh =
         MetropolisHastings::<f64, U2>::new(opt_prob, &UpdateConf::Auto(AutoConf {}), x0, 42);
 
     let t_i: f64 = 0.0; // hot
     let t_j: f64 = 0.5; // cold
-    // hot replica has lower fitness — should mostly reject
+                        // hot replica has lower fitness — should mostly reject
     let f_hot = DVector::from_vec(vec![1.0, 1.0]); // sum 2
     let f_cold = DVector::from_vec(vec![10.0, 10.0]); // sum 20
     let mut accepts = 0;
@@ -173,10 +171,7 @@ fn lbfgs_strong_wolfe_returns_positive_step() {
         },
     };
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
-    let opt_prob = OptProb::new(
-        Box::new(UnitGrad),
-        Some(Box::new(AlwaysFeasible)),
-    );
+    let opt_prob = OptProb::new(Box::new(UnitGrad), Some(Box::new(AlwaysFeasible)));
     let mut lbfgs: LBFGS<f64, U1, U2> = LBFGS::new(conf, init_x, opt_prob, &OptConf::default(), 0);
     let initial = lbfgs.st.best_f;
     for _ in 0..10 {
@@ -228,10 +223,7 @@ fn tpe_kde_silverman_bandwidth() {
         [0.0, 0.03].into(),
     ]);
 
-    let opt_prob = OptProb::new(
-        Box::new(UnitGrad),
-        Some(Box::new(AlwaysFeasible)),
-    );
+    let opt_prob = OptProb::new(Box::new(UnitGrad), Some(Box::new(AlwaysFeasible)));
     let mut tpe: TPE<f64, Const<10>, U2> =
         TPE::new(conf, init_pop, opt_prob, &OptConf::default(), 42);
     // best should be (0,0) already
@@ -276,14 +268,15 @@ fn convergence_fires_after_stagnation_window() {
         }}
     }"#;
     let conf = Config::new(json).unwrap();
-    let alg = match &conf.alg_conf {
-        AlgConf::Adam(_) => true,
-        _ => false,
-    };
-    assert!(alg);
+    assert!(matches!(&conf.alg_conf, AlgConf::Adam(_)));
 
-    let mut opt: NonConvexOpt<f64, U1, U2> =
-        NonConvexOpt::new(conf, SMatrix::<f64, 1, 2>::zeros(), ZeroGrad, None::<AlwaysFeasible>, 0);
+    let mut opt: NonConvexOpt<f64, U1, U2> = NonConvexOpt::new(
+        conf,
+        SMatrix::<f64, 1, 2>::zeros(),
+        ZeroGrad,
+        None::<AlwaysFeasible>,
+        0,
+    );
     opt.run();
     assert!(opt.converged, "expected convergence on flat objective");
     assert_eq!(

@@ -7,7 +7,7 @@ use plotters::prelude::*;
 
 use common::fcns::{BoxConstraints, MultiModalFunction};
 use common::img::{
-    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams
+    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams,
 };
 
 use non_convex_opt::utils::config::Config;
@@ -83,7 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             min_val,
             max_val,
             constraints: &constraints,
-            frame_path: "examples/lbfgs_frame.png"
+            frame_path: "examples/lbfgs_frame.png",
         })?;
 
         // Draw best individual in yellow

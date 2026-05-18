@@ -8,7 +8,7 @@ use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
 use non_convex_opt::{algorithms::differential_evolution::DE, utils::config::DEConf};
 
 use non_convex_opt::algorithms::differential_evolution::{
-    AdaptiveConf, CommonConf, DEStrategy, MutationType, StandardConf
+    AdaptiveConf, CommonConf, DEStrategy, MutationType, StandardConf,
 };
 
 #[test]
@@ -18,8 +18,8 @@ fn test_de_basic() {
         mutation_type: MutationType::Standard(StandardConf {
             f: 0.8,
             cr: 0.9,
-            strategy: DEStrategy::Best2Bin
-        })
+            strategy: DEStrategy::Best2Bin,
+        }),
     };
 
     let mut init_pop = DMatrix::zeros(100, 2);
@@ -52,8 +52,8 @@ fn test_adaptive_de() {
             use_jade: false,
             memory_size: 5,
             f: 0.65,
-            cr: 0.5
-        })
+            cr: 0.5,
+        }),
     };
 
     let mut init_pop = DMatrix::zeros(100, 2);

@@ -1,7 +1,7 @@
 mod common;
 
 use common::fcns::{
-    QuadraticConstraints, QuadraticObjective, RosenbrockConstraints, RosenbrockObjective
+    QuadraticConstraints, QuadraticObjective, RosenbrockConstraints, RosenbrockObjective,
 };
 use nalgebra::DMatrix;
 use non_convex_opt::utils::config::Config;

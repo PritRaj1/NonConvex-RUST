@@ -105,8 +105,11 @@ where
             let x_new = x + p * alpha;
             let f_new = opt_prob.evaluate(&x_new);
             let g_new_p = opt_prob.objective.gradient(&x_new).unwrap().dot(p);
-            let abs_g_new_p =
-                if g_new_p >= T::zero() { g_new_p } else { T::zero() - g_new_p };
+            let abs_g_new_p = if g_new_p >= T::zero() {
+                g_new_p
+            } else {
+                T::zero() - g_new_p
+            };
 
             if f_new < f + c1 * alpha * initial_gp || g_new_p < T::zero() {
                 // step too large or overshot peak → tighten upper bracket

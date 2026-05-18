@@ -101,45 +101,48 @@ where
     pub fn construct_solution(&self) -> OVector<T, D> {
         let candidates: Vec<OVector<T, D>> = (0..self.conf.num_candidates)
             .into_par_iter()
-            .map_init(                || {
+            .map_init(
+                || {
                     let thread_id = rayon::current_thread_index().unwrap_or(0);
                     rng::split(self.seed, [self.st.iter as u64, thread_id as u64])
-                }, |rng, _i| {
-                let mut candidate =
-                    OVector::<T, D>::zeros_generic(D::from_usize(self.st.best_x.len()), U1);
+                },
+                |rng, _i| {
+                    let mut candidate =
+                        OVector::<T, D>::zeros_generic(D::from_usize(self.st.best_x.len()), U1);
 
-                let (lb, ub) = self.get_bounds(&candidate);
+                    let (lb, ub) = self.get_bounds(&candidate);
 
-                // Generate value within restricted candidate list (RCL)
-                for i in 0..self.st.best_x.len() {
-                    let adaptive_alpha = if self.stagnation_count > 5 {
-                        (self.conf.alpha * 1.5).min(0.8)
-                    } else {
-                        self.conf.alpha
-                    };
+                    // Generate value within restricted candidate list (RCL)
+                    for i in 0..self.st.best_x.len() {
+                        let adaptive_alpha = if self.stagnation_count > 5 {
+                            (self.conf.alpha * 1.5).min(0.8)
+                        } else {
+                            self.conf.alpha
+                        };
 
-                    let alpha = T::cast(adaptive_alpha);
-                    let range = ub[i] - lb[i];
-                    let rcl_min = lb[i] + (T::one() - alpha) * range;
-                    let rcl_max = ub[i] - (T::one() - alpha) * range;
+                        let alpha = T::cast(adaptive_alpha);
+                        let range = ub[i] - lb[i];
+                        let rcl_min = lb[i] + (T::one() - alpha) * range;
+                        let rcl_max = ub[i] - (T::one() - alpha) * range;
 
-                    let (min_val, max_val) = if rcl_min < rcl_max {
-                        (rcl_min, rcl_max)
-                    } else if (rcl_min - rcl_max).abs() < T::cast(1e-10) {
-                        // If very close, use small range around the value
-                        let epsilon = T::cast(1e-6);
-                        (rcl_min - epsilon, rcl_max + epsilon)
-                    } else {
-                        // rcl_min > rcl_max → fall back to the full bound
-                        (lb[i], ub[i])
-                    };
+                        let (min_val, max_val) = if rcl_min < rcl_max {
+                            (rcl_min, rcl_max)
+                        } else if (rcl_min - rcl_max).abs() < T::cast(1e-10) {
+                            // If very close, use small range around the value
+                            let epsilon = T::cast(1e-6);
+                            (rcl_min - epsilon, rcl_max + epsilon)
+                        } else {
+                            // rcl_min > rcl_max → fall back to the full bound
+                            (lb[i], ub[i])
+                        };
 
-                    candidate[i] = T::cast(
-                        rng.random_range(min_val.to_f64().unwrap()..max_val.to_f64().unwrap()),
-                    );
-                }
-                candidate
-            })
+                        candidate[i] = T::cast(
+                            rng.random_range(min_val.to_f64().unwrap()..max_val.to_f64().unwrap()),
+                        );
+                    }
+                    candidate
+                },
+            )
             .collect();
 
         // Select best feasible candidate

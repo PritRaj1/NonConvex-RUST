@@ -7,7 +7,7 @@ use non_convex_opt::algorithms::multi_swarm::{Swarm, SwarmConfig, MSPO};
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::{AlgConf, Config},
-    opt_prob::{OptProb, OptimizationAlgorithm}
+    opt_prob::{OptProb, OptimizationAlgorithm},
 };
 
 #[test]
@@ -30,7 +30,7 @@ fn test_swarm_initialization() {
             init_pop,
             inertia_start: 0.9,
             inertia_end: 0.4,
-            max_iterations: 100
+            max_iterations: 100,
         },
         42,
     );
@@ -66,7 +66,7 @@ fn test_swarm_update() {
             init_pop,
             inertia_start: 0.9,
             inertia_end: 0.4,
-            max_iterations: 100
+            max_iterations: 100,
         },
         42,
     );
@@ -111,7 +111,7 @@ fn test_mspo() {
     let conf = Config::new(config_json).unwrap();
     let mspo_conf = match conf.alg_conf {
         AlgConf::MSPO(mspo_conf) => mspo_conf,
-        _ => panic!("Expected MSPOConf")
+        _ => panic!("Expected MSPOConf"),
     };
 
     // Create initial population matrix

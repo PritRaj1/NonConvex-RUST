@@ -51,12 +51,18 @@ where
 
         // bounds: whatever objective exposes, else ±10
         let sample = st.best_x.clone();
-        let lower = opt_prob.objective.x_lower_bound(&sample).unwrap_or_else(|| {
-            OVector::<T, D>::from_element_generic(D::from_usize(dim), U1, T::cast(-10.0))
-        });
-        let upper = opt_prob.objective.x_upper_bound(&sample).unwrap_or_else(|| {
-            OVector::<T, D>::from_element_generic(D::from_usize(dim), U1, T::cast(10.0))
-        });
+        let lower = opt_prob
+            .objective
+            .x_lower_bound(&sample)
+            .unwrap_or_else(|| {
+                OVector::<T, D>::from_element_generic(D::from_usize(dim), U1, T::cast(-10.0))
+            });
+        let upper = opt_prob
+            .objective
+            .x_upper_bound(&sample)
+            .unwrap_or_else(|| {
+                OVector::<T, D>::from_element_generic(D::from_usize(dim), U1, T::cast(10.0))
+            });
 
         let mut observations = VecDeque::with_capacity(conf.max_history);
         for i in 0..st.pop.nrows() {

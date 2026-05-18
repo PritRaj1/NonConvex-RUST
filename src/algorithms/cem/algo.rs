@@ -500,7 +500,11 @@ where
         let mut elite_indices: Vec<usize> =
             (0..population_size).filter(|&i| constraints[i]).collect();
 
-        elite_indices.sort_by(|&a, &b| fitness[b].partial_cmp(&fitness[a]).unwrap_or(std::cmp::Ordering::Equal));
+        elite_indices.sort_by(|&a, &b| {
+            fitness[b]
+                .partial_cmp(&fitness[a])
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         let elite_size = self.conf.common.elite_size.min(elite_indices.len());
         let elite_samples: Vec<OVector<T, D>> = elite_indices[..elite_size]
             .iter()

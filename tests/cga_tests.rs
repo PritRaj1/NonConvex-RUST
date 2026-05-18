@@ -58,8 +58,7 @@ fn test_cga() {
     let constraints = RosenbrockConstraints {};
     let opt_prob = OptProb::new(Box::new(obj_f), Some(Box::new(constraints)));
     let initial = init_pop.row(0).clone_owned();
-    let initial_fitness = RosenbrockObjective { a: 1.0, b: 1.0 }
-        .f(&initial.transpose());
+    let initial_fitness = RosenbrockObjective { a: 1.0, b: 1.0 }.f(&initial.transpose());
 
     let mut cga = CGA::new(cga_conf, init_pop, opt_prob, &OptConf::default(), 42);
     for _ in 0..30 {

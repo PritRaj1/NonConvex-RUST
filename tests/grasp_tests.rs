@@ -7,7 +7,7 @@ use non_convex_opt::algorithms::grasp::GRASP;
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::GRASPConf,
-    opt_prob::{BooleanConstraintFunction, OptProb, OptimizationAlgorithm}
+    opt_prob::{BooleanConstraintFunction, OptProb, OptimizationAlgorithm},
 };
 
 #[test]
@@ -22,7 +22,7 @@ fn test_grasp_unconstrained() {
         cache_bounds: true,
         diversity_prob: 0.7,
         restart_threshold: 15,
-        diversity_strength: 10.0
+        diversity_strength: 10.0,
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -55,7 +55,7 @@ fn test_grasp_constrained() {
         cache_bounds: true,
         diversity_prob: 0.7,
         restart_threshold: 15,
-        diversity_strength: 10.0
+        diversity_strength: 10.0,
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -87,7 +87,7 @@ fn test_grasp_construction_and_local_search() {
         cache_bounds: true,
         diversity_prob: 0.7,
         restart_threshold: 15,
-        diversity_strength: 10.0
+        diversity_strength: 10.0,
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
@@ -116,7 +116,7 @@ fn test_grasp_bounds() {
         cache_bounds: true,
         diversity_prob: 0.7,
         restart_threshold: 15,
-        diversity_strength: 10.0
+        diversity_strength: 10.0,
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);

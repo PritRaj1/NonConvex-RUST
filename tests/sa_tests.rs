@@ -4,7 +4,7 @@ use common::fcns::{RosenbrockConstraints, RosenbrockObjective};
 use nalgebra::{SMatrix, U1, U2};
 
 use non_convex_opt::algorithms::simulated_annealing::{
-    AdvancedConf, CoolingScheduleType, RestartStrategy, SAConf, SimulatedAnnealing
+    AdvancedConf, CoolingScheduleType, RestartStrategy, SAConf, SimulatedAnnealing,
 };
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::opt_prob::{OptProb, OptimizationAlgorithm};
@@ -26,8 +26,8 @@ fn test_sa() {
             adaptation_rate: 0.1,
             improvement_history_size: 20,
             success_history_size: 20,
-            cooling_schedule: CoolingScheduleType::Exponential
-        }
+            cooling_schedule: CoolingScheduleType::Exponential,
+        },
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.9, 0.9]);
@@ -72,8 +72,8 @@ fn test_sa_cooling() {
             adaptation_rate: 0.1,
             improvement_history_size: 20,
             success_history_size: 20,
-            cooling_schedule: CoolingScheduleType::Exponential
-        }
+            cooling_schedule: CoolingScheduleType::Exponential,
+        },
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.9, 0.9]);
@@ -121,8 +121,8 @@ fn test_sa_neighbor_generation() {
             adaptation_rate: 0.1,
             improvement_history_size: 20,
             success_history_size: 20,
-            cooling_schedule: CoolingScheduleType::Exponential
-        }
+            cooling_schedule: CoolingScheduleType::Exponential,
+        },
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.9, 0.9]);
@@ -162,8 +162,8 @@ fn test_sa_with_constraints() {
             adaptation_rate: 0.1,
             improvement_history_size: 20,
             success_history_size: 20,
-            cooling_schedule: CoolingScheduleType::Exponential
-        }
+            cooling_schedule: CoolingScheduleType::Exponential,
+        },
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.9, 0.9]);

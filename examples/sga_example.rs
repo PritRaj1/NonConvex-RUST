@@ -7,7 +7,7 @@ use plotters::prelude::*;
 
 use common::fcns::{BoxConstraints, MultiModalFunction};
 use common::img::{
-    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams
+    create_contour_data, find_closest_color, get_color_palette, setup_chart, setup_gif, ChartParams,
 };
 
 use non_convex_opt::utils::config::{AlgConf, Config, OptConf, SGAConf};
@@ -19,15 +19,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             max_iter: 100,
             rtol: 1e-6,
             atol: 0.0,
-            stagnation_window: 50
+            stagnation_window: 50,
         },
         alg_conf: AlgConf::SGA(SGAConf {
             learning_rate: 0.01,
             momentum: 0.9,
             gradient_clip: 0.0,
             noise_decay: 0.99,
-            adaptive_noise: false
-        })
+            adaptive_noise: false,
+        }),
     };
 
     let obj_f = MultiModalFunction;
@@ -55,7 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             min_val,
             max_val,
             constraints: &constraints,
-            frame_path: "examples/sga_frame.png"
+            frame_path: "examples/sga_frame.png",
         })?;
 
         // Draw best individual

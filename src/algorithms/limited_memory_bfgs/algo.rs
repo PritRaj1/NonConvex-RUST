@@ -124,7 +124,12 @@ where
         let mut q = q_in.clone();
         let mut alpha = vec![T::zero(); m];
         let mut rho = vec![T::zero(); m];
-        let cond_thresh = T::cast(self.conf.advanced.numerical_safeguards.conditioning_threshold);
+        let cond_thresh = T::cast(
+            self.conf
+                .advanced
+                .numerical_safeguards
+                .conditioning_threshold,
+        );
 
         for i in (0..m).rev() {
             let s_dot_y = self.s[i].dot(&self.y[i]);
@@ -176,9 +181,9 @@ where
             }
         }
 
-        let alpha =
-            self.linesearch
-                .search(&self.st.best_x, &p, self.st.best_f, g, &self.opt_prob);
+        let alpha = self
+            .linesearch
+            .search(&self.st.best_x, &p, self.st.best_f, g, &self.opt_prob);
         let mut x_new = &self.x + &p * alpha;
         self.project_onto_bounds(&mut x_new);
 
@@ -189,9 +194,9 @@ where
 
     fn step_without_bounds(&mut self, g: &OVector<T, D>) {
         let p = self.two_loop_recursion(g);
-        let alpha =
-            self.linesearch
-                .search(&self.st.best_x, &p, self.st.best_f, g, &self.opt_prob);
+        let alpha = self
+            .linesearch
+            .search(&self.st.best_x, &p, self.st.best_f, g, &self.opt_prob);
         let x_new = &self.x + &p * alpha;
         self.update_s_y(&x_new, g);
         self.update_best(&x_new);
@@ -306,7 +311,11 @@ where
             .copied()
             .sum::<f64>()
             / win as f64;
-        avg < self.conf.advanced.stagnation_detection.improvement_threshold
+        avg < self
+            .conf
+            .advanced
+            .stagnation_detection
+            .improvement_threshold
     }
 }
 

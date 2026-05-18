@@ -43,10 +43,16 @@ where
         generation: usize,
     ) -> OVector<T, D> {
         match self {
-            MutationOperatorEnum::Gaussian(op, _) => op.mutate(individual, lower, upper, generation),
+            MutationOperatorEnum::Gaussian(op, _) => {
+                op.mutate(individual, lower, upper, generation)
+            }
             MutationOperatorEnum::Uniform(op, _) => op.mutate(individual, lower, upper, generation),
-            MutationOperatorEnum::NonUniform(op, _) => op.mutate(individual, lower, upper, generation),
-            MutationOperatorEnum::Polynomial(op, _) => op.mutate(individual, lower, upper, generation),
+            MutationOperatorEnum::NonUniform(op, _) => {
+                op.mutate(individual, lower, upper, generation)
+            }
+            MutationOperatorEnum::Polynomial(op, _) => {
+                op.mutate(individual, lower, upper, generation)
+            }
         }
     }
 }

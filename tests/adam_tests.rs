@@ -6,7 +6,7 @@ use non_convex_opt::algorithms::adam::Adam;
 use non_convex_opt::utils::config::OptConf;
 use non_convex_opt::utils::{
     config::AdamConf,
-    opt_prob::{OptProb, OptimizationAlgorithm}
+    opt_prob::{OptProb, OptimizationAlgorithm},
 };
 
 #[test]
@@ -18,7 +18,7 @@ fn test_adam() {
         epsilon: 1e-8,
         weight_decay: 0.0,
         gradient_clip: 1.0,
-        amsgrad: false
+        amsgrad: false,
     };
 
     let init_x = SMatrix::<f64, 1, 2>::from_row_slice(&[0.5, 0.5]);
